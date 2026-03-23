@@ -6,7 +6,11 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 
-export default function AuthProvider({ children }: { children: React.ReactNode }) {
+export default function AuthProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const [activeIndex, setActiveIndex] = useState(0);
 
   useEffect(() => {
@@ -43,32 +47,25 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
           {/* Quote Block */}
           <div className="flex flex-col gap-6">
             <QuotesIcon size={48} weight="fill" className="text-accent-gold" />
-            <blockquote className="text-lg leading-relaxed italic">
+            <blockquote className="text-lg leading-relaxed italic font-mono">
               {current.quote}
             </blockquote>
           </div>
 
           {/* Author Card */}
           <div className="flex items-center gap-4">
-            
             <Avatar className="size-12">
               <AvatarImage src={current.avatarUrl} alt={current.author} />
-              <AvatarFallback>
-                {current.author.slice(0, 2)}
-              </AvatarFallback>
+              <AvatarFallback>{current.author.slice(0, 2)}</AvatarFallback>
             </Avatar>
             <div className="flex flex-col">
-              <p className="font-semibold text-base">
-                {current.author}
-              </p>
+              <p className="font-semibold text-base">{current.author}</p>
               <p className="text-sm text-white/70">{current.title}</p>
             </div>
           </div>
 
           {/* Carousel Controls */}
           <div className="flex items-center gap-3 pt-4">
-           
-
             <div className="flex gap-2 flex-1">
               {testimonials.map((_, index) => (
                 <div
@@ -79,8 +76,6 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
                 />
               ))}
             </div>
-
-            
           </div>
         </div>
       </aside>
@@ -91,9 +86,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
           {/* Footer */}
           <footer className="absolute bottom-6 md:bottom-8 text-center text-xs text-muted-foreground">
             <span>Powered by </span>
-            <span className="font-semibold text-accent-navy">
-              Eduvia
-            </span>
+            <span className="font-semibold text-accent-navy">Eduvia</span>
           </footer>
         </div>
       </main>
