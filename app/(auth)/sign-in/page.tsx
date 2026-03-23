@@ -9,7 +9,7 @@ import {
 } from "@phosphor-icons/react";
 import { GraduationCapIcon, UsersIcon } from "lucide-react";
 import { useState } from "react";
-import {cn} from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import SignInForm from "@/components/form/sign-in-form";
 
 export default function SignInPage() {
@@ -48,22 +48,63 @@ export default function SignInPage() {
                   : ""
               }`}
             >
-              <span className={`text-2xl mb-1.5 ${
-                selectedRole === role.value
-                  ? "text-primary-green"
-                  : "text-[#4B5563]"
-              }`}>
+              <span
+                className={`text-2xl mb-1.5 ${
+                  selectedRole === role.value
+                    ? "text-primary-green"
+                    : "text-[#4B5563]"
+                }`}
+              >
                 {role.value === "admin" && (
-                  <ShieldStarIcon className={cn("size-6", selectedRole === role.value ? "text-white" : "text-[#4B5563]")} />
+                  <ShieldStarIcon
+                    className={cn(
+                      "size-6",
+                      selectedRole === role.value
+                        ? "text-white"
+                        : "text-[#4B5563]",
+                    )}
+                  />
                 )}
                 {role.value === "student" && (
-                  <GraduationCapIcon className={cn("size-6", selectedRole === role.value ? "text-white" : "text-[#4B5563]")} />
+                  <GraduationCapIcon
+                    className={cn(
+                      "size-6",
+                      selectedRole === role.value
+                        ? "text-white"
+                        : "text-[#4B5563]",
+                    )}
+                  />
                 )}
                 {role.value === "teacher" && (
-                  <ChalkboardTeacherIcon className={cn("size-6", selectedRole === role.value ? "text-white" : "text-[#4B5563]")} />
+                  <ChalkboardTeacherIcon
+                    className={cn(
+                      "size-6",
+                      selectedRole === role.value
+                        ? "text-white"
+                        : "text-[#4B5563]",
+                    )}
+                  />
                 )}
-                {role.value === "parent" && <UsersIcon className={cn("size-6", selectedRole === role.value ? "text-white" : "text-[#4B5563]")} />}
-                {role.value === "staff" && <BriefcaseIcon className={cn("size-6", selectedRole === role.value ? "text-white" : "text-[#4B5563]")} />}
+                {role.value === "parent" && (
+                  <UsersIcon
+                    className={cn(
+                      "size-6",
+                      selectedRole === role.value
+                        ? "text-white"
+                        : "text-[#4B5563]",
+                    )}
+                  />
+                )}
+                {role.value === "staff" && (
+                  <BriefcaseIcon
+                    className={cn(
+                      "size-6",
+                      selectedRole === role.value
+                        ? "text-white"
+                        : "text-[#4B5563]",
+                    )}
+                  />
+                )}
                 {/* {role.value === "super-admin" && <ShieldStarIcon size={32} />} */}
               </span>
               <span

@@ -27,7 +27,6 @@ export const userRoles: SelectOption[] = [
   // },
 ];
 
-
 export const testimonials: Testimonial[] = [
   {
     quote:

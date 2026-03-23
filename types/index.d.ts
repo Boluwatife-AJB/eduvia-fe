@@ -1,8 +1,6 @@
 import { signInSchema } from "@/lib/schema";
 import { z } from "zod";
 
-
-
 export type SignInFormValues = z.infer<typeof signInSchema>;
 
 interface SelectOption {
