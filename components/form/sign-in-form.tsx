@@ -60,7 +60,10 @@ export default function SignInForm({ userType }: SignInFormProps) {
     mutationFn: signInUser,
     onSuccess: (data) => {
       console.log(data);
-      setAuthToken(data.access_token, data.refresh_token);
+      setAuthToken({
+        access_token: data.access_token,
+        refresh_token: data.refresh_token,
+      });
       router.push("/");
     },
     onError: (error: AxiosError) => {
