@@ -1,4 +1,4 @@
-import AuthProvider from "@/components/providers/auth-provider";
+import AuthProvider from "@/components/providers/tenant/auth-provider";
 
 export default function AuthLayout({
   children,

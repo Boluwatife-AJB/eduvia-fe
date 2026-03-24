@@ -16,13 +16,14 @@ import {
 import { useState } from "react";
 import { Button } from "../../ui/button";
 import Link from "next/link";
-import { publicApi } from "@/lib/api";
+import { apiClient, publicApi } from "@/lib/api";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { setAuthToken } from "@/lib/auth";
 import { Spinner } from "../../ui/spinner";
 import { toast } from "sonner";
 import { AxiosError } from "axios";
+import { useTenantStore } from "@/lib/stores/tenant.store";
 
 interface SignInFormProps {
   userType: string;
@@ -33,13 +34,13 @@ const signInUser = async (data: SignInFormValues) => {
     identifier: data.identifier,
     password: data.password,
   };
-  const response = await publicApi.post("/auth/login", payload);
+  const response = await apiClient.post("/auth/login", payload);
   return response.data.data;
 };
 
 export default function SignInForm({ userType }: SignInFormProps) {
   const router = useRouter();
-
+  const { tenant } = useTenantStore();
   const [showPassword, setShowPassword] = useState(false);
   const form = useForm({
     resolver: zodResolver(signInSchema),
@@ -59,12 +60,11 @@ export default function SignInForm({ userType }: SignInFormProps) {
   const { mutateAsync: signIn, isPending } = useMutation({
     mutationFn: signInUser,
     onSuccess: (data) => {
-      console.log(data);
       setAuthToken({
         access_token: data.access_token,
         refresh_token: data.refresh_token,
       });
-      router.push("/");
+      router.push(`/${tenant?.slug}/`);
     },
     onError: (error: AxiosError) => {
       toast.error(
@@ -161,7 +161,7 @@ export default function SignInForm({ userType }: SignInFormProps) {
                   variant="ghost"
                   type="button"
                   size="icon"
-                  className="absolute right-3 top-1/2 -translate-y-1/2 hover:text-primary hover:bg-transparent active:translate-y-0"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 hover:text-primary hover:bg-transparent active:-translate-y-4"
                   onClick={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? (
@@ -178,7 +178,7 @@ export default function SignInForm({ userType }: SignInFormProps) {
         <Button
           variant="default"
           size="lg"
-          className="w-full h-13 bg-primary-blue hover:bg-[#14522c] text-white font-bold rounded-xl shadow-xl shadow-primary/20 transition-all active:scale-[0.98] flex items-center justify-center gap-2 text-base"
+          className="w-full h-13 bg-primary-blue hover:bg-primary-blue/95 text-white font-bold rounded-xl shadow-xl shadow-primary/20 transition-all active:scale-[0.98] flex items-center justify-center gap-2 text-base"
           type="submit"
           disabled={!isValid || isPending}
         >

@@ -7,6 +7,7 @@ interface Tokens {
 }
 
 export const setAuthToken = (tokens: Partial<Tokens>) => {
+  // console.log("Setting auth tokens:", tokens);
   if (tokens.access_token) {
     Cookies.set("ev-access-token", tokens.access_token, { expires: 30 });
   }

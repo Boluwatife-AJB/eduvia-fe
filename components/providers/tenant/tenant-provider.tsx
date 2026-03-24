@@ -1,6 +1,6 @@
 "use client";
 
-import { publicApi } from "@/lib/api";
+import { apiClient } from "@/lib/api";
 import { setAuthToken } from "@/lib/auth";
 import { useTenantStore } from "@/lib/stores/tenant.store";
 import { useQuery } from "@tanstack/react-query";
@@ -8,8 +8,8 @@ import { useParams } from "next/navigation";
 import { useEffect } from "react";
 
 const fetchTenant = async (slug: string) => {
-  const response = await publicApi.get(`/tenant/${slug}/public`);
-  return response.data.data;
+  const response = await apiClient.get(`/tenant/${slug}/public`);
+  return response.data;
 };
 
 export default function TenantProvider({

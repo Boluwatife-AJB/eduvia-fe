@@ -22,6 +22,7 @@ import {
   KeyIcon,
   ListMagnifyingGlassIcon,
   MegaphoneSimpleIcon,
+  SoccerBallIcon,
   SquaresFour,
   SquaresFourIcon,
   StudentIcon,
@@ -81,6 +82,193 @@ export const testimonials: Testimonial[] = [
   },
 ];
 
+export const studentDashboardLink: NavLink = {
+  title: "Overview",
+  href: "/student/overview",
+  Icon: SquaresFourIcon,
+};
+
+export const studentNavSections: NavSection[] = [
+  {
+    label: "Academic",
+    items: [
+      {
+        title: "My Classes",
+        href: "/student/academic/my-classes",
+        Icon: ChartLineIcon,
+      },
+      {
+        title: "Timetable",
+        href: "/student/academic/timetable",
+        Icon: ClockIcon,
+      },
+      {
+        title: "Assignments",
+        href: "/student/academic/assignments",
+        Icon: FileTextIcon,
+      },
+      {
+        title: "Exams & Tests",
+        href: "/student/academic/exams-tests",
+        Icon: ClipboardTextIcon,
+      },
+      {
+        title: "My Results",
+        href: "/student/academic/my-results",
+        Icon: FileTextIcon,
+      },
+    ],
+  },
+  {
+    label: "Campus Life",
+    items: [
+      {
+        title: "Study Groups",
+        href: "/student/campus-life/study-groups",
+        Icon: UsersThreeIcon,
+      },
+      {
+        title: "Events",
+        href: "/student/campus-life/events",
+        Icon: CalendarCheckIcon,
+      },
+      {
+        title: "Sport",
+        href: "/student/campus-life/sport",
+        Icon: SoccerBallIcon,
+      },
+    ],
+  },
+  {
+    label: "Finance",
+    items: [
+      {
+        title: "Fee Payment",
+        href: "/student/finance/fee-payment",
+        Icon: CoinsIcon,
+      },
+      {
+        title: "Payment History",
+        href: "/student/finance/payment-history",
+        Icon: WalletIcon,
+      },
+    ],
+  },
+  {
+    label: "Account",
+    items: [
+      {
+        title: "My Profile",
+        href: "/student/account/my-profile",
+        Icon: UserIcon,
+      },
+      {
+        title: "Settings",
+        href: "/student/account/settings",
+        Icon: GearIcon,
+      },
+    ],
+  },
+];
+
+export const teacherDashboardLink: NavLink = {
+  title: "Overview",
+  href: "/teacher/overview",
+  Icon: SquaresFourIcon,
+};
+
+export const teacherNavSections: NavSection[] = [
+  {
+    label: "Teaching",
+    items: [
+      {
+        title: "My Classes",
+        href: "/teacher/teaching/my-classes",
+        Icon: ChartLineIcon,
+      },
+      {
+        title: "Timetable",
+        href: "/teacher/teaching/timetable",
+        Icon: ClockIcon,
+      },
+      {
+        title: "Upload Lectures",
+        href: "/teacher/teaching/upload-lectures",
+        Icon: FileTextIcon,
+      },
+      {
+        title: "Assignments",
+        href: "/teacher/teaching/assignments",
+        Icon: FileTextIcon,
+      },
+      {
+        title: "Assessments",
+        href: "/teacher/teaching/assessments",
+        Icon: ClipboardTextIcon,
+      },
+      {
+        title: "Grade Book",
+        href: "/teacher/teaching/grade-book",
+        Icon: FileTextIcon,
+      },
+    ],
+  },
+  {
+    label: "Communication",
+    items: [
+      {
+        title: "Messages",
+        href: "/teacher/communication/messages",
+        Icon: ChatIcon,
+      },
+      {
+        title: "Announcements",
+        href: "/teacher/communication/announcements",
+        Icon: MegaphoneSimpleIcon,
+      },
+    ],
+  },
+  {
+    label: "Administration",
+    items: [
+      {
+        title: "Tutorial Classes",
+        href: "/teacher/administration/tutorial-classes",
+        Icon: BookOpenTextIcon,
+      },
+      {
+        title: "Disciplinary",
+        href: "/teacher/administration/disciplinary",
+        Icon: GavelIcon,
+      },
+    ],
+  },
+  {
+    label: "Finance",
+    items: [
+      {
+        title: "My Payslips",
+        href: "/teacher/finance/my-payslips",
+        Icon: WalletIcon,
+      },
+    ],
+  },
+  {
+    label: "Account",
+    items: [
+      {
+        title: "My Profile",
+        href: "/teacher/account/my-profile",
+        Icon: UserIcon,
+      },
+      {
+        title: "Settings",
+        href: "/teacher/account/settings",
+        Icon: GearIcon,
+      },
+    ],
+  },
+];
 export const schoolAdminDashboardLink: NavLink = {
   title: "Dashboard",
   href: "/",

@@ -2,7 +2,15 @@ import { signInSchema } from "@/lib/schema";
 import { Icon } from "@phosphor-icons/react";
 import { z } from "zod";
 
-export type SignInFormValues = z.infer<typeof signInSchema>;
+type SignInFormValues = z.infer<typeof signInSchema>;
+
+type Role =
+  | "TEACHER"
+  | "STUDENT"
+  | "PARENT"
+  | "ADMIN"
+  | "STAFF"
+  | "SUPER_ADMIN";
 
 interface SelectOption {
   value: string;
@@ -16,13 +24,20 @@ interface Testimonial {
   avatarUrl: string;
 }
 
-export type NavLink = {
+type NavLink = {
   title: string;
   href: string;
   Icon: Icon;
 };
 
-export type NavSection = {
+type NavSection = {
   label: string;
   items: NavLink[];
 };
+
+interface TenantSlice {
+  id: string;
+  name: string;
+  slug: string;
+  logo: string;
+}
