@@ -1,4 +1,4 @@
-import { NavLink, NavSection, SelectOption, Testimonial } from "@/types";
+import { NavLink, NavSection, Role, SelectOption, Testimonial } from "@/types";
 import {
   BankIcon,
   BookOpenTextIcon,
@@ -23,7 +23,6 @@ import {
   ListMagnifyingGlassIcon,
   MegaphoneSimpleIcon,
   SoccerBallIcon,
-  SquaresFour,
   SquaresFourIcon,
   StudentIcon,
   UserIcon,
@@ -501,3 +500,51 @@ export const parentNavSections: NavSection[] = [
     ],
   },
 ];
+
+export function getNavConfigForRole(role: Role | undefined): {
+  dashboard: NavLink;
+  sections: NavSection[];
+} {
+  switch (role) {
+    case "STUDENT":
+      return {
+        dashboard: studentDashboardLink,
+        sections: studentNavSections,
+      };
+    case "TEACHER":
+      return {
+        dashboard: teacherDashboardLink,
+        sections: teacherNavSections,
+      };
+    case "PARENT":
+      return {
+        dashboard: parentDashboardLink,
+        sections: parentNavSections,
+      };
+    case "ADMIN":
+      return {
+        dashboard: schoolAdminDashboardLink,
+        sections: schoolAdminNavSections,
+      };
+    case "PRINCIPAL":
+      return {
+        dashboard: schoolAdminDashboardLink,
+        sections: schoolAdminNavSections,
+      };
+    case "STAFF":
+      return {
+        dashboard: schoolAdminDashboardLink,
+        sections: schoolAdminNavSections,
+      };
+    case "SUPER_ADMIN":
+      return {
+        dashboard: schoolAdminDashboardLink,
+        sections: schoolAdminNavSections,
+      };
+    default:
+      return {
+        dashboard: studentDashboardLink,
+        sections: [],
+      };
+  }
+}

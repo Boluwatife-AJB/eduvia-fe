@@ -1,11 +1,11 @@
 "use client";
 
+import { apiClient } from "@/lib/api";
+import { setAuthToken } from "@/lib/auth";
 import { signInSchema } from "@/lib/schema";
+import { useTenantStore } from "@/lib/stores/tenant.store";
 import { SignInFormValues } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Controller, useForm } from "react-hook-form";
-import { Field, FieldError, FieldGroup, FieldLabel } from "../../ui/field";
-import { Input } from "../../ui/input";
 import {
   ArrowRightIcon,
   EyeIcon,
@@ -13,17 +13,17 @@ import {
   IdentificationCardIcon,
   LockKeyIcon,
 } from "@phosphor-icons/react";
-import { useState } from "react";
-import { Button } from "../../ui/button";
-import Link from "next/link";
-import { apiClient, publicApi } from "@/lib/api";
 import { useMutation } from "@tanstack/react-query";
-import { useRouter } from "next/navigation";
-import { setAuthToken } from "@/lib/auth";
-import { Spinner } from "../../ui/spinner";
-import { toast } from "sonner";
 import { AxiosError } from "axios";
-import { useTenantStore } from "@/lib/stores/tenant.store";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { Controller, useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { Button } from "../../ui/button";
+import { Field, FieldError, FieldGroup, FieldLabel } from "../../ui/field";
+import { Input } from "../../ui/input";
+import { Spinner } from "../../ui/spinner";
 
 interface SignInFormProps {
   userType: string;
@@ -35,7 +35,7 @@ const signInUser = async (data: SignInFormValues) => {
     password: data.password,
   };
   const response = await apiClient.post("/auth/login", payload);
-  return response.data.data;
+  return response.data;
 };
 
 export default function SignInForm({ userType }: SignInFormProps) {

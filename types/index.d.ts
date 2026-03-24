@@ -9,6 +9,7 @@ type Role =
   | "STUDENT"
   | "PARENT"
   | "ADMIN"
+  | "PRINCIPAL"
   | "STAFF"
   | "SUPER_ADMIN";
 

@@ -11,10 +11,12 @@ export default function TenantDashboardProvider({
 }) {
   return (
     <UserProvider>
-      <div className="flex flex-col min-h-screen w-full">
+      <div className="">
         <TenantHeader />
-        <TenantSidebar />
-        <main className="flex-1">{children}</main>
+        <div className="flex h-[calc(100vh-75px)] overflow-hidden">
+          <TenantSidebar />
+          <main className="flex-1">{children}</main>
+        </div>
       </div>
     </UserProvider>
   );

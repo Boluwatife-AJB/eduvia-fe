@@ -1,7 +1,7 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono, Assistant } from "next/font/google";
-import "./globals.css";
 import AppProvider from "@/components/providers/app-provider";
+import type { Metadata } from "next";
+import { Assistant, Geist, Outfit } from "next/font/google";
+import "./globals.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -10,6 +10,11 @@ const geistSans = Geist({
 
 const assistant = Assistant({
   variable: "--font-assistant",
+  subsets: ["latin"],
+});
+
+const outfit = Outfit({
+  variable: "--font-outlines",
   subsets: ["latin"],
 });
 
