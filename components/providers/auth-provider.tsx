@@ -32,11 +32,11 @@ export default function AuthProvider({
 
         {/* Top: Branding */}
         <div className="flex flex-col gap-2 z-10">
-          <div className="flex items-baseline gap-1">
+          <div className="flex items-baseline gap-1.5">
             <h1 className="text-5xl font-bold">Eduvia</h1>
-            <span className="text-accent-gold text-3xl font-black">.</span>
+            <span className="bg-accent-amber size-2 rounded-full font-black"></span>
           </div>
-          <p className="text-accent-gold text-lg font-medium">
+          <p className="text-accent-amber text-lg font-medium">
             The Path of Education
           </p>
         </div>
@@ -45,7 +45,7 @@ export default function AuthProvider({
         <div className="flex flex-col gap-8 z-10">
           {/* Quote Block */}
           <div className="flex flex-col gap-6">
-            <QuotesIcon size={48} weight="fill" className="text-accent-gold" />
+            <QuotesIcon size={48} weight="fill" className="text-accent-amber" />
             <blockquote className="text-lg leading-relaxed italic font-mono">
               {current.quote}
             </blockquote>

@@ -5,10 +5,10 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --color-primary-green: var(--primary-green);
-  --color-primary-green-light: var(--primary-green-light);
+  --color-primary-blue: var(--primary-blue);
+  --color-primary-blue-light: var(--primary-blue-light);
   --color-pale-green: var(--pale-green);
-  --color-accent-gold: var(--accent-gold);
+  --color-accent-amber: var(--accent-amber);
   --color-accent-navy: var(--accent-navy);
   --color-eduvia-success: var(--eduvia-success);
   --color-eduvia-success-light: var(--eduvia-success-light);
@@ -101,10 +101,10 @@
   --sidebar-ring: oklch(0.708 0 0);
 
   /* Color Refactoring */
-  --primary-green: #1b6b3a;
-  --primary-green-light: #2d9653;
+  --primary-blue: #1e3a8a;
+  --primary-blue-light: #1d4ed8;
   --pale-green: #e8f5ee;
-  --accent-gold: #d4a017;
+  --accent-amber: #d97706;
   --accent-navy: #0f1f3d;
 
   /* Eduvia Colors */

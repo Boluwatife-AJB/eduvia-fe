@@ -28,7 +28,7 @@ export default function SignInPage() {
             variant="outline"
             className=" py-1 bg-[#F9FAFB] text-xs font-semibold text-[#4B5563] rounded-full flex items-center gap-2 capitalize"
           >
-            <span className="w-2 h-2 rounded-full bg-primary-green animate-pulse"></span>
+            <span className="w-2 h-2 rounded-full bg-primary-blue animate-pulse"></span>
             {tenant}
           </Badge>
         </div>
@@ -46,14 +46,14 @@ export default function SignInPage() {
               onClick={() => setSelectedRole(role.value)}
               className={`flex flex-col items-center justify-center py-4 rounded-lg transition-all hover:bg-gray-100 hover:text-white ${
                 selectedRole === role.value
-                  ? "bg-primary-green text-white hover:bg-primary-green/80"
+                  ? "bg-primary-blue text-white hover:bg-primary-blue/80"
                   : ""
               }`}
             >
               <span
                 className={`text-2xl mb-1.5 ${
                   selectedRole === role.value
-                    ? "text-primary-green"
+                    ? "text-primary-blue"
                     : "text-[#4B5563]"
                 }`}
               >

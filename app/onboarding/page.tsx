@@ -88,7 +88,7 @@ export default function OnboardingPage() {
         <div className="max-w-2xl mx-auto flex items-center justify-between">
           <div className="flex items-baseline gap-1">
             <h1 className="text-2xl font-bold">Eduvia</h1>
-            <span className="text-accent-gold text-2xl font-black">.</span>
+            <span className="text-accent-amber text-2xl font-black">.</span>
           </div>
           <span className="text-sm text-slate-500">
             Already have an account?{" "}

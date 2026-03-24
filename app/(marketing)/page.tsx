@@ -9,7 +9,7 @@ export default function Home() {
     <main className="flex flex-col items-center justify-center h-screen gap-4">
       <h1 className="text-4xl font-bold">
         Eduvia
-        <span className="text-accent-gold text-4xl font-black">.</span>
+        <span className="text-accent-amber text-4xl font-black">.</span>
       </h1>
       <p className="text-lg text-gray-500">The Path of Education</p>
       {/* <Button render={<Link href="/onboarding">Get Started</Link>}>

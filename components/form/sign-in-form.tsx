@@ -94,7 +94,7 @@ export default function SignInForm({ userType }: SignInFormProps) {
                 <IdentificationCardIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground size-5" />
                 <Input
                   id="identifier"
-                  className="h-10 md:h-13 pl-11 placeholder:text-xs md:placeholder:text-sm focus-visible:ring-2 focus-visible:ring-primary-green/20 focus-visible:border-primary-green placeholder:font-semibold"
+                  className="h-10 md:h-13 pl-11 placeholder:text-xs md:placeholder:text-sm focus-visible:ring-2 focus-visible:ring-primary-blue/20 focus-visible:border-primary-blue placeholder:font-semibold"
                   placeholder={`Enter your ${userType === "student" ? "Matric Number" : userType === "teacher" ? "Staff ID" : userType === "parent" ? "Parent ID" : "Admin ID"}`}
                   type={
                     userType === "student"
@@ -137,7 +137,7 @@ export default function SignInForm({ userType }: SignInFormProps) {
 
                 <Link
                   href="/forgot-password"
-                  className="text-xs font-semibold text-primary-green hover:underline underline-offset-4"
+                  className="text-xs font-semibold text-primary-blue hover:underline underline-offset-4"
                   transitionTypes={["slide"]}
                 >
                   Forgot Password?
@@ -148,7 +148,7 @@ export default function SignInForm({ userType }: SignInFormProps) {
                 <LockKeyIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground size-5" />
                 <Input
                   id="password"
-                  className="h-10 md:h-13 pl-11 placeholder:text-xs md:placeholder:text-sm focus-visible:ring-2 focus-visible:ring-primary-green/20 focus-visible:border-primary-green placeholder:font-semibold"
+                  className="h-10 md:h-13 pl-11 placeholder:text-xs md:placeholder:text-sm focus-visible:ring-2 focus-visible:ring-primary-blue/20 focus-visible:border-primary-blue placeholder:font-semibold"
                   placeholder="Enter your password"
                   type={showPassword ? "text" : "password"}
                   autoComplete="off"
@@ -175,7 +175,7 @@ export default function SignInForm({ userType }: SignInFormProps) {
         <Button
           variant="default"
           size="lg"
-          className="w-full h-13 bg-primary-green hover:bg-[#14522c] text-white font-bold rounded-xl shadow-xl shadow-primary/20 transition-all active:scale-[0.98] flex items-center justify-center gap-2 text-base"
+          className="w-full h-13 bg-primary-blue hover:bg-[#14522c] text-white font-bold rounded-xl shadow-xl shadow-primary/20 transition-all active:scale-[0.98] flex items-center justify-center gap-2 text-base"
           type="submit"
           disabled={!isValid || isPending}
         >
