@@ -158,7 +158,7 @@ export default function SignInForm({ userType }: SignInFormProps) {
                   variant="ghost"
                   type="button"
                   size="icon"
-                  className="absolute right-3 top-1/2 -translate-y-1/2 hover:text-primary hover:bg-transparent"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 hover:text-primary hover:bg-transparent active:translate-y-0"
                   onClick={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? (

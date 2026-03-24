@@ -2,7 +2,6 @@
 
 import { testimonials } from "@/lib/data";
 import { QuotesIcon } from "@phosphor-icons/react";
-import Image from "next/image";
 import { useEffect, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 

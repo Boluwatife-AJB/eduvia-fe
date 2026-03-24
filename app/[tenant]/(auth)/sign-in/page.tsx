@@ -11,8 +11,10 @@ import { GraduationCapIcon, UsersIcon } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import SignInForm from "@/components/form/sign-in-form";
+import { useParams } from "next/navigation";
 
 export default function SignInPage() {
+  const { tenant } = useParams();
   const [selectedRole, setSelectedRole] = useState<string>(userRoles[0].value);
   return (
     <div className="space-y-6">
@@ -24,10 +26,10 @@ export default function SignInPage() {
           </h1>
           <Badge
             variant="outline"
-            className=" py-1 bg-[#F9FAFB] text-xs font-semibold text-[#4B5563] rounded-full flex items-center gap-2"
+            className=" py-1 bg-[#F9FAFB] text-xs font-semibold text-[#4B5563] rounded-full flex items-center gap-2 capitalize"
           >
             <span className="w-2 h-2 rounded-full bg-primary-green animate-pulse"></span>
-            OS-992-GROVE SCHOOL
+            {tenant}
           </Badge>
         </div>
         <p className="text-[#4B5563]">
