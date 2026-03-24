@@ -13,9 +13,9 @@ interface TenantStore {
   tenant: TenantProfile | null;
   isLoading: boolean;
   error: string | null;
-  setTenant: (tenant: TenantProfile) => void;
+  setTenant: (tenant: TenantProfile | null) => void;
   setLoading: (loading: boolean) => void;
-  setError: (error: string) => void;
+  setError: (error: string | null) => void;
 }
 
 export const useTenantStore = create<TenantStore>((set) => ({

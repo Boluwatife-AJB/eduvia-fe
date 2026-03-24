@@ -4,8 +4,8 @@ import { signInSchema } from "@/lib/schema";
 import { SignInFormValues } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
-import { Field, FieldError, FieldGroup, FieldLabel } from "../ui/field";
-import { Input } from "../ui/input";
+import { Field, FieldError, FieldGroup, FieldLabel } from "../../ui/field";
+import { Input } from "../../ui/input";
 import {
   ArrowRightIcon,
   EyeIcon,
@@ -14,13 +14,13 @@ import {
   LockKeyIcon,
 } from "@phosphor-icons/react";
 import { useState } from "react";
-import { Button } from "../ui/button";
+import { Button } from "../../ui/button";
 import Link from "next/link";
 import { publicApi } from "@/lib/api";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { setAuthToken } from "@/lib/auth";
-import { Spinner } from "../ui/spinner";
+import { Spinner } from "../../ui/spinner";
 import { toast } from "sonner";
 import { AxiosError } from "axios";
 

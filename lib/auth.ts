@@ -18,13 +18,17 @@ export const setAuthToken = (tokens: Partial<Tokens>) => {
   }
 };
 
-// export const getAuthToken = () => {
-//   const authToken = Cookies.get("ev-access-token");
-//   if (!authToken) {
-//     throw new Error("No auth token found");
-//   }
-//   return authToken;
-// };
+export const getAuthToken = (tokenType: "access" | "refresh" | "tenant") => {
+  if (tokenType === "access") {
+    return Cookies.get("ev-access-token");
+  }
+  if (tokenType === "refresh") {
+    return Cookies.get("ev-refresh-token");
+  }
+  if (tokenType === "tenant") {
+    return Cookies.get("ev-tenant-slug");
+  }
+};
 
 export const removeAuthToken = () => {
   Cookies.remove("ev-access-token");
