@@ -13,14 +13,23 @@ import {
   UserIcon,
 } from "@phosphor-icons/react";
 
-export default function TenantHeader() {
+interface TenantHeaderProps {
+  toggleSidebar: () => void;
+}
+
+export default function TenantHeader({ toggleSidebar }: TenantHeaderProps) {
   const { tenant } = useTenantStore();
   const { user } = useUser();
 
   return (
     <header className="flex justify-between items-center px-6 w-full sticky top-0 z-50 bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-800 docked full-width h-18">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" className="active:translate-y-0">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="active:translate-y-0"
+          onClick={toggleSidebar}
+        >
           <ListIcon className="text-slate-600 size-6" />
         </Button>
         <div className="flex items-center gap-3">

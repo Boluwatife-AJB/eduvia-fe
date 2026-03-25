@@ -1,9 +1,10 @@
 "use client";
 
-import { apiClient } from "@/lib/api";
-import { getAuthToken } from "@/lib/auth";
+import { apiClient, publicApi } from "@/lib/api";
+import { getAuthToken, removeAuthToken, setAuthToken } from "@/lib/auth";
 import type { Role, TenantSlice } from "@/types";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 import { createContext, useContext, useEffect, type ReactNode } from "react";
 import { toast } from "sonner";
 
@@ -33,19 +34,22 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 
 const fetchUser = async (): Promise<User> => {
   const response = await apiClient.get("/auth/me");
-  const payload = response.data as { data?: User } | User;
-  if (
-    payload &&
-    typeof payload === "object" &&
-    "data" in payload &&
-    payload.data
-  ) {
-    return payload.data;
-  }
-  return payload as User;
+  return response.data;
+};
+
+const refreshToken = async (): Promise<{
+  access_token: string;
+  refresh_token: string;
+}> => {
+  const payload = {
+    refresh_token: getAuthToken("refresh"),
+  };
+  const response = await publicApi.post("/auth/refresh", payload);
+  return response.data.data;
 };
 
 export function UserProvider({ children }: { children: ReactNode }) {
+  const router = useRouter();
   const {
     data: user,
     isLoading,
@@ -57,6 +61,21 @@ export function UserProvider({ children }: { children: ReactNode }) {
     enabled: Boolean(getAuthToken("access")),
     staleTime: 3 * 60 * 1000,
     refetchOnWindowFocus: true,
+  });
+
+  const { mutate: refreshTokenMutation } = useMutation({
+    mutationFn: refreshToken,
+    onSuccess: (data) => {
+      setAuthToken({
+        access_token: data.access_token,
+        refresh_token: data.refresh_token,
+      });
+    },
+    onError: (error) => {
+      toast.error("Failed to refresh token");
+      removeAuthToken();
+      router.push("/sign-in");
+    },
   });
 
   useEffect(() => {

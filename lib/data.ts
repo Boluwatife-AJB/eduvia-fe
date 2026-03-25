@@ -1,4 +1,11 @@
-import { NavLink, NavSection, Role, SelectOption, Testimonial } from "@/types";
+import {
+  AdminRoles,
+  NavLink,
+  NavSection,
+  Role,
+  SelectOption,
+  Testimonial,
+} from "@/types";
 import {
   BankIcon,
   BookOpenTextIcon,
@@ -29,6 +36,15 @@ import {
   UsersThreeIcon,
   WalletIcon,
 } from "@phosphor-icons/react";
+
+export const adminRoles: AdminRoles[] = [
+  "ADMIN",
+  "PRINCIPAL",
+  "VICE_PRINCIPAL",
+  "SUPER_ADMIN",
+  "HEAD_TEACHER",
+  "ASST_HEAD_TEACHER",
+];
 
 export const userRoles: SelectOption[] = [
   {
@@ -93,27 +109,27 @@ export const studentNavSections: NavSection[] = [
     items: [
       {
         title: "My Classes",
-        href: "/student/academic/my-classes",
+        href: "/student/my-classes",
         Icon: ChartLineIcon,
       },
       {
         title: "Timetable",
-        href: "/student/academic/timetable",
+        href: "/student/timetable",
         Icon: ClockIcon,
       },
       {
         title: "Assignments",
-        href: "/student/academic/assignments",
+        href: "/student/assignments",
         Icon: FileTextIcon,
       },
       {
         title: "Exams & Tests",
-        href: "/student/academic/exams-tests",
+        href: "/student/exams-tests",
         Icon: ClipboardTextIcon,
       },
       {
         title: "My Results",
-        href: "/student/academic/my-results",
+        href: "/student/my-results",
         Icon: FileTextIcon,
       },
     ],
@@ -123,17 +139,17 @@ export const studentNavSections: NavSection[] = [
     items: [
       {
         title: "Study Groups",
-        href: "/student/campus-life/study-groups",
+        href: "/student/study-groups",
         Icon: UsersThreeIcon,
       },
       {
         title: "Events",
-        href: "/student/campus-life/events",
+        href: "/student/events",
         Icon: CalendarCheckIcon,
       },
       {
         title: "Sport",
-        href: "/student/campus-life/sport",
+        href: "/student/sport",
         Icon: SoccerBallIcon,
       },
     ],
@@ -143,12 +159,12 @@ export const studentNavSections: NavSection[] = [
     items: [
       {
         title: "Fee Payment",
-        href: "/student/finance/fee-payment",
+        href: "/student/fee-payment",
         Icon: CoinsIcon,
       },
       {
         title: "Payment History",
-        href: "/student/finance/payment-history",
+        href: "/student/payment-history",
         Icon: WalletIcon,
       },
     ],
@@ -158,12 +174,12 @@ export const studentNavSections: NavSection[] = [
     items: [
       {
         title: "My Profile",
-        href: "/student/account/my-profile",
+        href: "/student/my-profile",
         Icon: UserIcon,
       },
       {
         title: "Settings",
-        href: "/student/account/settings",
+        href: "/student/settings",
         Icon: GearIcon,
       },
     ],
@@ -182,32 +198,32 @@ export const teacherNavSections: NavSection[] = [
     items: [
       {
         title: "My Classes",
-        href: "/teacher/teaching/my-classes",
+        href: "/teacher/my-classes",
         Icon: ChartLineIcon,
       },
       {
         title: "Timetable",
-        href: "/teacher/teaching/timetable",
+        href: "/teacher/timetable",
         Icon: ClockIcon,
       },
       {
         title: "Upload Lectures",
-        href: "/teacher/teaching/upload-lectures",
+        href: "/teacher/upload-lectures",
         Icon: FileTextIcon,
       },
       {
         title: "Assignments",
-        href: "/teacher/teaching/assignments",
+        href: "/teacher/assignments",
         Icon: FileTextIcon,
       },
       {
         title: "Assessments",
-        href: "/teacher/teaching/assessments",
+        href: "/teacher/assessments",
         Icon: ClipboardTextIcon,
       },
       {
         title: "Grade Book",
-        href: "/teacher/teaching/grade-book",
+        href: "/teacher/grade-book",
         Icon: FileTextIcon,
       },
     ],
@@ -217,12 +233,12 @@ export const teacherNavSections: NavSection[] = [
     items: [
       {
         title: "Messages",
-        href: "/teacher/communication/messages",
+        href: "/teacher/messages",
         Icon: ChatIcon,
       },
       {
         title: "Announcements",
-        href: "/teacher/communication/announcements",
+        href: "/teacher/announcements",
         Icon: MegaphoneSimpleIcon,
       },
     ],
@@ -232,12 +248,12 @@ export const teacherNavSections: NavSection[] = [
     items: [
       {
         title: "Tutorial Classes",
-        href: "/teacher/administration/tutorial-classes",
+        href: "/teacher/tutorial-classes",
         Icon: BookOpenTextIcon,
       },
       {
         title: "Disciplinary",
-        href: "/teacher/administration/disciplinary",
+        href: "/teacher/disciplinary",
         Icon: GavelIcon,
       },
     ],
@@ -247,7 +263,7 @@ export const teacherNavSections: NavSection[] = [
     items: [
       {
         title: "My Payslips",
-        href: "/teacher/finance/my-payslips",
+        href: "/teacher/my-payslips",
         Icon: WalletIcon,
       },
     ],
@@ -257,12 +273,12 @@ export const teacherNavSections: NavSection[] = [
     items: [
       {
         title: "My Profile",
-        href: "/teacher/account/my-profile",
+        href: "/teacher/my-profile",
         Icon: UserIcon,
       },
       {
         title: "Settings",
-        href: "/teacher/account/settings",
+        href: "/teacher/settings",
         Icon: GearIcon,
       },
     ],
@@ -280,17 +296,17 @@ export const schoolAdminNavSections: NavSection[] = [
     items: [
       {
         title: "Academic Sessions",
-        href: "/school-admin/school-setup/academic-sessions",
+        href: "/admin/academic-sessions",
         Icon: CalendarBlankIcon,
       },
       {
         title: "Classes & Subjects",
-        href: "/school-admin/school-setup/classes-subjects",
+        href: "/admin/classes-subjects",
         Icon: BookOpenTextIcon,
       },
       {
         title: "Timetable",
-        href: "/school-admin/school-setup/timetable",
+        href: "/admin/timetable",
         Icon: ClockIcon,
       },
     ],
@@ -300,22 +316,22 @@ export const schoolAdminNavSections: NavSection[] = [
     items: [
       {
         title: "Students",
-        href: "/school-admin/people/students",
+        href: "/admin/students",
         Icon: StudentIcon,
       },
       {
         title: "Teachers",
-        href: "/school-admin/people/teachers",
+        href: "/admin/teachers",
         Icon: ChalkboardTeacherIcon,
       },
       {
         title: "Parents",
-        href: "/school-admin/people/parents",
+        href: "/admin/parents",
         Icon: UsersThreeIcon,
       },
       {
         title: "Staff",
-        href: "/school-admin/people/staff",
+        href: "/admin/staff",
         Icon: BriefcaseMetalIcon,
       },
     ],
@@ -325,17 +341,17 @@ export const schoolAdminNavSections: NavSection[] = [
     items: [
       {
         title: "Results Management",
-        href: "/school-admin/academic/results",
+        href: "/admin/results",
         Icon: FileTextIcon,
       },
       {
         title: "Exam Scheduling",
-        href: "/school-admin/academic/exams",
+        href: "/admin/exams",
         Icon: ClipboardTextIcon,
       },
       {
         title: "Calendar",
-        href: "/school-admin/academic/calendar",
+        href: "/admin/calendar",
         Icon: CalendarIcon,
       },
     ],
@@ -345,17 +361,17 @@ export const schoolAdminNavSections: NavSection[] = [
     items: [
       {
         title: "Fee Management",
-        href: "/school-admin/finance/fees",
+        href: "/admin/fees",
         Icon: CoinsIcon,
       },
       {
         title: "Payroll",
-        href: "/school-admin/finance/payroll",
+        href: "/admin/payroll",
         Icon: WalletIcon,
       },
       {
         title: "Loans",
-        href: "/school-admin/finance/loans",
+        href: "/admin/loans",
         Icon: BankIcon,
       },
     ],
@@ -365,12 +381,12 @@ export const schoolAdminNavSections: NavSection[] = [
     items: [
       {
         title: "School Documents",
-        href: "/school-admin/repository/school-documents",
+        href: "/admin/school-documents",
         Icon: FolderOpenIcon,
       },
       {
         title: "Department Files",
-        href: "/school-admin/repository/department-files",
+        href: "/admin/department-files",
         Icon: FoldersIcon,
       },
     ],
@@ -380,22 +396,22 @@ export const schoolAdminNavSections: NavSection[] = [
     items: [
       {
         title: "Disciplinary",
-        href: "/school-admin/administration/disciplinary",
+        href: "/admin/disciplinary",
         Icon: GavelIcon,
       },
       {
         title: "Announcements",
-        href: "/school-admin/administration/announcements",
+        href: "/admin/announcements",
         Icon: MegaphoneSimpleIcon,
       },
       {
         title: "Events",
-        href: "/school-admin/administration/events",
+        href: "/admin/events",
         Icon: CalendarCheckIcon,
       },
       {
         title: "Audit Log",
-        href: "/school-admin/administration/audit-log",
+        href: "/admin/audit-log",
         Icon: ListMagnifyingGlassIcon,
       },
     ],
@@ -405,17 +421,17 @@ export const schoolAdminNavSections: NavSection[] = [
     items: [
       {
         title: "School Profile",
-        href: "/school-admin/settings/profile",
+        href: "/admin/profile",
         Icon: BuildingsIcon,
       },
       {
         title: "Permissions",
-        href: "/school-admin/settings/permissions",
+        href: "/admin/permissions",
         Icon: KeyIcon,
       },
       {
         title: "Billing & Plan",
-        href: "/school-admin/settings/billing",
+        href: "/admin/billing",
         Icon: CreditCardIcon,
       },
     ],
@@ -548,3 +564,58 @@ export function getNavConfigForRole(role: Role | undefined): {
       };
   }
 }
+
+/** backgroundColor is a light tint of the same hue as iconColor. */
+export const adminStatsCards = [
+  {
+    title: "Total Students",
+    value: 1000,
+    change: "+14.2%",
+    Icon: StudentIcon,
+    iconColor: "#1D4ED8",
+    backgroundColor: "#DBEAFE",
+  },
+  {
+    title: "Teachers",
+    value: 100,
+    change: "-3.8%",
+    Icon: ChalkboardTeacherIcon,
+    iconColor: "#7C3AED",
+    backgroundColor: "#EDE9FE",
+  },
+  {
+    title: "Active Classes",
+    value: 28,
+    change: "+1.2%",
+    Icon: ChartLineIcon,
+    iconColor: "#1E40AF",
+    backgroundColor: "#E0E7FF",
+  },
+  {
+    title: "Support Staff",
+    value: 30,
+    change: "+6.1%",
+    Icon: BriefcaseMetalIcon,
+    iconColor: "#C2410C",
+    backgroundColor: "#FFEDD5",
+  },
+  {
+    title: "Fee Collected",
+    value: "$100,000",
+    change: "-1.4%",
+    Icon: CoinsIcon,
+    iconColor: "#047857",
+    backgroundColor: "#D1FAE5",
+  },
+];
+
+export const genderOptions: SelectOption[] = [
+  {
+    value: "male",
+    label: "Male",
+  },
+  {
+    value: "female",
+    label: "Female",
+  },
+];
