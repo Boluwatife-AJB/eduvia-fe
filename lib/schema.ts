@@ -1,5 +1,13 @@
+import { isValid, parse } from "date-fns";
 import { z } from "zod";
 import { genderOptions } from "./data";
+
+export const DATE_OF_BIRTH_INPUT_FORMAT = "dd/MM/yyyy";
+
+function isValidDateOfBirthString(value: string): boolean {
+  const d = parse(value.trim(), DATE_OF_BIRTH_INPUT_FORMAT, new Date());
+  return isValid(d);
+}
 
 export const signInSchema = z.object({
   // userType: z
@@ -55,7 +63,12 @@ export const addStudentSchema = z
       })
       .optional(),
     class: z.string().min(1, { message: "Class is required" }),
-    dateOfBirth: z.string().min(1, { message: "Date of birth is required" }),
+    dateOfBirth: z
+      .string()
+      .min(1, { message: "Date of birth is required" })
+      .refine(isValidDateOfBirthString, {
+        message: "Enter a valid date as dd/MM/yyyy",
+      }),
     admissionDate: z.string().min(1, { message: "Admission date is required" }),
     password: z.string().min(1, { message: "Password is required" }),
     confirmPassword: z

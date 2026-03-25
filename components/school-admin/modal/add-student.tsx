@@ -1,6 +1,6 @@
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { addStudentSchema } from "@/lib/schema";
+import { addStudentSchema, DATE_OF_BIRTH_INPUT_FORMAT } from "@/lib/schema";
 import { AddStudentFormValues, SelectOption } from "@/types";
 import {
   DialogDescription,
@@ -26,7 +26,11 @@ import {
 } from "@/components/ui/select";
 import { useState } from "react";
 import { genderOptions } from "@/lib/data";
-import { ArrowLeftIcon, ArrowRightIcon } from "@phosphor-icons/react";
+import {
+  ArrowLeftIcon,
+  ArrowRightIcon,
+  CalendarIcon,
+} from "@phosphor-icons/react";
 import { useClasses } from "@/hooks/use-classes";
 import {
   Popover,
@@ -34,10 +38,16 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { format } from "date-fns";
+import { format, isValid, parse } from "date-fns";
 import { apiClient } from "@/lib/api";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+} from "@/components/ui/input-group";
 
 const STEPS = [
   {
@@ -60,6 +70,18 @@ const STEP_FIELDS: Array<Array<keyof AddStudentFormValues>> = [
   ["password", "confirmPassword"],
 ];
 
+function formatDobField(date: Date | undefined): string {
+  if (!date || !isValid(date)) return "";
+  return format(date, DATE_OF_BIRTH_INPUT_FORMAT);
+}
+
+function parseDobField(value: string): Date | undefined {
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+  const d = parse(trimmed, DATE_OF_BIRTH_INPUT_FORMAT, new Date());
+  return isValid(d) ? d : undefined;
+}
+
 const addNewStudent = async (data: AddStudentFormValues) => {
   const payload = {
     role: "STUDENT",
@@ -69,7 +91,10 @@ const addNewStudent = async (data: AddStudentFormValues) => {
     matric_number: data.matricNumber,
     password: data.password,
     gender: data.gender.toUpperCase(),
-    date_of_birth: data.dateOfBirth,
+    date_of_birth: format(
+      parse(data.dateOfBirth, DATE_OF_BIRTH_INPUT_FORMAT, new Date()),
+      "yyyy-MM-dd",
+    ),
     admission_date: data.admissionDate,
   };
   const response = await apiClient.post("/users", payload);
@@ -78,7 +103,8 @@ const addNewStudent = async (data: AddStudentFormValues) => {
 
 export default function AddStudent() {
   const { classes, isLoading: isClassesLoading } = useClasses();
-  const [date, setDate] = useState<Date | undefined>(undefined);
+  const [dobPopoverOpen, setDobPopoverOpen] = useState(false);
+  const [dobCalendarMonth, setDobCalendarMonth] = useState(() => new Date());
   const [adDate, setAdDate] = useState<Date | undefined>(undefined);
 
   const [currentStep, setCurrentStep] = useState(0);
@@ -107,9 +133,12 @@ export default function AddStudent() {
 
   const { mutateAsync: addStudent, isPending: isAddingStudent } = useMutation({
     mutationFn: addNewStudent,
-    onSuccess: (data) => {
+    onSuccess: () => {
       toast.success("Student added successfully");
       form.reset();
+      setAdDate(undefined);
+      setDobCalendarMonth(new Date());
+      setDobPopoverOpen(false);
     },
     onError: (error) => {
       toast.error("Failed to add student");
@@ -231,46 +260,84 @@ export default function AddStudent() {
               <Controller
                 control={control}
                 name="dateOfBirth"
-                render={({ field, fieldState }) => (
-                  <Field>
-                    <FieldLabel>
-                      Date of Birth <span className="text-destructive">*</span>
-                    </FieldLabel>
-                    <Popover>
-                      <PopoverTrigger
-                        render={
-                          <Button
-                            variant="outline"
-                            id="date-picker-simple"
-                            className="justify-start font-normal h-12"
-                          >
-                            {date ? (
-                              format(date, "dd/MM/yyyy")
-                            ) : (
-                              <span>Pick a date</span>
-                            )}
-                          </Button>
-                        }
-                      />
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={date}
-                          onSelect={(date) => {
-                            if (date) {
-                              field.onChange(format(date, "yyyy-MM-dd"));
+                render={({ field, fieldState }) => {
+                  const selectedDob = parseDobField(field.value);
+                  return (
+                    <Field>
+                      <FieldLabel>
+                        Date of Birth{" "}
+                        <span className="text-destructive">*</span>
+                      </FieldLabel>
+                      <InputGroup className="h-12!">
+                        <InputGroupInput
+                          id="date-required"
+                          placeholder={DATE_OF_BIRTH_INPUT_FORMAT}
+                          autoComplete="bday"
+                          value={field.value}
+                          onChange={(e) => field.onChange(e.target.value)}
+                          onBlur={field.onBlur}
+                          name={field.name}
+                          ref={field.ref}
+                          onKeyDown={(e) => {
+                            if (e.key === "ArrowDown") {
+                              e.preventDefault();
+                              setDobPopoverOpen(true);
                             }
-                            setDate(date);
                           }}
-                          defaultMonth={date}
                         />
-                      </PopoverContent>
-                    </Popover>
-                    {fieldState.invalid && (
-                      <FieldError errors={[fieldState.error]} />
-                    )}
-                  </Field>
-                )}
+                        <InputGroupAddon align="inline-end">
+                          <Popover
+                            open={dobPopoverOpen}
+                            onOpenChange={(next) => {
+                              setDobPopoverOpen(next);
+                              if (next) {
+                                const p = parseDobField(field.value);
+                                setDobCalendarMonth(p ?? new Date());
+                              }
+                            }}
+                          >
+                            <PopoverTrigger
+                              render={
+                                <InputGroupButton
+                                  type="button"
+                                  id="date-picker"
+                                  variant="ghost"
+                                  size="icon-sm"
+                                  aria-label="Select date"
+                                >
+                                  <CalendarIcon />
+                                  <span className="sr-only">Select date</span>
+                                </InputGroupButton>
+                              }
+                            />
+                            <PopoverContent
+                              className="w-auto overflow-hidden p-0"
+                              align="end"
+                              alignOffset={-8}
+                              sideOffset={10}
+                            >
+                              <Calendar
+                                mode="single"
+                                selected={selectedDob}
+                                month={dobCalendarMonth}
+                                onMonthChange={setDobCalendarMonth}
+                                onSelect={(d) => {
+                                  if (!d) return;
+                                  field.onChange(formatDobField(d));
+                                  setDobCalendarMonth(d);
+                                  setDobPopoverOpen(false);
+                                }}
+                              />
+                            </PopoverContent>
+                          </Popover>
+                        </InputGroupAddon>
+                      </InputGroup>
+                      {fieldState.invalid && (
+                        <FieldError errors={[fieldState.error]} />
+                      )}
+                    </Field>
+                  );
+                }}
               />
 
               <Controller
