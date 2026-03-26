@@ -58,9 +58,9 @@ export const addStudentSchema = z
     gender: z.enum(genderOptions.map((option) => option.value)),
     matricNumber: z
       .string()
-      // .regex(/^[A-Z]{3}\/\d{4}\/\d{4}$/, {
-      //   message: "Matric number must be in the format XXX/YYYY/NNNN",
-      // })
+      .regex(/^[A-Z]{3}\/\d{4}\/\d{4}$/, {
+        message: "Matric number must be in the format XXX/YYYY/NNNN",
+      })
       .optional(),
     class: z.string().min(1, { message: "Class is required" }),
     dateOfBirth: z
@@ -74,6 +74,7 @@ export const addStudentSchema = z
     confirmPassword: z
       .string()
       .min(1, { message: "Confirm password is required" }),
+    enforceChangePassword: z.boolean().default(false),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",

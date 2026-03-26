@@ -9,6 +9,8 @@ import {
 } from "@/components/ui/dialog";
 import {
   Field,
+  FieldContent,
+  FieldDescription,
   FieldError,
   FieldGroup,
   FieldLabel,
@@ -30,6 +32,7 @@ import {
   ArrowLeftIcon,
   ArrowRightIcon,
   CalendarIcon,
+  CheckIcon,
 } from "@phosphor-icons/react";
 import { useClasses } from "@/hooks/use-classes";
 import {
@@ -49,6 +52,7 @@ import {
   InputGroupInput,
 } from "@/components/ui/input-group";
 import { Spinner } from "@/components/ui/spinner";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const STEPS = [
   {
@@ -110,7 +114,7 @@ export default function AddStudent({ onClose }: { onClose: () => void }) {
   const [adDate, setAdDate] = useState<Date | undefined>(undefined);
 
   const [currentStep, setCurrentStep] = useState(0);
-  const form = useForm<AddStudentFormValues>({
+  const form = useForm({
     resolver: zodResolver(addStudentSchema),
     mode: "onChange",
     defaultValues: {
@@ -123,6 +127,7 @@ export default function AddStudent({ onClose }: { onClose: () => void }) {
       admissionDate: "",
       password: "",
       confirmPassword: "",
+      enforceChangePassword: false,
     },
   });
 
@@ -181,7 +186,7 @@ export default function AddStudent({ onClose }: { onClose: () => void }) {
         {STEPS.map((step, index) => (
           <div key={step.title} className="flex items-center gap-2 flex-1">
             <div
-              className={`h-8 w-8 rounded-full flex items-center justify-center text-sm font-medium shrink-0 ${
+              className={`size-9 rounded-full flex items-center justify-center text-sm font-medium shrink-0 ${
                 index < currentStep
                   ? "bg-blue-800 text-white"
                   : index === currentStep
@@ -189,11 +194,15 @@ export default function AddStudent({ onClose }: { onClose: () => void }) {
                     : "bg-slate-200 text-slate-500"
               }`}
             >
-              {index < currentStep ? "✓" : index + 1}
+              {index < currentStep ? (
+                <CheckIcon className="size-5 text-white" />
+              ) : (
+                index + 1
+              )}
             </div>
             {index < STEPS.length - 1 && (
               <div
-                className={`h-0.5 flex-1 ${
+                className={`h-0.5 w-full ${
                   index < currentStep ? "bg-blue-800" : "bg-slate-200"
                 }`}
               />
@@ -324,6 +333,7 @@ export default function AddStudent({ onClose }: { onClose: () => void }) {
                                 mode="single"
                                 selected={selectedDob}
                                 month={dobCalendarMonth}
+                                captionLayout="dropdown"
                                 onMonthChange={setDobCalendarMonth}
                                 onSelect={(d) => {
                                   if (!d) return;
@@ -467,6 +477,7 @@ export default function AddStudent({ onClose }: { onClose: () => void }) {
                         <Calendar
                           mode="single"
                           selected={adDate}
+                          captionLayout="dropdown"
                           onSelect={(date) => {
                             if (date) {
                               field.onChange(format(date, "yyyy-MM-dd"));
@@ -528,6 +539,34 @@ export default function AddStudent({ onClose }: { onClose: () => void }) {
                       autoComplete="off"
                       {...field}
                     />
+                    {fieldState.invalid && (
+                      <FieldError errors={[fieldState.error]} />
+                    )}
+                  </Field>
+                )}
+              />
+
+              <Controller
+                control={control}
+                name="enforceChangePassword"
+                render={({ field, fieldState }) => (
+                  <Field orientation="horizontal">
+                    <Checkbox
+                      id="enforceChangePassword"
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                      className="size-4.5 shadow-none border-primary-blue data-checked:bg-primary-blue data-checked:text-white"
+                    />
+                    <FieldContent>
+                      <FieldLabel htmlFor="enforceChangePassword">
+                        Change Password on Next Login
+                      </FieldLabel>
+                      <FieldDescription>
+                        The student will be required to change their password on
+                        their next login.
+                      </FieldDescription>
+                    </FieldContent>
+
                     {fieldState.invalid && (
                       <FieldError errors={[fieldState.error]} />
                     )}

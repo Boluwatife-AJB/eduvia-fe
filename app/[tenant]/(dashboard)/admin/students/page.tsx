@@ -37,6 +37,7 @@ import {
   TrashSimpleIcon,
   XIcon,
   PencilLineIcon,
+  ProhibitIcon,
 } from "@phosphor-icons/react";
 import { ColumnDef } from "@tanstack/react-table";
 import { useCallback, useMemo, useState } from "react";
@@ -48,6 +49,7 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import {
   AlertDialog,
@@ -65,6 +67,7 @@ import { toast } from "sonner";
 
 function getStudentColumns(
   onRequestDelete: (student: Student) => void,
+  onRequestSuspendReactivate: (student: Student) => void,
 ): ColumnDef<Student>[] {
   return [
     {
@@ -118,7 +121,7 @@ function getStudentColumns(
         const styles = {
           ACTIVE:
             "bg-green-600/10 text-green-600 focus-visible:ring-green-600/20 dark:bg-green-400/10 dark:text-green-400 dark:focus-visible:ring-green-400/40 [a&]:hover:bg-green-600/5 dark:[a&]:hover:bg-green-400/5",
-          INACTIVE:
+          SUSPENDED:
             "bg-destructive/10 [a&]:hover:bg-destructive/5 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 text-destructive",
           PENDING:
             "bg-yellow-600/10 text-yellow-600 focus-visible:ring-yellow-600/20 dark:bg-yellow-400/10 dark:text-yellow-400 dark:focus-visible:ring-yellow-400/40 [a&]:hover:bg-yellow-600/5 dark:[a&]:hover:bg-yellow-400/5",
@@ -151,29 +154,36 @@ function getStudentColumns(
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors scale-95 duration-100 active:opacity-80 active:translate-y-0"
+                  className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors scale-95 duration-100 active:opacity-80 active:translate-y-0"
                 >
                   <DotsThreeIcon weight="bold" className="size-4 " />
                 </Button>
               }
             />
-            <DropdownMenuContent className="data-[state=closed]:slide-out-to-left-0 data-[state=open]:slide-in-from-left-0 data-[state=closed]:slide-out-to-bottom-20 data-[state=open]:slide-in-from-bottom-20 data-[state=closed]:zoom-out-100 duration-400 w-40">
-              <DropdownMenuGroup>
+            <DropdownMenuContent className="data-[state=closed]:slide-out-to-left-0 data-[state=open]:slide-in-from-left-0 data-[state=closed]:slide-out-to-bottom-20 data-[state=open]:slide-in-from-bottom-20 data-[state=closed]:zoom-out-100 duration-400 w-48">
+              <DropdownMenuGroup className="space-y-1">
                 <DropdownMenuLabel>Actions</DropdownMenuLabel>
 
                 <DropdownMenuItem>
-                  <PencilLineIcon weight="bold" className="size-4 " />
+                  <PencilLineIcon className="size-4 " />
                   <span>Edit Student</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <PencilLineIcon weight="bold" className="size-4 " />
-                  <span>Suspend Student</span>
+                <DropdownMenuItem
+                  onClick={() => onRequestSuspendReactivate(row.original)}
+                >
+                  <ProhibitIcon className="size-4 " />
+                  <span>
+                    {row.original.status === "ACTIVE"
+                      ? "Suspend Student"
+                      : "Reactivate Student"}
+                  </span>
                 </DropdownMenuItem>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem
                   variant="destructive"
                   onClick={() => onRequestDelete(row.original)}
                 >
-                  <TrashSimpleIcon weight="bold" className="size-4 " />
+                  <TrashSimpleIcon className="size-4 " />
                   <span>Delete Student</span>
                 </DropdownMenuItem>
               </DropdownMenuGroup>
@@ -187,6 +197,17 @@ function getStudentColumns(
 
 const deleteStudent = async (studentId: string) => {
   const response = await apiClient.delete(`/users/${studentId}`);
+  return response.data;
+};
+
+const updateStudentStatus = async ({
+  studentId,
+  type,
+}: {
+  studentId: string;
+  type: "suspend" | "reactivate";
+}) => {
+  const response = await apiClient.patch(`/users/${studentId}/${type}`);
   return response.data;
 };
 
@@ -221,14 +242,21 @@ export default function Students() {
   const [itemsPerPage, setItemsPerPage] = useState(20);
   const [isAddStudentOpenModal, setIsAddStudentOpenModal] = useState(false);
   const [studentToDelete, setStudentToDelete] = useState<Student | null>(null);
+  const [studentToSuspendReactivate, setStudentToSuspendReactivate] =
+    useState<Student | null>(null);
 
   const requestDeleteStudent = useCallback((student: Student) => {
     setStudentToDelete(student);
   }, []);
 
+  const requestSuspendReactivateStudent = useCallback((student: Student) => {
+    setStudentToSuspendReactivate(student);
+  }, []);
+
   const columns = useMemo(
-    () => getStudentColumns(requestDeleteStudent),
-    [requestDeleteStudent],
+    () =>
+      getStudentColumns(requestDeleteStudent, requestSuspendReactivateStudent),
+    [requestDeleteStudent, requestSuspendReactivateStudent],
   );
 
   const { mutate: removeStudent, isPending: isDeletingStudent } = useMutation({
@@ -240,6 +268,21 @@ export default function Students() {
     },
     onError: () => {
       toast.error("Failed to delete student");
+    },
+  });
+
+  const {
+    mutate: toggleStudentStatus,
+    isPending: isSuspendingReactivatingStudent,
+  } = useMutation({
+    mutationFn: updateStudentStatus,
+    onSuccess: () => {
+      toast.success("Student status updated");
+      queryClient.invalidateQueries({ queryKey: ["students"] });
+      setStudentToSuspendReactivate(null);
+    },
+    onError: () => {
+      toast.error("Failed to suspend/reactivate student");
     },
   });
 
@@ -481,6 +524,90 @@ export default function Students() {
                 </>
               ) : (
                 "Delete"
+              )}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={studentToSuspendReactivate !== null}
+        onOpenChange={(open) => {
+          if (!open) setStudentToSuspendReactivate(null);
+        }}
+      >
+        <AlertDialogContent size="sm">
+          <AlertDialogHeader>
+            <AlertDialogMedia
+              className={cn(
+                "bg-destructive/10 text-destructive dark:bg-destructive/20 dark:text-destructive",
+                studentToSuspendReactivate?.status === "ACTIVE"
+                  ? "bg-destructive/10 text-destructive dark:bg-destructive/20 dark:text-destructive"
+                  : "bg-green-600/10 text-green-600 dark:bg-green-400/10 dark:text-green-400",
+              )}
+            >
+              <ProhibitIcon weight="bold" className="size-4 " />
+            </AlertDialogMedia>
+            <AlertDialogTitle>
+              {studentToSuspendReactivate?.status === "ACTIVE"
+                ? "Suspend"
+                : "Reactivate"}{" "}
+              student?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This will{" "}
+              {studentToSuspendReactivate?.status === "ACTIVE"
+                ? "suspend"
+                : "reactivate"}{" "}
+              the student{" "}
+              <span className="font-medium text-foreground">
+                {studentToSuspendReactivate
+                  ? `${studentToSuspendReactivate.first_name} ${studentToSuspendReactivate.last_name}`
+                  : ""}
+              </span>
+              {studentToSuspendReactivate?.student_profile.matric_number ? (
+                <>
+                  {" "}
+                  ({studentToSuspendReactivate.student_profile.matric_number})
+                </>
+              ) : null}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isSuspendingReactivatingStudent}>
+              Cancel
+            </AlertDialogCancel>
+            <Button
+              variant={
+                studentToSuspendReactivate?.status === "ACTIVE"
+                  ? "destructive"
+                  : "primary"
+              }
+              disabled={isSuspendingReactivatingStudent}
+              onClick={() => {
+                if (studentToSuspendReactivate) {
+                  toggleStudentStatus({
+                    studentId: studentToSuspendReactivate.id,
+                    type:
+                      studentToSuspendReactivate.status === "ACTIVE"
+                        ? "suspend"
+                        : "reactivate",
+                  });
+                }
+              }}
+            >
+              {isSuspendingReactivatingStudent ? (
+                <>
+                  <Spinner className="size-4" />
+                  {studentToSuspendReactivate?.status === "ACTIVE"
+                    ? "Suspending"
+                    : "Reactivating"}
+                  …
+                </>
+              ) : studentToSuspendReactivate?.status === "ACTIVE" ? (
+                "Suspend"
+              ) : (
+                "Reactivate"
               )}
             </Button>
           </AlertDialogFooter>
