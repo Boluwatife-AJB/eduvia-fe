@@ -121,8 +121,10 @@ function getStudentColumns(
         const styles = {
           ACTIVE:
             "bg-green-600/10 text-green-600 focus-visible:ring-green-600/20 dark:bg-green-400/10 dark:text-green-400 dark:focus-visible:ring-green-400/40 [a&]:hover:bg-green-600/5 dark:[a&]:hover:bg-green-400/5",
-          SUSPENDED:
+          INACTIVE:
             "bg-destructive/10 [a&]:hover:bg-destructive/5 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 text-destructive",
+          SUSPENDED:
+            "bg-amber-600/10 text-amber-600 focus-visible:ring-amber-600/20 dark:bg-amber-400/10 dark:text-amber-400 dark:focus-visible:ring-amber-400/40 [a&]:hover:bg-amber-600/5 dark:[a&]:hover:bg-amber-400/5",
           PENDING:
             "bg-yellow-600/10 text-yellow-600 focus-visible:ring-yellow-600/20 dark:bg-yellow-400/10 dark:text-yellow-400 dark:focus-visible:ring-yellow-400/40 [a&]:hover:bg-yellow-600/5 dark:[a&]:hover:bg-yellow-400/5",
         }[row.original.status];
@@ -216,6 +218,7 @@ const fetchStudents = async (params: {
   limit: number;
   gender?: string;
   class_id?: string;
+  status?: string;
   search?: string;
 }): Promise<StudentsResponse> => {
   const response = await apiClient.get("/users?role=STUDENT", {
@@ -224,6 +227,7 @@ const fetchStudents = async (params: {
       limit: params.limit,
       ...(params.gender && { gender: params.gender.toUpperCase() }),
       ...(params.class_id && { class_id: params.class_id }),
+      ...(params.status && { status: params.status.toUpperCase() }),
       ...(params.search && { search: params.search }),
     },
   });
@@ -232,11 +236,20 @@ const fetchStudents = async (params: {
 };
 
 export default function Students() {
+  const studentStatusOptions = [
+    "ACTIVE",
+    "SUSPENDED",
+    "INACTIVE",
+    "PENDING",
+    "BLOCKED",
+    "DELETED",
+  ] as const;
   const queryClient = useQueryClient();
   const { classes } = useClasses();
   const [filterOpen, setFilterOpen] = useState(false);
   const [filterGender, setFilterGender] = useState("");
   const [filterClass, setFilterClass] = useState("");
+  const [filterStatus, setFilterStatus] = useState("");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(20);
@@ -287,13 +300,14 @@ export default function Students() {
   });
 
   const activeFilterCount = useMemo(
-    () => [filterGender, filterClass].filter(Boolean).length,
-    [filterGender, filterClass],
+    () => [filterGender, filterClass, filterStatus].filter(Boolean).length,
+    [filterGender, filterClass, filterStatus],
   );
 
   const clearFilters = () => {
     setFilterGender("");
     setFilterClass("");
+    setFilterStatus("");
     setFilterOpen(false);
     setPage(1);
   };
@@ -305,6 +319,7 @@ export default function Students() {
       itemsPerPage,
       filterGender,
       filterClass,
+      filterStatus,
       search,
     ],
     queryFn: () =>
@@ -313,6 +328,7 @@ export default function Students() {
         limit: itemsPerPage,
         gender: filterGender,
         class_id: filterClass,
+        status: filterStatus,
         search: search.trim() || undefined,
       }),
   });
@@ -452,6 +468,36 @@ export default function Students() {
                       </SelectGroup>
                     </SelectContent>
                   </Select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-muted-foreground">
+                    Status
+                  </label>
+                  <div className="flex flex-wrap gap-1.5">
+                    {studentStatusOptions.map((status) => (
+                      <Button
+                        key={status}
+                        variant={
+                          filterStatus === status ? "primary" : "outline"
+                        }
+                        size="sm"
+                        className={cn(
+                          "h-7 text-xs",
+                          filterStatus === status &&
+                            "bg-primary-blue hover:bg-primary-blue/90 text-white",
+                        )}
+                        onClick={() => {
+                          setFilterStatus(
+                            filterStatus === status ? "" : status,
+                          );
+                          setPage(1);
+                        }}
+                      >
+                        {status}
+                      </Button>
+                    ))}
+                  </div>
                 </div>
               </PopoverContent>
             </Popover>

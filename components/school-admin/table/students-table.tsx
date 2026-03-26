@@ -26,18 +26,20 @@ import {
   CaretLineRightIcon,
   CaretRightIcon,
 } from "@phosphor-icons/react";
-import { Meta } from "@/types";
+import { Meta, Student } from "@/types";
 import {
   flexRender,
   getCoreRowModel,
+  Row,
   useReactTable,
   type ColumnDef,
 } from "@tanstack/react-table";
 import { cn } from "@/lib/utils";
+import { useParams, useRouter } from "next/navigation";
 
-interface StudentsTableProps<TData, TValue> {
-  columns: ColumnDef<TData, TValue>[];
-  data: TData[];
+interface StudentsTableProps<TValue> {
+  columns: ColumnDef<Student, TValue>[];
+  data: Student[];
   meta: Meta;
   itemsPerPage: number;
   isLoading?: boolean;
@@ -45,7 +47,7 @@ interface StudentsTableProps<TData, TValue> {
   onItemsPerPageChange: (itemsPerPage: number) => void;
 }
 
-export default function StudentsTable<TData, TValue>({
+export default function StudentsTable<TValue>({
   columns,
   data,
   meta,
@@ -53,7 +55,9 @@ export default function StudentsTable<TData, TValue>({
   isLoading = false,
   onPageChange,
   onItemsPerPageChange,
-}: StudentsTableProps<TData, TValue>) {
+}: StudentsTableProps<TValue>) {
+  const { tenant } = useParams<{ tenant: string }>();
+  const router = useRouter();
   // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
     data,
@@ -108,6 +112,12 @@ export default function StudentsTable<TData, TValue>({
               <TableRow
                 key={row.id}
                 data-state={row.getIsSelected() && "selected"}
+                onClick={
+                  () =>
+                    router.push(`/${tenant}/admin/students/${row.original.id}`)
+                  // console.log(row.original?.id)
+                }
+                className="cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
               >
                 {row.getVisibleCells().map((cell) => (
                   <TableCell key={cell.id}>
