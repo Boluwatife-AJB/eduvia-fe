@@ -98,7 +98,7 @@ const addNewStudent = async (data: AddStudentFormValues) => {
     admission_date: data.admissionDate,
   };
   const response = await apiClient.post("/users", payload);
-  return response.data;
+  return response.data.data;
 };
 
 export default function AddStudent() {

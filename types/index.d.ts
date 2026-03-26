@@ -68,3 +68,45 @@ interface StatsResponse {
   total_staff: number;
   total_classes: number;
 }
+
+interface Student {
+  id: string;
+  tenant_id: string;
+  role: Role;
+  identifier: string;
+  first_name: string;
+  last_name: string;
+  email: string | null;
+  phone: string | null;
+  avatar: string | null;
+  gender: "MALE" | "FEMALE";
+  status: string;
+  mfa_enabled: boolean;
+  last_login_at: string | null;
+  created_at: string;
+  updated_at: string;
+  student_profile: {
+    matric_number: string;
+    class_id: string;
+    class: {
+      id: string;
+      name: string;
+      level: string;
+      department_id: string | null;
+    };
+  };
+}
+
+interface Meta {
+  total: number;
+  page: number;
+  limit: number;
+  total_pages: number;
+  has_next_page: boolean;
+  has_previous_page: boolean;
+}
+
+interface StudentsResponse {
+  data: Student[];
+  meta: Meta;
+}

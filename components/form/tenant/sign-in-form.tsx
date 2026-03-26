@@ -35,7 +35,7 @@ const signInUser = async (data: SignInFormValues) => {
     password: data.password,
   };
   const response = await apiClient.post("/auth/login", payload);
-  return response.data;
+  return response.data.data;
 };
 
 export default function SignInForm({ userType }: SignInFormProps) {

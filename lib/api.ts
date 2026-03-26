@@ -130,7 +130,7 @@ apiClient.interceptors.request.use(
 // Response Interceptor
 apiClient.interceptors.response.use(
   (response) => {
-    return response.data;
+    return response;
   },
   async (error) => {
     const originalRequest = error.config as RetriableRequestConfig | undefined;

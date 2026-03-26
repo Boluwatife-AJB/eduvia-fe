@@ -1,24 +1,20 @@
 "use client";
 
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import AddStudent from "@/components/school-admin/modal/add-student";
+import StudentsTable from "@/components/school-admin/table/students-table";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import {
-  DownloadIcon,
-  MagnifyingGlassIcon,
-  PlusIcon,
-} from "@phosphor-icons/react";
 import {
   InputGroup,
   InputGroupAddon,
   InputGroupInput,
 } from "@/components/ui/input-group";
-import { ButtonGroup } from "@/components/ui/button-group";
-import { Popover, PopoverTrigger } from "@/components/ui/popover";
-import { FunnelSimpleIcon } from "@phosphor-icons/react";
-import { PopoverContent } from "@/components/ui/popover";
-import { XIcon } from "@phosphor-icons/react";
-import { useClasses } from "@/hooks/use-classes";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -28,12 +24,143 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { SelectOption } from "@/types";
-import { genderOptions } from "@/lib/data";
-import { useState } from "react";
-import { cn } from "@/lib/utils";
+import { useClasses } from "@/hooks/use-classes";
 import { apiClient } from "@/lib/api";
+import { genderOptions } from "@/lib/data";
+import { cn } from "@/lib/utils";
+import { SelectOption, Student, StudentsResponse } from "@/types";
+import {
+  DotsThreeIcon,
+  FunnelSimpleIcon,
+  MagnifyingGlassIcon,
+  PlusIcon,
+  TrashSimpleIcon,
+  XIcon,
+  PencilLineIcon,
+} from "@phosphor-icons/react";
 import { useQuery } from "@tanstack/react-query";
+import { ColumnDef } from "@tanstack/react-table";
+import { useMemo, useState } from "react";
+import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
+const columns: ColumnDef<Student>[] = [
+  {
+    accessorKey: "full_name",
+    header: "Full Name",
+    cell: ({ row }) => (
+      <div className="flex items-center gap-3 pl-4">
+        <Avatar>
+          <AvatarImage src={row.original.avatar ?? ""} />
+          <AvatarFallback>
+            {row.original.first_name.charAt(0).toUpperCase()}
+            {row.original.last_name.charAt(0).toUpperCase()}
+          </AvatarFallback>
+        </Avatar>
+        <span>
+          {row.original.first_name} {row.original.last_name}
+        </span>
+      </div>
+    ),
+  },
+
+  {
+    accessorKey: "identifier",
+    header: "Matric Number",
+  },
+
+  {
+    accessorKey: "gender",
+    header: "Gender",
+    cell: ({ row }) => (
+      <div>
+        {row.original.gender?.charAt(0).toUpperCase() +
+          row.original.gender?.slice(1).toLowerCase()}
+      </div>
+    ),
+  },
+  {
+    accessorKey: "class",
+    header: "Class",
+    cell: ({ row }) => <div>{row.original.student_profile.class.name}</div>,
+  },
+  {
+    accessorKey: "level",
+    header: "Level",
+    cell: ({ row }) => <div>{row.original.student_profile.class.level}</div>,
+  },
+  {
+    accessorKey: "status",
+    header: "Status",
+    cell: ({ row }) => {
+      const styles = {
+        ACTIVE:
+          "bg-green-600/10 text-green-600 focus-visible:ring-green-600/20 dark:bg-green-400/10 dark:text-green-400 dark:focus-visible:ring-green-400/40 [a&]:hover:bg-green-600/5 dark:[a&]:hover:bg-green-400/5",
+        INACTIVE:
+          "bg-destructive/10 [a&]:hover:bg-destructive/5 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 text-destructive",
+        PENDING:
+          "bg-yellow-600/10 text-yellow-600 focus-visible:ring-yellow-600/20 dark:bg-yellow-400/10 dark:text-yellow-400 dark:focus-visible:ring-yellow-400/40 [a&]:hover:bg-yellow-600/5 dark:[a&]:hover:bg-yellow-400/5",
+      }[row.original.status];
+
+      return (
+        <div>
+          <Badge
+            className={
+              (cn(
+                "border-none focus-visible:outline-none text-xs py-0.5 px-1.5",
+              ),
+              styles)
+            }
+          >
+            {row.original.status}
+          </Badge>
+        </div>
+      );
+    },
+  },
+  {
+    accessorKey: "actions",
+    header: "Actions",
+    cell: () => (
+      <div>
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            render={
+              <Button
+                variant="ghost"
+                size="icon"
+                className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors scale-95 duration-100 active:opacity-80 active:translate-y-0"
+              >
+                <DotsThreeIcon weight="bold" className="size-4 " />
+              </Button>
+            }
+          />
+          <DropdownMenuContent className="data-[state=closed]:slide-out-to-left-0 data-[state=open]:slide-in-from-left-0 data-[state=closed]:slide-out-to-bottom-20 data-[state=open]:slide-in-from-bottom-20 data-[state=closed]:zoom-out-100 duration-400 w-40">
+            <DropdownMenuGroup>
+              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+
+              <DropdownMenuItem>
+                <PencilLineIcon weight="bold" className="size-4 " />
+                <span>Edit Student</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <TrashSimpleIcon weight="bold" className="size-4 " />
+                <span>Delete Student</span>
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    ),
+  },
+];
 
 const fetchStudents = async (params: {
   page: number;
@@ -41,17 +168,18 @@ const fetchStudents = async (params: {
   gender?: string;
   class_id?: string;
   search?: string;
-}) => {
+}): Promise<StudentsResponse> => {
   const response = await apiClient.get("/users?role=STUDENT", {
     params: {
-      page: 1,
-      limit: 20,
-      // ...(params.gender && { gender: params.gender.toUpperCase() }),
+      page: params.page,
+      limit: params.limit,
+      ...(params.gender && { gender: params.gender.toUpperCase() }),
       ...(params.class_id && { class_id: params.class_id }),
       ...(params.search && { search: params.search }),
     },
   });
-  return response.data;
+
+  return response.data as StudentsResponse;
 };
 
 export default function Students() {
@@ -59,29 +187,40 @@ export default function Students() {
   const [filterOpen, setFilterOpen] = useState(false);
   const [filterGender, setFilterGender] = useState("");
   const [filterClass, setFilterClass] = useState("");
-  const [activeFilterCount, setActiveFilterCount] = useState(0);
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(20);
+
+  const activeFilterCount = useMemo(
+    () => [filterGender, filterClass].filter(Boolean).length,
+    [filterGender, filterClass],
+  );
 
   const clearFilters = () => {
     setFilterGender("");
     setFilterClass("");
-    setActiveFilterCount(0);
     setFilterOpen(false);
+    setPage(1);
   };
 
   const { data: students, isLoading: isStudentsLoading } = useQuery({
-    queryKey: ["students", filterGender, filterClass, search],
+    queryKey: [
+      "students",
+      page,
+      itemsPerPage,
+      filterGender,
+      filterClass,
+      search,
+    ],
     queryFn: () =>
       fetchStudents({
-        page: 1,
-        limit: 20,
+        page,
+        limit: itemsPerPage,
         gender: filterGender,
         class_id: filterClass,
-        search: search,
+        search: search.trim() || undefined,
       }),
   });
-
-  console.log(students);
 
   return (
     <div className="px-8 py-6 space-y-10">
@@ -111,8 +250,12 @@ export default function Students() {
             <InputGroupInput
               id="inline-start-input"
               placeholder="Search for student by name, matric number, class, gender, level, etc."
+              className="placeholder:text-muted-foreground placeholder:text-xs placeholder:text-truncate"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(1);
+              }}
             />
             <InputGroupAddon align="inline-start">
               <MagnifyingGlassIcon className="text-muted-foreground" />
@@ -176,6 +319,7 @@ export default function Students() {
                           setFilterGender(
                             filterGender === gender.value ? "" : gender.value,
                           );
+                          setPage(1);
                         }}
                       >
                         {gender.label}
@@ -190,7 +334,10 @@ export default function Students() {
                   </label>
                   <Select
                     value={filterClass}
-                    onValueChange={(value) => setFilterClass(value || "")}
+                    onValueChange={(value) => {
+                      setFilterClass(value || "");
+                      setPage(1);
+                    }}
                     items={classes}
                   >
                     <SelectTrigger className=" w-full px-3">
@@ -212,6 +359,28 @@ export default function Students() {
             </Popover>
           </div>
         </div>
+
+        <StudentsTable
+          columns={columns}
+          data={students?.data ?? []}
+          isLoading={isStudentsLoading}
+          itemsPerPage={itemsPerPage}
+          meta={
+            students?.meta ?? {
+              total: 0,
+              page: 1,
+              limit: itemsPerPage,
+              total_pages: 1,
+              has_next_page: false,
+              has_previous_page: false,
+            }
+          }
+          onPageChange={setPage}
+          onItemsPerPageChange={(next) => {
+            setItemsPerPage(next);
+            setPage(1);
+          }}
+        />
       </div>
     </div>
   );

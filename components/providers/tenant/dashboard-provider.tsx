@@ -22,7 +22,7 @@ export default function TenantDashboardProvider({
         <TenantHeader toggleSidebar={toggleSidebar} />
         <div className="flex h-[calc(100vh-75px)] overflow-hidden">
           <TenantSidebar isSidebarOpen={isSidebarOpen} />
-          <main className="flex-1">{children}</main>
+          <main className="flex-1 overflow-y-auto">{children}</main>
         </div>
       </div>
     </UserProvider>

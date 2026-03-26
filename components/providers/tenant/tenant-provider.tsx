@@ -9,7 +9,7 @@ import { useEffect } from "react";
 
 const fetchTenant = async (slug: string) => {
   const response = await apiClient.get(`/tenant/${slug}/public`);
-  return response.data;
+  return response.data.data;
 };
 
 export default function TenantProvider({

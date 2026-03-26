@@ -10,7 +10,7 @@ interface ClassResponse {
 
 const fetchClasses = async () => {
   const response = await apiClient.get("/school-setup/classes/names");
-  return response.data;
+  return response.data.data;
 };
 
 export function useClasses() {

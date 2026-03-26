@@ -34,7 +34,7 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 
 const fetchUser = async (): Promise<User> => {
   const response = await apiClient.get("/auth/me");
-  return response.data;
+  return response.data.data;
 };
 
 const refreshToken = async (): Promise<{

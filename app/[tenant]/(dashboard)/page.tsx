@@ -10,7 +10,7 @@ import { useMemo } from "react";
 
 const fetchStats = async (): Promise<StatsResponse> => {
   const response = await apiClient.get("/users/stats");
-  return response.data;
+  return response.data.data;
 };
 
 export default function TenantDashboardPage() {
