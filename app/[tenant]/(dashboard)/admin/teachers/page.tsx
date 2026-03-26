@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { PlusIcon } from "@phosphor-icons/react";
-// import AddStudent from "@/components/school-admin/modal/add-student";
+import AddTeacher from "@/components/school-admin/modal/add-teacher";
 
 export default function Teachers() {
   const [isAddTeacherOpenModal, setIsAddTeacherOpenModal] = useState(false);
@@ -26,7 +26,7 @@ export default function Teachers() {
             }
           />
           <DialogContent className="max-w-[calc(100%-2rem)] sm:max-w-2xl p-6">
-            {/* <AddStudent onClose={() => setIsAddStudentOpenModal(false)} /> */}
+            <AddTeacher onClose={() => setIsAddTeacherOpenModal(false)} />
           </DialogContent>
         </Dialog>
       </div>
