@@ -190,6 +190,7 @@ export default function Students() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(20);
+  const [isAddStudentOpenModal, setIsAddStudentOpenModal] = useState(false);
 
   const activeFilterCount = useMemo(
     () => [filterGender, filterClass].filter(Boolean).length,
@@ -227,7 +228,10 @@ export default function Students() {
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-assistant font-bold">Students</h1>
 
-        <Dialog>
+        <Dialog
+          open={isAddStudentOpenModal}
+          onOpenChange={setIsAddStudentOpenModal}
+        >
           <DialogTrigger
             render={
               <Button variant="primary" className="h-12 gap-2">
@@ -237,7 +241,7 @@ export default function Students() {
             }
           />
           <DialogContent className="max-w-[calc(100%-2rem)] sm:max-w-2xl p-6">
-            <AddStudent />
+            <AddStudent onClose={() => setIsAddStudentOpenModal(false)} />
           </DialogContent>
         </Dialog>
       </div>

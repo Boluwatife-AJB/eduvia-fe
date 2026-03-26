@@ -40,7 +40,7 @@ import {
 import { Calendar } from "@/components/ui/calendar";
 import { format, isValid, parse } from "date-fns";
 import { apiClient } from "@/lib/api";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   InputGroup,
@@ -48,6 +48,7 @@ import {
   InputGroupButton,
   InputGroupInput,
 } from "@/components/ui/input-group";
+import { Spinner } from "@/components/ui/spinner";
 
 const STEPS = [
   {
@@ -101,7 +102,8 @@ const addNewStudent = async (data: AddStudentFormValues) => {
   return response.data.data;
 };
 
-export default function AddStudent() {
+export default function AddStudent({ onClose }: { onClose: () => void }) {
+  const queryClient = useQueryClient();
   const { classes, isLoading: isClassesLoading } = useClasses();
   const [dobPopoverOpen, setDobPopoverOpen] = useState(false);
   const [dobCalendarMonth, setDobCalendarMonth] = useState(() => new Date());
@@ -138,7 +140,9 @@ export default function AddStudent() {
       form.reset();
       setAdDate(undefined);
       setDobCalendarMonth(new Date());
+      queryClient.invalidateQueries({ queryKey: ["students"] });
       setDobPopoverOpen(false);
+      onClose();
     },
     onError: (error) => {
       toast.error("Failed to add student");
@@ -563,9 +567,17 @@ export default function AddStudent() {
                 size="lg"
                 className="h-12 px-4"
                 type="submit"
-                disabled={isSubmitting || !isValid}
+                disabled={isSubmitting || !isValid || isAddingStudent}
               >
-                Add Student
+                {isAddingStudent ? (
+                  <>
+                    <Spinner className="size-5 text-white" />
+                    <span>Adding student...</span>
+                  </>
+                ) : (
+                  "Add Student"
+                )}
+                {/* Add Student */}
               </Button>
             )}
           </div>
