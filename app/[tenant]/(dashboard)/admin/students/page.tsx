@@ -38,9 +38,8 @@ import {
   XIcon,
   PencilLineIcon,
 } from "@phosphor-icons/react";
-import { useQuery } from "@tanstack/react-query";
 import { ColumnDef } from "@tanstack/react-table";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
@@ -50,117 +49,146 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogMedia,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Spinner } from "@/components/ui/spinner";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
-const columns: ColumnDef<Student>[] = [
-  {
-    accessorKey: "full_name",
-    header: "Full Name",
-    cell: ({ row }) => (
-      <div className="flex items-center gap-3 pl-4">
-        <Avatar>
-          <AvatarImage src={row.original.avatar ?? ""} />
-          <AvatarFallback>
-            {row.original.first_name.charAt(0).toUpperCase()}
-            {row.original.last_name.charAt(0).toUpperCase()}
-          </AvatarFallback>
-        </Avatar>
-        <span>
-          {row.original.first_name} {row.original.last_name}
-        </span>
-      </div>
-    ),
-  },
-
-  {
-    accessorKey: "identifier",
-    header: "Matric Number",
-  },
-
-  {
-    accessorKey: "gender",
-    header: "Gender",
-    cell: ({ row }) => (
-      <div>
-        {row.original.gender?.charAt(0).toUpperCase() +
-          row.original.gender?.slice(1).toLowerCase()}
-      </div>
-    ),
-  },
-  {
-    accessorKey: "class",
-    header: "Class",
-    cell: ({ row }) => <div>{row.original.student_profile.class.name}</div>,
-  },
-  {
-    accessorKey: "level",
-    header: "Level",
-    cell: ({ row }) => <div>{row.original.student_profile.class.level}</div>,
-  },
-  {
-    accessorKey: "status",
-    header: "Status",
-    cell: ({ row }) => {
-      const styles = {
-        ACTIVE:
-          "bg-green-600/10 text-green-600 focus-visible:ring-green-600/20 dark:bg-green-400/10 dark:text-green-400 dark:focus-visible:ring-green-400/40 [a&]:hover:bg-green-600/5 dark:[a&]:hover:bg-green-400/5",
-        INACTIVE:
-          "bg-destructive/10 [a&]:hover:bg-destructive/5 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 text-destructive",
-        PENDING:
-          "bg-yellow-600/10 text-yellow-600 focus-visible:ring-yellow-600/20 dark:bg-yellow-400/10 dark:text-yellow-400 dark:focus-visible:ring-yellow-400/40 [a&]:hover:bg-yellow-600/5 dark:[a&]:hover:bg-yellow-400/5",
-      }[row.original.status];
-
-      return (
-        <div>
-          <Badge
-            className={
-              (cn(
-                "border-none focus-visible:outline-none text-xs py-0.5 px-1.5",
-              ),
-              styles)
-            }
-          >
-            {row.original.status}
-          </Badge>
+function getStudentColumns(
+  onRequestDelete: (student: Student) => void,
+): ColumnDef<Student>[] {
+  return [
+    {
+      accessorKey: "full_name",
+      header: "Full Name",
+      cell: ({ row }) => (
+        <div className="flex items-center gap-3 pl-4">
+          <Avatar>
+            <AvatarImage src={row.original.avatar ?? ""} />
+            <AvatarFallback>
+              {row.original.first_name.charAt(0).toUpperCase()}
+              {row.original.last_name.charAt(0).toUpperCase()}
+            </AvatarFallback>
+          </Avatar>
+          <span>
+            {row.original.first_name} {row.original.last_name}
+          </span>
         </div>
-      );
+      ),
     },
-  },
-  {
-    accessorKey: "actions",
-    header: "Actions",
-    cell: () => (
-      <div>
-        <DropdownMenu>
-          <DropdownMenuTrigger
-            render={
-              <Button
-                variant="ghost"
-                size="icon"
-                className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors scale-95 duration-100 active:opacity-80 active:translate-y-0"
-              >
-                <DotsThreeIcon weight="bold" className="size-4 " />
-              </Button>
-            }
-          />
-          <DropdownMenuContent className="data-[state=closed]:slide-out-to-left-0 data-[state=open]:slide-in-from-left-0 data-[state=closed]:slide-out-to-bottom-20 data-[state=open]:slide-in-from-bottom-20 data-[state=closed]:zoom-out-100 duration-400 w-40">
-            <DropdownMenuGroup>
-              <DropdownMenuLabel>Actions</DropdownMenuLabel>
 
-              <DropdownMenuItem>
-                <PencilLineIcon weight="bold" className="size-4 " />
-                <span>Edit Student</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <TrashSimpleIcon weight="bold" className="size-4 " />
-                <span>Delete Student</span>
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-    ),
-  },
-];
+    {
+      accessorKey: "identifier",
+      header: "Matric Number",
+    },
+
+    {
+      accessorKey: "gender",
+      header: "Gender",
+      cell: ({ row }) => (
+        <div>
+          {row.original.gender?.charAt(0).toUpperCase() +
+            row.original.gender?.slice(1).toLowerCase()}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "class",
+      header: "Class",
+      cell: ({ row }) => <div>{row.original.student_profile.class.name}</div>,
+    },
+    {
+      accessorKey: "level",
+      header: "Level",
+      cell: ({ row }) => <div>{row.original.student_profile.class.level}</div>,
+    },
+    {
+      accessorKey: "status",
+      header: "Status",
+      cell: ({ row }) => {
+        const styles = {
+          ACTIVE:
+            "bg-green-600/10 text-green-600 focus-visible:ring-green-600/20 dark:bg-green-400/10 dark:text-green-400 dark:focus-visible:ring-green-400/40 [a&]:hover:bg-green-600/5 dark:[a&]:hover:bg-green-400/5",
+          INACTIVE:
+            "bg-destructive/10 [a&]:hover:bg-destructive/5 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 text-destructive",
+          PENDING:
+            "bg-yellow-600/10 text-yellow-600 focus-visible:ring-yellow-600/20 dark:bg-yellow-400/10 dark:text-yellow-400 dark:focus-visible:ring-yellow-400/40 [a&]:hover:bg-yellow-600/5 dark:[a&]:hover:bg-yellow-400/5",
+        }[row.original.status];
+
+        return (
+          <div>
+            <Badge
+              className={
+                (cn(
+                  "border-none focus-visible:outline-none text-xs py-0.5 px-1.5",
+                ),
+                styles)
+              }
+            >
+              {row.original.status}
+            </Badge>
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "actions",
+      header: "Actions",
+      cell: ({ row }) => (
+        <div>
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              render={
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors scale-95 duration-100 active:opacity-80 active:translate-y-0"
+                >
+                  <DotsThreeIcon weight="bold" className="size-4 " />
+                </Button>
+              }
+            />
+            <DropdownMenuContent className="data-[state=closed]:slide-out-to-left-0 data-[state=open]:slide-in-from-left-0 data-[state=closed]:slide-out-to-bottom-20 data-[state=open]:slide-in-from-bottom-20 data-[state=closed]:zoom-out-100 duration-400 w-40">
+              <DropdownMenuGroup>
+                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+
+                <DropdownMenuItem>
+                  <PencilLineIcon weight="bold" className="size-4 " />
+                  <span>Edit Student</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <PencilLineIcon weight="bold" className="size-4 " />
+                  <span>Suspend Student</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  variant="destructive"
+                  onClick={() => onRequestDelete(row.original)}
+                >
+                  <TrashSimpleIcon weight="bold" className="size-4 " />
+                  <span>Delete Student</span>
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      ),
+    },
+  ];
+}
+
+const deleteStudent = async (studentId: string) => {
+  const response = await apiClient.delete(`/users/${studentId}`);
+  return response.data;
+};
 
 const fetchStudents = async (params: {
   page: number;
@@ -183,6 +211,7 @@ const fetchStudents = async (params: {
 };
 
 export default function Students() {
+  const queryClient = useQueryClient();
   const { classes } = useClasses();
   const [filterOpen, setFilterOpen] = useState(false);
   const [filterGender, setFilterGender] = useState("");
@@ -191,6 +220,28 @@ export default function Students() {
   const [page, setPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(20);
   const [isAddStudentOpenModal, setIsAddStudentOpenModal] = useState(false);
+  const [studentToDelete, setStudentToDelete] = useState<Student | null>(null);
+
+  const requestDeleteStudent = useCallback((student: Student) => {
+    setStudentToDelete(student);
+  }, []);
+
+  const columns = useMemo(
+    () => getStudentColumns(requestDeleteStudent),
+    [requestDeleteStudent],
+  );
+
+  const { mutate: removeStudent, isPending: isDeletingStudent } = useMutation({
+    mutationFn: deleteStudent,
+    onSuccess: () => {
+      toast.success("Student deleted");
+      queryClient.invalidateQueries({ queryKey: ["students"] });
+      setStudentToDelete(null);
+    },
+    onError: () => {
+      toast.error("Failed to delete student");
+    },
+  });
 
   const activeFilterCount = useMemo(
     () => [filterGender, filterClass].filter(Boolean).length,
@@ -386,6 +437,55 @@ export default function Students() {
           }}
         />
       </div>
+
+      <AlertDialog
+        open={studentToDelete !== null}
+        onOpenChange={(open) => {
+          if (!open) setStudentToDelete(null);
+        }}
+      >
+        <AlertDialogContent size="sm">
+          <AlertDialogHeader>
+            <AlertDialogMedia className="bg-destructive/10 text-destructive dark:bg-destructive/20 dark:text-destructive">
+              <TrashSimpleIcon weight="bold" className="size-4 " />
+            </AlertDialogMedia>
+            <AlertDialogTitle>Delete student?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently remove{" "}
+              <span className="font-medium text-foreground">
+                {studentToDelete
+                  ? `${studentToDelete.first_name} ${studentToDelete.last_name}`
+                  : ""}
+              </span>
+              {studentToDelete?.student_profile.matric_number ? (
+                <> ({studentToDelete.student_profile.matric_number})</>
+              ) : null}
+              . This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeletingStudent}>
+              Cancel
+            </AlertDialogCancel>
+            <Button
+              variant="destructive"
+              disabled={isDeletingStudent}
+              onClick={() => {
+                if (studentToDelete) removeStudent(studentToDelete.id);
+              }}
+            >
+              {isDeletingStudent ? (
+                <>
+                  <Spinner className="size-4" />
+                  Deleting…
+                </>
+              ) : (
+                "Delete"
+              )}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
