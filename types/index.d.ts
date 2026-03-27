@@ -20,7 +20,8 @@ type AdminRoles =
   | "VICE_PRINCIPAL"
   | "SUPER_ADMIN"
   | "HEAD_TEACHER"
-  | "ASST_HEAD_TEACHER";
+  | "ASST_HEAD_TEACHER"
+  | "SCHOOL_OWNER";
 
 interface SelectOption {
   value: string;

@@ -44,6 +44,7 @@ export const adminRoles: AdminRoles[] = [
   "SUPER_ADMIN",
   "HEAD_TEACHER",
   "ASST_HEAD_TEACHER",
+  "SCHOOL_OWNER",
 ];
 
 export const userRoles: SelectOption[] = [
