@@ -116,3 +116,15 @@ export const addStaffSchema = z
     message: "Passwords do not match",
     path: ["confirmPassword"],
   });
+
+export const addParentSchema = z.object({
+  firstName: z.string().min(1, { message: "First name is required" }),
+  lastName: z.string().min(1, { message: "Last name is required" }),
+  gender: z.enum(genderOptions.map((option) => option.value)),
+  identifier: z.string().min(1, { message: "Identifier is required" }),
+  password: z.string().min(1, { message: "Password is required" }),
+  confirmPassword: z
+    .string()
+    .min(1, { message: "Confirm password is required" }),
+  enforceChangePassword: z.boolean().default(false),
+});
