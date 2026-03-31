@@ -5,14 +5,19 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { apiClient } from "@/lib/api";
 import { cn } from "@/lib/utils";
-import { PencilLineIcon, TrashSimpleIcon } from "@phosphor-icons/react";
+import {
+  ArrowLeftIcon,
+  PencilLineIcon,
+  TrashSimpleIcon,
+} from "@phosphor-icons/react";
 import { useQuery } from "@tanstack/react-query";
-import { useParams } from "next/navigation";
-import { useLayoutEffect, useRef, useState } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { motion } from "motion/react";
+import Link from "next/link";
+import { useParams, useRouter } from "next/navigation";
+import { useLayoutEffect, useRef, useState } from "react";
 
 const fetchStudent = async (id: string) => {
   const response = await apiClient.get(`/users/${id}`);
@@ -59,10 +64,10 @@ const tabs = [
 
 export default function StudentDetails() {
   const { id } = useParams<{ id: string }>();
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState("explore");
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const [underlineStyle, setUnderlineStyle] = useState({ left: 0, width: 0 });
-
   const { data: student, isLoading: isStudentLoading } = useQuery({
     queryKey: ["student", id],
     queryFn: () => fetchStudent(id),
@@ -97,7 +102,13 @@ export default function StudentDetails() {
 
   return (
     <div className="container mx-auto px-8 py-6 space-y-10">
-      <h1 className="text-3xl font-assistant font-bold">Student Details</h1>
+      <h1
+        className="text-3xl font-assistant font-bold flex items-center gap-2 cursor-pointer"
+        onClick={() => router.back()}
+      >
+        <ArrowLeftIcon className="size-4" />
+        <span>Student Details</span>
+      </h1>
 
       {/* Student Profile Card */}
       <Card>

@@ -1,5 +1,11 @@
 import { Label } from "@/components/ui/label";
 import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+} from "@/components/ui/pagination";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -14,27 +20,20 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-} from "@/components/ui/pagination";
+import { cn } from "@/lib/utils";
+import { Meta, Student } from "@/types";
 import {
   CaretLeftIcon,
   CaretLineLeftIcon,
   CaretLineRightIcon,
   CaretRightIcon,
 } from "@phosphor-icons/react";
-import { Meta, Student } from "@/types";
 import {
   flexRender,
   getCoreRowModel,
-  Row,
   useReactTable,
   type ColumnDef,
 } from "@tanstack/react-table";
-import { cn } from "@/lib/utils";
 import { useParams, useRouter } from "next/navigation";
 
 interface StudentsTableProps<TValue> {

@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/select";
 import { useClasses } from "@/hooks/use-classes";
 import { apiClient } from "@/lib/api";
-import { genderOptions } from "@/lib/data";
+import { genderOptions, userStatusOptions } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import { SelectOption, Student, StudentsResponse } from "@/types";
 import {
@@ -149,7 +149,10 @@ function getStudentColumns(
       accessorKey: "actions",
       header: "Actions",
       cell: ({ row }) => (
-        <div>
+        <div
+          onClick={(e) => e.stopPropagation()}
+          onPointerDown={(e) => e.stopPropagation()}
+        >
           <DropdownMenu>
             <DropdownMenuTrigger
               render={
@@ -221,7 +224,7 @@ const fetchStudents = async (params: {
   status?: string;
   search?: string;
 }): Promise<StudentsResponse> => {
-  const response = await apiClient.get("/users?role=STUDENT", {
+  const response = await apiClient.get("/users/students", {
     params: {
       page: params.page,
       limit: params.limit,
@@ -236,14 +239,6 @@ const fetchStudents = async (params: {
 };
 
 export default function Students() {
-  const studentStatusOptions = [
-    "ACTIVE",
-    "SUSPENDED",
-    "INACTIVE",
-    "PENDING",
-    "BLOCKED",
-    "DELETED",
-  ] as const;
   const queryClient = useQueryClient();
   const { classes } = useClasses();
   const [filterOpen, setFilterOpen] = useState(false);
@@ -475,7 +470,7 @@ export default function Students() {
                     Status
                   </label>
                   <div className="flex flex-wrap gap-1.5">
-                    {studentStatusOptions.map((status) => (
+                    {userStatusOptions.map((status: string) => (
                       <Button
                         key={status}
                         variant={

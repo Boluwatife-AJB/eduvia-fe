@@ -698,3 +698,12 @@ export const classOfDegreeOptions = [
     label: "Credit",
   },
 ];
+
+export const userStatusOptions = [
+  "ACTIVE",
+  "SUSPENDED",
+  "INACTIVE",
+  "PENDING",
+  "BLOCKED",
+  "DELETED",
+];
