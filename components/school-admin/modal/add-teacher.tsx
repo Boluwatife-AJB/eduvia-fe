@@ -39,7 +39,7 @@ import {
 import { Spinner } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
 import { apiClient } from "@/lib/api";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
 
@@ -72,9 +72,12 @@ const addNewTeacher = async (data: AddTeacherFormValues) => {
     identifier: data.identifier,
     gender: data.gender.toUpperCase(),
     qualification: data.qualification,
+    class_of_degree: data.classOfDegree,
+    year_of_graduation: data.yearOfGraduation,
+    course_of_study: data.courseOfStudy,
+    password: data.password,
     email: data.email,
     phone: data.phone,
-    password: data.password,
   };
   const response = await apiClient.post("/users", payload);
   return response.data.data;
@@ -82,6 +85,7 @@ const addNewTeacher = async (data: AddTeacherFormValues) => {
 
 export default function AddTeacher({ onClose }: { onClose: () => void }) {
   const [currentStep, setCurrentStep] = useState(0);
+  const queryClient = useQueryClient();
   const form = useForm({
     resolver: zodResolver(addTeacherSchema),
     mode: "onChange",
@@ -91,6 +95,9 @@ export default function AddTeacher({ onClose }: { onClose: () => void }) {
       gender: "",
       identifier: "",
       qualification: "",
+      classOfDegree: "",
+      yearOfGraduation: "",
+      courseOfStudy: "",
       email: "",
       phone: "",
       password: "",
@@ -103,6 +110,7 @@ export default function AddTeacher({ onClose }: { onClose: () => void }) {
     mutationFn: addNewTeacher,
     onSuccess: () => {
       toast.success("Teacher added successfully");
+      queryClient.invalidateQueries({ queryKey: ["teachers"] });
       form.reset();
       onClose();
     },
@@ -242,7 +250,7 @@ export default function AddTeacher({ onClose }: { onClose: () => void }) {
                       <SelectTrigger className="h-12! w-full px-3">
                         <SelectValue placeholder="Select gender" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent alignItemWithTrigger={false}>
                         <SelectGroup>
                           <SelectLabel>Gender</SelectLabel>
                           {genderOptions.map((option) => (
@@ -328,7 +336,7 @@ export default function AddTeacher({ onClose }: { onClose: () => void }) {
                       <SelectTrigger className="h-12! w-full px-3">
                         <SelectValue placeholder="Select qualification" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent alignItemWithTrigger={false}>
                         <SelectGroup>
                           <SelectLabel>Qualification</SelectLabel>
                           {qualificationOptions.map((option) => (
@@ -362,7 +370,7 @@ export default function AddTeacher({ onClose }: { onClose: () => void }) {
                       <SelectTrigger className="h-12! w-full px-3">
                         <SelectValue placeholder="Select class of degree" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent alignItemWithTrigger={false}>
                         <SelectGroup>
                           <SelectLabel>Class of Degree</SelectLabel>
                           {classOfDegreeOptions.map((option) => (

@@ -31,10 +31,13 @@ import {
 import {
   flexRender,
   getCoreRowModel,
+  getSortedRowModel,
   useReactTable,
   type ColumnDef,
+  type SortingState,
 } from "@tanstack/react-table";
 import { useParams, useRouter } from "next/navigation";
+import { useState } from "react";
 
 interface StudentsTableProps<TValue> {
   columns: ColumnDef<Student, TValue>[];
@@ -57,11 +60,18 @@ export default function StudentsTable<TValue>({
 }: StudentsTableProps<TValue>) {
   const { tenant } = useParams<{ tenant: string }>();
   const router = useRouter();
+  const [sorting, setSorting] = useState<SortingState>([]);
+
   // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
     data,
     columns,
+    state: {
+      sorting,
+    },
+    onSortingChange: setSorting,
     getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
   });
 
   const from = meta.total === 0 ? 0 : (meta.page - 1) * meta.limit + 1;

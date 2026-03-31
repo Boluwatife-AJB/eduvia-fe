@@ -62,6 +62,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Spinner } from "@/components/ui/spinner";
+import { CaretDownIcon, CaretUpIcon } from "@phosphor-icons/react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
@@ -111,7 +112,21 @@ function getStudentColumns(
     },
     {
       accessorKey: "level",
-      header: "Level",
+      header: ({ column }) => (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="-ml-2 h-8 px-2"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Level
+          {column.getIsSorted() === "asc" ? (
+            <CaretUpIcon className="ml-1 size-3.5" />
+          ) : (
+            <CaretDownIcon className="ml-1 size-3.5" />
+          )}
+        </Button>
+      ),
       cell: ({ row }) => <div>{row.original.student_profile.class.level}</div>,
     },
     {
