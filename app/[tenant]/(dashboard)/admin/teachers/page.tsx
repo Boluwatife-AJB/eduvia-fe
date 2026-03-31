@@ -11,7 +11,7 @@ export default function Teachers() {
   return (
     <div className="px-8 py-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-assistant font-bold">Students</h1>
+        <h1 className="text-3xl font-assistant font-bold">Teachers</h1>
 
         <Dialog
           open={isAddTeacherOpenModal}
@@ -21,7 +21,7 @@ export default function Teachers() {
             render={
               <Button variant="primary" className="h-12 gap-2">
                 <PlusIcon className="size-4" />
-                Add Student
+                Add Teacher
               </Button>
             }
           />

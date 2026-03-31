@@ -1,6 +1,6 @@
 import { isValid, parse } from "date-fns";
 import { z } from "zod";
-import { genderOptions } from "./data";
+import { classOfDegreeOptions, genderOptions } from "./data";
 
 export const DATE_OF_BIRTH_INPUT_FORMAT = "dd/MM/yyyy";
 
@@ -88,6 +88,15 @@ export const addTeacherSchema = z
     gender: z.enum(genderOptions.map((option) => option.value)),
     identifier: z.string().min(1, { message: "Identifier is required" }),
     qualification: z.string().min(1, { message: "Qualification is required" }),
+    classOfDegree: z.enum(classOfDegreeOptions.map((option) => option.value)),
+    yearOfGraduation: z
+      .string()
+      .min(1, { message: "Year of graduation is required" }),
+    courseOfStudy: z
+      .string()
+      .min(1, { message: "Course of study is required" }),
+    email: z.email({ message: "Invalid email address" }),
+    phone: z.string().min(1, { message: "Phone number is required" }),
     password: z.string().min(1, { message: "Password is required" }),
     confirmPassword: z
       .string()

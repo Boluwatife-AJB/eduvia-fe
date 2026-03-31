@@ -1,9 +1,10 @@
-import { addStudentSchema, signInSchema } from "@/lib/schema";
+import { addStudentSchema, addTeacherSchema, signInSchema } from "@/lib/schema";
 import { Icon } from "@phosphor-icons/react";
 import { z } from "zod";
 
 type SignInFormValues = z.infer<typeof signInSchema>;
 type AddStudentFormValues = z.infer<typeof addStudentSchema>;
+type AddTeacherFormValues = z.infer<typeof addTeacherSchema>;
 
 type Role =
   | "TEACHER"

@@ -620,3 +620,81 @@ export const genderOptions: SelectOption[] = [
     label: "Female",
   },
 ];
+
+export const qualificationOptions: SelectOption[] = [
+  {
+    value: "wassce",
+    label: "Wassce",
+  },
+  {
+    value: "hnd",
+    label: "HND",
+  },
+  {
+    value: "nd",
+    label: "ND",
+  },
+  {
+    value: "bsc",
+    label: "BSc",
+  },
+  {
+    value: "beng",
+    label: "BEng",
+  },
+  {
+    value: "ba",
+    label: "BA",
+  },
+  {
+    value: "ma",
+    label: "MA",
+  },
+  {
+    value: "meng",
+    label: "MEng",
+  },
+  {
+    value: "msc",
+    label: "MSc",
+  },
+  {
+    value: "phd",
+    label: "PhD",
+  },
+];
+
+export const classOfDegreeOptions = [
+  {
+    value: "first-class",
+    label: "First Class",
+  },
+  {
+    value: "second-class-upper",
+    label: "Second Class Upper",
+  },
+  {
+    value: "second-class-lower",
+    label: "Second Class Lower",
+  },
+  {
+    value: "third-class",
+    label: "Third Class",
+  },
+  {
+    value: "pass",
+    label: "Pass",
+  },
+  {
+    value: "distinction",
+    label: "Distinction",
+  },
+  {
+    value: "merit",
+    label: "Merit",
+  },
+  {
+    value: "credit",
+    label: "Credit",
+  },
+];
