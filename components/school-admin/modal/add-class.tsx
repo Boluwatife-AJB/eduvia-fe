@@ -44,7 +44,7 @@ interface AddClassModalProps {
 const addNewClass = async (data: ClassFormValues) => {
   const payload = {
     name: data.name,
-    level: data.level,
+    level: data.level.toUpperCase(),
     capacity: parseInt(data.capacity),
     department_id: data.departmentId ? data.departmentId : null,
     class_teacher_id: data.classTeacherId,

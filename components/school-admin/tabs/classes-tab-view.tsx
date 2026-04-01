@@ -1,24 +1,27 @@
 "use client";
 
-import { useState } from "react";
+import AddClassModal from "@/components/school-admin/modal/add-class";
+import ClassDetailsDrawer from "@/components/school-admin/modal/class-details-drawer";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { apiClient } from "@/lib/api";
+import { ClassesResponse, StudentSlice } from "@/types";
 import {
   DotsThreeIcon,
   MagnifyingGlassIcon,
   PlusIcon,
 } from "@phosphor-icons/react";
-import { Input } from "@/components/ui/input";
-import ClassDetailsDrawer from "@/components/school-admin/modal/class-details-drawer";
-import AddClassModal from "@/components/school-admin/modal/add-class";
+import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 
 // Mock Data
 export const mockClasses = [
@@ -69,14 +72,31 @@ export const mockClasses = [
   },
 ];
 
+const studentsExample = [
+  { id: "s10", initials: "AA" },
+  { id: "s11", initials: "BB" },
+  { id: "s12", initials: "CC" },
+  { id: "s13", initials: "DD" },
+  { id: "s14", initials: "EE" },
+  { id: "s15", initials: "FF" },
+];
+
+const fetchClasses = async (params: {
+  level: string;
+}): Promise<ClassesResponse[]> => {
+  const response = await apiClient.get("/school-setup/classes", {
+    params: {
+      level: params.level,
+    },
+  });
+  return response.data.data;
+};
+
 export default function ClassesTabView() {
   const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
   const [isAddClassOpen, setIsAddClassOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-
-  const filteredClasses = mockClasses.filter((c) =>
-    c.name.toLowerCase().includes(searchTerm.toLowerCase()),
-  );
+  const [level, setLevel] = useState<string>("");
 
   const getLevelColor = (level: string) => {
     switch (level) {
@@ -90,6 +110,19 @@ export default function ClassesTabView() {
         return "bg-slate-100 text-slate-700 border-slate-200";
     }
   };
+
+  const {
+    data: classes,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["classes", searchTerm, level],
+    queryFn: () => fetchClasses({ level }),
+  });
+
+  const filteredClasses = classes?.filter((c: ClassesResponse) =>
+    c?.name?.toLowerCase().includes(searchTerm.toLowerCase()),
+  );
 
   return (
     <div className="pt-6 animate-in fade-in duration-300 flex flex-col h-full">
@@ -114,14 +147,14 @@ export default function ClassesTabView() {
         </Button>
       </div>
 
-      <div className="flex-1 overflow-auto custom-scrollbar pb-6">
+      <div className="flex-1 overflow-auto custom-scrollbar pb-6 pt-2 px-3">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredClasses.length === 0 ? (
+          {filteredClasses?.length === 0 ? (
             <div className="col-span-full py-12 text-center text-muted-foreground">
               No classes found matching &quot;{searchTerm}&quot;
             </div>
           ) : (
-            filteredClasses.map((cls) => (
+            filteredClasses?.map((cls: ClassesResponse) => (
               <Card
                 key={cls.id}
                 className="group p-5 hover:border-primary/50 transition-all cursor-pointer hover:shadow-md bg-card/60 hover:bg-card border-border/50"
@@ -134,7 +167,7 @@ export default function ClassesTabView() {
                     </h2>
                     <Badge
                       variant="outline"
-                      className={`font-semibold text-xs ${getLevelColor(cls.level)}`}
+                      className={`font-semibold uppercase text-xs ${getLevelColor(cls.level)}`}
                     >
                       {cls.level}
                     </Badge>
@@ -172,7 +205,10 @@ export default function ClassesTabView() {
                 <div className="flex items-center gap-3 mb-5 p-3 rounded-lg bg-muted/40 border border-border/50">
                   <Avatar className="size-9 bg-primary/10 text-primary border border-primary/20">
                     <AvatarFallback className="font-semibold text-xs">
-                      {cls.formTeacher.initials}
+                      {cls.class_teacher
+                        ? cls.class_teacher.first_name.charAt(0).toUpperCase() +
+                          cls.class_teacher.last_name.charAt(0).toUpperCase()
+                        : "--"}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex flex-col">
@@ -180,7 +216,9 @@ export default function ClassesTabView() {
                       Form Teacher
                     </span>
                     <span className="text-sm font-semibold text-foreground">
-                      {cls.formTeacher.name}
+                      {/* {cls.formTeacher.name} */}
+                      {cls.class_teacher?.first_name}{" "}
+                      {cls.class_teacher?.last_name}
                     </span>
                   </div>
                 </div>
@@ -188,7 +226,7 @@ export default function ClassesTabView() {
                 <div className="flex items-center justify-between border-t border-border/50 pt-4">
                   <div className="flex flex-col">
                     <span className="text-sm font-semibold text-foreground">
-                      {cls.subjectCount}
+                      {cls.subjects_count}
                     </span>
                     <span className="text-[10px] uppercase font-bold text-muted-foreground">
                       Subjects
@@ -197,24 +235,27 @@ export default function ClassesTabView() {
 
                   <div className="flex flex-col items-end">
                     <div className="flex -space-x-2 mb-1">
-                      {cls.students.slice(0, 5).map((student) => (
-                        <Avatar
-                          key={student.id}
-                          className="size-6 border-2 border-background bg-muted text-muted-foreground"
-                        >
-                          <AvatarFallback className="text-[9px] font-semibold">
-                            {student.initials}
-                          </AvatarFallback>
-                        </Avatar>
-                      ))}
-                      {cls.students.length > 5 && (
+                      {cls.students
+                        ?.slice(0, 5)
+                        .map((student: StudentSlice) => (
+                          <Avatar
+                            key={student.user_id}
+                            className="size-6 border-2 border-background bg-muted text-muted-foreground"
+                          >
+                            <AvatarFallback className="text-[9px] font-semibold">
+                              {student.first_name.charAt(0).toUpperCase() +
+                                student.last_name.charAt(0).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                        ))}
+                      {cls.students?.length > 5 && (
                         <div className="size-6 rounded-full border-2 border-background bg-muted flex items-center justify-center text-[9px] font-semibold text-muted-foreground z-10 transition-transform">
-                          +{cls.students.length - 5}
+                          +{cls.students_count - 5}
                         </div>
                       )}
                     </div>
                     <span className="text-[10px] uppercase font-bold text-muted-foreground">
-                      {cls.studentCount} Students
+                      {cls.students_count} Students
                     </span>
                   </div>
                 </div>

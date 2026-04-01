@@ -233,3 +233,47 @@ interface StaffResponse {
   data: Staff[];
   meta: Meta;
 }
+
+interface Subject {
+  id: string;
+  name: string;
+  code: string;
+}
+
+interface ClassSubject {
+  id: string;
+  tenant_id: string;
+  class_id: string;
+  subject_id: string;
+  subject_type: string;
+  subject: Subject;
+}
+
+interface StudentSlice {
+  user_id: string;
+  first_name: string;
+  last_name: string;
+  matric_number: string;
+}
+
+interface UserSlice {
+  id: string;
+  first_name: string;
+  last_name: string;
+}
+interface ClassesResponse {
+  id: string;
+  tenant_id: string;
+  name: string;
+  level: string;
+  capacity: number;
+  department_id: string | null;
+  class_teacher_id: string | null;
+  subject_ids: string[];
+  department: unknown | null;
+  class_subjects: ClassSubject[];
+  class_teacher: UserSlice | null;
+  students: StudentSlice[] | [];
+  students_count: number;
+  subjects_count: number;
+}
