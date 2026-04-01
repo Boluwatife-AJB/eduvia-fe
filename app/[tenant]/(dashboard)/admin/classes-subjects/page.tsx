@@ -27,9 +27,9 @@ export default function ClassesSubjects() {
       <div className="flex-1 overflow-hidden flex flex-col">
         <Tabs
           defaultValue="classes"
-          className="h-[calc(100vh-140px)] flex flex-col"
+          className="h-[calc(100vh-200px)] flex flex-col"
         >
-          <TabsList className="w-fit mb-4">
+          <TabsList className="w-fit mb-4 h-12!">
             <TabsTrigger
               value="classes"
               className="px-6 h-10 data-active:text-primary relative data-active:bg-background data-active:shadow-sm"

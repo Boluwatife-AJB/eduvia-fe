@@ -24,6 +24,8 @@ import {
   PlusIcon,
 } from "@phosphor-icons/react";
 import AddSubjectSlider from "../modal/add-subject-slider";
+import { useQuery } from "@tanstack/react-query";
+import { apiClient } from "@/lib/api";
 
 export const mockSubjects = [
   {
@@ -68,9 +70,19 @@ export const mockSubjects = [
   },
 ];
 
+const fetchSubjects = async () => {
+  const response = await apiClient.get("/school-setup/subjects");
+  return response.data.data;
+};
+
 export default function SubjectsTabView() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddSliderOpen, setIsAddSliderOpen] = useState(false);
+
+  const { data: subjects, isLoading: isLoadingSubjects } = useQuery({
+    queryKey: ["subjects"],
+    queryFn: fetchSubjects,
+  });
 
   const filteredSubjects = useMemo(() => {
     if (!searchTerm) return mockSubjects;

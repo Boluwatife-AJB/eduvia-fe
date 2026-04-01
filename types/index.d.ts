@@ -234,7 +234,7 @@ interface StaffResponse {
   meta: Meta;
 }
 
-interface Subject {
+interface SubjectSlice {
   id: string;
   name: string;
   code: string;
@@ -246,7 +246,7 @@ interface ClassSubject {
   class_id: string;
   subject_id: string;
   subject_type: string;
-  subject: Subject;
+  subject: SubjectSlice;
 }
 
 interface StudentSlice {
@@ -276,4 +276,13 @@ interface ClassesResponse {
   students: StudentSlice[] | [];
   students_count: number;
   subjects_count: number;
+}
+
+interface Department {
+  id: string;
+  tenant_id: string;
+  name: string;
+  description: string | null;
+  hod: UserSlice | null;
+  subjects: SubjectSlice[] | [];
 }

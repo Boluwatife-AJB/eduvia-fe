@@ -143,6 +143,7 @@ export const createTimetableSlotSchema = z
 export const departmentSchema = z.object({
   name: z.string().min(1, { message: "Name is required" }),
   description: z.string().optional(),
+  hodId: z.string().optional(),
 });
 
 export const subjectSchema = departmentSchema.extend({

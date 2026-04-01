@@ -1,16 +1,14 @@
 "use client";
 
-import { Dialog, DialogOverlay, DialogPortal } from "@/components/ui/dialog";
-import { Dialog as DialogPrimitive } from "@base-ui/react/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Dialog, DialogOverlay, DialogPortal } from "@/components/ui/dialog";
 import {
   Field,
-  FieldLabel,
   FieldError,
   FieldGroup,
+  FieldLabel,
 } from "@/components/ui/field";
-import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -20,15 +18,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Controller, useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { Textarea } from "@/components/ui/textarea";
+import { useDepartments } from "@/hooks/use-department";
+import { apiClient } from "@/lib/api";
 import { subjectSchema } from "@/lib/schema";
-import { z } from "zod";
+import { SelectOption, SubjectFormValues } from "@/types";
+import { Dialog as DialogPrimitive } from "@base-ui/react/dialog";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   CaretRightIcon,
-  FloppyDiskIcon,
   CheckCircleIcon,
-} from "@phosphor-icons/react";
+  FloppyDiskIcon,
+  XCircleIcon,
+} from "@phosphor-icons/react/dist/ssr";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 
 interface AddSubjectSliderProps {
@@ -38,7 +42,17 @@ interface AddSubjectSliderProps {
   editingSubject?: any;
 }
 
-type SubjectFormValues = z.infer<typeof subjectSchema>;
+const addSubject = async (data: SubjectFormValues) => {
+  const payload = {
+    name: data.name,
+    code: data.code,
+    title: data.title,
+    department_id: data.departmentId,
+    description: data.description,
+  };
+  const response = await apiClient.post("/school-setup/subjects", payload);
+  return response.data;
+};
 
 export default function AddSubjectSlider({
   open,
@@ -46,6 +60,8 @@ export default function AddSubjectSlider({
   editingSubject,
 }: AddSubjectSliderProps) {
   const isEdit = !!editingSubject;
+  const queryClient = useQueryClient();
+  const { departments, isLoading: isLoadingDepartments } = useDepartments();
 
   const form = useForm<SubjectFormValues>({
     resolver: zodResolver(subjectSchema),
@@ -59,6 +75,29 @@ export default function AddSubjectSlider({
     },
   });
 
+  const { mutateAsync: addSubjectMutation, isPending: isAddingSubject } =
+    useMutation({
+      mutationFn: addSubject,
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["subjects"] });
+        toast.success("Subject created successfully", {
+          icon: (
+            <CheckCircleIcon
+              className="size-5 text-emerald-500"
+              weight="fill"
+            />
+          ),
+        });
+        reset();
+        onClose();
+      },
+      onError: () => {
+        toast.error("Failed to create subject", {
+          icon: <XCircleIcon className="size-5 text-red-500" weight="fill" />,
+        });
+      },
+    });
+
   const {
     handleSubmit,
     control,
@@ -66,19 +105,8 @@ export default function AddSubjectSlider({
     reset,
   } = form;
 
-  const onSubmit = async () => {
-    // Simulate API Call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    toast.success(
-      isEdit ? "Subject updated successfully" : "Subject created successfully",
-      {
-        icon: (
-          <CheckCircleIcon className="size-5 text-emerald-500" weight="fill" />
-        ),
-      },
-    );
-    reset();
-    onClose();
+  const onSubmit = async (data: SubjectFormValues) => {
+    addSubjectMutation(data);
   };
 
   const handleClose = () => {
@@ -199,11 +227,10 @@ export default function AddSubjectSlider({
                           <Select
                             value={field.value}
                             onValueChange={field.onChange}
-                            items={[
-                              { label: "Sciences", value: "dept_1" },
-                              { label: "Arts", value: "dept_2" },
-                              { label: "Commercial", value: "dept_3" },
-                            ]}
+                            items={departments.map((department) => ({
+                              label: department.label,
+                              value: department.value,
+                            }))}
                           >
                             <SelectTrigger className="h-11! w-full px-3 shadow-sm">
                               <SelectValue placeholder="Select Department" />
@@ -211,11 +238,28 @@ export default function AddSubjectSlider({
                             <SelectContent alignItemWithTrigger={false}>
                               <SelectGroup>
                                 <SelectLabel>Departments</SelectLabel>
-                                <SelectItem value="dept_1">Sciences</SelectItem>
-                                <SelectItem value="dept_2">Arts</SelectItem>
-                                <SelectItem value="dept_3">
-                                  Commercial
-                                </SelectItem>
+                                {/* {departments.map((department: SelectOption) => (
+                                  <SelectItem key={department.value} value={department.value}>
+                                    {department.label}
+                                  </SelectItem>
+                                ))} */}
+                                {isLoadingDepartments ? (
+                                  <SelectItem value="loading">
+                                    Loading...
+                                  </SelectItem>
+                                ) : (
+                                  departments.map(
+                                    (department: SelectOption) => (
+                                      <SelectItem
+                                        key={department.value}
+                                        value={department.value}
+                                      >
+                                        {department.label}
+                                      </SelectItem>
+                                    ),
+                                  )
+                                )}
+                                {/* {} */}
                               </SelectGroup>
                             </SelectContent>
                           </Select>

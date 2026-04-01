@@ -1,43 +1,78 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Field,
-  FieldLabel,
   FieldError,
   FieldGroup,
+  FieldLabel,
 } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
-import { Controller, useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { useTeachers } from "@/hooks/use-teachers";
+import { apiClient } from "@/lib/api";
 import { departmentSchema } from "@/lib/schema";
-import { z } from "zod";
-import { FloppyDiskIcon, CheckCircleIcon } from "@phosphor-icons/react";
+import { Department, DepartmentFormValues, SelectOption } from "@/types";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { CheckCircleIcon, FloppyDiskIcon } from "@phosphor-icons/react";
+import { XCircleIcon } from "@phosphor-icons/react/dist/ssr";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 
 interface AddDepartmentModalProps {
   open: boolean;
   onClose: () => void;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  editingDepartment?: any;
+  editingDepartment?: Department;
 }
 
-type DepartmentFormValues = z.infer<typeof departmentSchema>;
+const addDepartment = async (data: DepartmentFormValues) => {
+  const payload = {
+    name: data.name,
+    description: data.description,
+    hod_id: data.hodId || null,
+  };
+  const response = await apiClient.post("/school-setup/departments", payload);
+  return response.data.data;
+};
+
+const updateDepartment = async (data: DepartmentFormValues, deptId: string) => {
+  const payload = {
+    name: data.name,
+    description: data.description,
+    hod_id: data.hodId || null,
+  };
+  const response = await apiClient.patch(
+    `/school-setup/departments/${deptId}`,
+    payload,
+  );
+  return response.data.data;
+};
 
 export default function AddDepartmentModal({
   open,
   onClose,
   editingDepartment,
 }: AddDepartmentModalProps) {
+  const queryClient = useQueryClient();
   const isEdit = !!editingDepartment;
+  const { teachers, isLoading: isLoadingTeachers } = useTeachers();
 
   const form = useForm<DepartmentFormValues>({
     resolver: zodResolver(departmentSchema),
@@ -45,6 +80,7 @@ export default function AddDepartmentModal({
     defaultValues: {
       name: editingDepartment?.name || "",
       description: editingDepartment?.description || "",
+      hodId: editingDepartment?.hod?.id || "",
     },
   });
 
@@ -55,20 +91,63 @@ export default function AddDepartmentModal({
     reset,
   } = form;
 
-  const onSubmit = async () => {
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    toast.success(
-      isEdit
-        ? "Department updated successfully"
-        : "Department created successfully",
-      {
+  const { mutateAsync: addDepartmentMutation, isPending: isAddingDepartment } =
+    useMutation({
+      mutationFn: addDepartment,
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["departments"] });
+        toast.success("Department created successfully", {
+          icon: (
+            <CheckCircleIcon
+              className="size-5 text-emerald-500"
+              weight="fill"
+            />
+          ),
+        });
+        reset();
+        onClose();
+      },
+      onError: () => {
+        toast.error("Failed to create department", {
+          icon: <XCircleIcon className="size-5 text-red-500" weight="fill" />,
+        });
+      },
+    });
+
+  const {
+    mutateAsync: updateDepartmentMutation,
+    isPending: isUpdatingDepartment,
+  } = useMutation({
+    mutationFn: ({
+      data,
+      deptId,
+    }: {
+      data: DepartmentFormValues;
+      deptId: string;
+    }) => updateDepartment(data, deptId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["departments"] });
+      toast.success("Department updated successfully", {
         icon: (
           <CheckCircleIcon className="size-5 text-emerald-500" weight="fill" />
         ),
-      },
-    );
-    reset();
-    onClose();
+      });
+      reset();
+      onClose();
+    },
+    onError: () => {
+      toast.error("Failed to update department", {
+        icon: <XCircleIcon className="size-5 text-red-500" weight="fill" />,
+      });
+    },
+  });
+
+  const onSubmit = (data: DepartmentFormValues) => {
+    if (isEdit && editingDepartment?.id) {
+      updateDepartmentMutation({ data, deptId: editingDepartment?.id });
+    } else {
+      addDepartmentMutation(data);
+    }
   };
 
   const handleClose = () => {
@@ -118,6 +197,46 @@ export default function AddDepartmentModal({
                   )}
                 />
 
+                <Controller
+                  control={control}
+                  name="hodId"
+                  render={({ field, fieldState }) => (
+                    <Field>
+                      <FieldLabel>
+                        Assign HOD <span className="text-destructive">*</span>
+                      </FieldLabel>
+                      <Select
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        items={teachers.map((teacher) => ({
+                          label: teacher.label,
+                          value: teacher.value,
+                        }))}
+                      >
+                        <SelectTrigger className="h-12! w-full px-3">
+                          <SelectValue placeholder="Select HOD" />
+                        </SelectTrigger>
+                        <SelectContent alignItemWithTrigger={false}>
+                          <SelectGroup>
+                            <SelectLabel>Teachers</SelectLabel>
+                            {teachers.map((teacher: SelectOption) => (
+                              <SelectItem
+                                key={teacher.value}
+                                value={teacher.value}
+                              >
+                                {teacher.label}
+                              </SelectItem>
+                            ))}
+                          </SelectGroup>
+                        </SelectContent>
+                      </Select>
+                      {fieldState.invalid && (
+                        <FieldError errors={[fieldState.error]} />
+                      )}
+                    </Field>
+                  )}
+                />
+
                 {/* Description */}
                 <Controller
                   control={control}
@@ -126,7 +245,7 @@ export default function AddDepartmentModal({
                     <Field>
                       <FieldLabel>Description / Notes</FieldLabel>
                       <Textarea
-                        className="min-h-[100px] shadow-sm resize-none"
+                        className="max-h-[100px] shadow-sm resize-none"
                         placeholder="Optional outline of the department..."
                         {...field}
                       />
@@ -155,10 +274,25 @@ export default function AddDepartmentModal({
             type="submit"
             form="department-form"
             className="h-11 px-6 shadow-md gap-2"
-            disabled={!isValid || isSubmitting}
+            disabled={
+              !isValid ||
+              isSubmitting ||
+              isAddingDepartment ||
+              isUpdatingDepartment
+            }
           >
             <FloppyDiskIcon className="size-4" weight="fill" />
-            {isEdit ? "Update Department" : "Create Department"}
+            {isEdit ? (
+              isUpdatingDepartment ? (
+                <Spinner className="size-4" />
+              ) : (
+                "Update Department"
+              )
+            ) : isAddingDepartment ? (
+              <Spinner className="size-4" />
+            ) : (
+              "Create Department"
+            )}
           </Button>
         </div>
       </DialogContent>
