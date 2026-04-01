@@ -812,3 +812,53 @@ export const nonTeachingStaffRoles = [
     label: "Administrative Staff",
   },
 ];
+
+export const days = [
+  {
+    value: "monday",
+    label: "Monday",
+  },
+  {
+    value: "tuesday",
+    label: "Tuesday",
+  },
+  {
+    value: "wednesday",
+    label: "Wednesday",
+  },
+  {
+    value: "thursday",
+    label: "Thursday",
+  },
+  {
+    value: "friday",
+    label: "Friday",
+  },
+  {
+    value: "saturday",
+    label: "Saturday",
+  },
+  {
+    value: "sunday",
+    label: "Sunday",
+  },
+];
+
+export const levels = [
+  {
+    value: "nursery",
+    label: "Nursery",
+  },
+  {
+    value: "primary",
+    label: "Primary",
+  },
+  {
+    value: "jss",
+    label: "JSS",
+  },
+  {
+    value: "sss",
+    label: "SSS",
+  },
+];

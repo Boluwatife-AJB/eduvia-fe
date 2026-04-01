@@ -2,7 +2,9 @@ import { isValid, parse } from "date-fns";
 import { z } from "zod";
 import {
   classOfDegreeOptions,
+  days,
   genderOptions,
+  levels,
   nonTeachingStaffRoles,
   relationshipOptions,
 } from "./data";
@@ -28,33 +30,6 @@ export const signInSchema = z.object({
     .min(8, { message: "Password is required" })
     .describe("The password you use to sign in"),
 });
-
-// {
-//   "role": "STUDENT",
-//   "first_name": "Adetayo",
-//   "last_name": "Adelabu",
-//   "identifier": "GFA/2026/0001",
-//   "email": "adetayoadelabu@greenfieldacademy.edu.ng",
-//   "phone": "+2348061234567",
-//   "date_of_birth": "2007-02-21",
-//   "password": "Password123",
-//   "matric_number": "GFA/2026/0001",
-//   "admission_date": "2026-09-04",
-//   "class_id": "string",
-//   "employee_id": "string",
-//   "qualification": "B.Sc Computer Science",
-//   "subject_ids": [
-//     "subject-id-1",
-//     "subject-id-2"
-//   ],
-//   "staff_type": "nurse",
-//   "guardian_id": "string",
-//   "relationship": "string",
-//   "ward_ids": [
-//     "string"
-//   ],
-//   "occupation": "string"
-// }
 
 export const addStudentSchema = z
   .object({
@@ -142,4 +117,49 @@ export const addParentSchema = z.object({
     .string()
     .min(1, { message: "Confirm password is required" }),
   enforceChangePassword: z.boolean().default(false),
+});
+
+export const createTimetableSlotSchema = z
+  .object({
+    classId: z.string().min(1, { message: "Class is required" }),
+    teacherId: z.string().min(1, { message: "Teacher is required" }),
+    subjectId: z.string().min(1, { message: "Subject is required" }),
+    startTime: z.string().min(1, { message: "Start time is required" }),
+    endTime: z.string().min(1, { message: "End time is required" }),
+    day: z.enum(
+      days.map((option) => option.value),
+      {
+        message: "Day is required",
+      },
+    ),
+    venue: z.string().min(1, { message: "Venue is required" }),
+    color: z.string().min(1, { message: "Color is required" }),
+  })
+  .refine((data) => data.startTime < data.endTime, {
+    message: "Start time must be before end time",
+    path: ["startTime", "endTime"],
+  });
+
+export const departmentSchema = z.object({
+  name: z.string().min(1, { message: "Name is required" }),
+  description: z.string().optional(),
+});
+
+export const subjectSchema = departmentSchema.extend({
+  code: z.string().min(1, { message: "Code is required" }),
+  title: z.string().min(1, { message: "Title is required" }),
+  departmentId: z.string().min(1, { message: "Department is required" }),
+});
+
+export const classSchema = z.object({
+  name: z.string().min(1, { message: "Class Name is required" }),
+  level: z.enum(
+    levels.map((level) => level.value),
+    {
+      message: "Level is required",
+    },
+  ),
+  capacity: z.string().min(1, { message: "Class capacity is required" }),
+  departmentId: z.string().optional(),
+  classTeacherId: z.string().optional(),
 });

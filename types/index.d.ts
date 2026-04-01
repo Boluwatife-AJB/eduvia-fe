@@ -3,7 +3,11 @@ import {
   addStaffSchema,
   addStudentSchema,
   addTeacherSchema,
+  classSchema,
+  createTimetableSlotSchema,
+  departmentSchema,
   signInSchema,
+  subjectSchema,
 } from "@/lib/schema";
 import { Icon } from "@phosphor-icons/react";
 import { z } from "zod";
@@ -13,6 +17,10 @@ type AddStudentFormValues = z.infer<typeof addStudentSchema>;
 type AddTeacherFormValues = z.infer<typeof addTeacherSchema>;
 type AddParentFormValues = z.infer<typeof addParentSchema>;
 type AddStaffFormValues = z.infer<typeof addStaffSchema>;
+type CreateTimetableSlotFormValues = z.infer<typeof createTimetableSlotSchema>;
+type ClassFormValues = z.infer<typeof classSchema>;
+type DepartmentFormValues = z.infer<typeof departmentSchema>;
+type SubjectFormValues = z.infer<typeof subjectSchema>;
 
 type Gender = "MALE" | "FEMALE";
 
