@@ -26,6 +26,7 @@ import {
 import AddSubjectSlider from "../modal/add-subject-slider";
 import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api";
+import { Subject } from "@/types";
 
 export const mockSubjects = [
   {
@@ -70,7 +71,7 @@ export const mockSubjects = [
   },
 ];
 
-const fetchSubjects = async () => {
+const fetchSubjects = async (): Promise<Subject[]> => {
   const response = await apiClient.get("/school-setup/subjects");
   return response.data.data;
 };
@@ -85,14 +86,16 @@ export default function SubjectsTabView() {
   });
 
   const filteredSubjects = useMemo(() => {
-    if (!searchTerm) return mockSubjects;
-    return mockSubjects.filter(
-      (s) =>
-        s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        s.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        s.department.toLowerCase().includes(searchTerm.toLowerCase()),
+    if (!searchTerm) return subjects ?? [];
+    return (
+      subjects?.filter(
+        (s) =>
+          s.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          s.code?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          s.department?.name?.toLowerCase().includes(searchTerm.toLowerCase()),
+      ) ?? []
     );
-  }, [searchTerm]);
+  }, [searchTerm, subjects]);
 
   return (
     <div className="pt-6 animate-in fade-in duration-300 flex flex-col h-[calc(100vh-200px)]">
@@ -164,12 +167,12 @@ export default function SubjectsTabView() {
                         variant="outline"
                         className="bg-background text-xs font-medium"
                       >
-                        {subject.department}
+                        {subject.department?.name}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-center">
                       <div className="inline-flex items-center justify-center font-bold px-2.5 py-1 rounded-md bg-muted text-foreground text-xs">
-                        {subject.assignedClasses}
+                        {subject.classes_assigned?.length ?? 0}
                       </div>
                     </TableCell>
                     <TableCell className="text-right px-6">
@@ -179,7 +182,7 @@ export default function SubjectsTabView() {
                             <Button
                               variant="ghost"
                               size="icon-sm"
-                              className="opacity-0 group-hover:opacity-100 transition-opacity data-open:opacity-100"
+                              className="transition-opacity data-open:opacity-100"
                             />
                           }
                         >

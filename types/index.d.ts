@@ -42,6 +42,8 @@ type AdminRoles =
   | "ASST_HEAD_TEACHER"
   | "SCHOOL_OWNER";
 
+type SubjectType = "COMPULSORY" | "ELECTIVE" | "OPTIONAL";
+
 interface SelectOption {
   value: string;
   label: string;
@@ -261,6 +263,12 @@ interface UserSlice {
   first_name: string;
   last_name: string;
 }
+
+interface ClassSlice {
+  id: string;
+  name: string;
+  level: string;
+}
 interface ClassesResponse {
   id: string;
   tenant_id: string;
@@ -285,4 +293,69 @@ interface Department {
   description: string | null;
   hod: UserSlice | null;
   subjects: SubjectSlice[] | [];
+}
+
+interface DepartmentSlice {
+  id: string;
+  name: string;
+}
+
+interface Subject {
+  id: string;
+  tenant_id: string;
+  name: string;
+  code: string;
+  title: string;
+  description: string | null;
+  department_id: string;
+  department: {
+    id: string;
+    name: string;
+  };
+  classes_assigned: ClassSlice[];
+  teachers_assigned: UserSlice[];
+}
+
+interface ClassSubjectSlice {
+  id: string;
+  subject_id: string;
+  subject_type: SubjectType;
+  name: string;
+  code: string;
+  title: string;
+  description: string | null;
+  department: DepartmentSlice;
+}
+
+interface RegisteredSubjectSlice {
+  id: string;
+  name: string;
+  code: string;
+  title: string;
+  department: DepartmentSlice;
+}
+
+interface ClassStudentSlice {
+  user_id: string;
+  gender: Gender;
+  first_name: string;
+  last_name: string;
+  matric_number: string;
+  avatar: string | null;
+  email: string | null;
+  registered_subjects: RegisteredSubjectSlice[];
+}
+
+interface ClassDetailsResponse {
+  id: string;
+  tenant_id: string;
+  name: string;
+  level: string;
+  capacity: number;
+  department: DepartmentSlice | null;
+  class_teacher: UserSlice | null;
+  class_subjects: ClassSubjectSlice[];
+  students: ClassStudentSlice[];
+  student_count: number;
+  subject_count: number;
 }

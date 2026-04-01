@@ -268,7 +268,7 @@ export default function ClassesTabView() {
       <ClassDetailsDrawer
         classId={selectedClassId}
         onClose={() => setSelectedClassId(null)}
-        classData={mockClasses.find((c) => c.id === selectedClassId)}
+        // classData={classes?.find((c) => c.id === selectedClassId)}
       />
 
       <AddClassModal

@@ -28,26 +28,6 @@ const fetchDepartments = async (): Promise<Department[]> => {
   return response.data.data;
 };
 
-// Description for Science
-const scienceDescription =
-  "The Science Department is responsible for teaching and researching the natural and physical sciences. It includes subjects such as biology, chemistry, physics, and mathematics. The department is also responsible for conducting research and experiments to advance the understanding of the natural and physical sciences.";
-
-// Description for Arts
-const artsDescription =
-  "The Arts Department is responsible for teaching and researching the arts. It includes subjects such as literature, history, and philosophy. The department is also responsible for conducting research and experiments to advance the understanding of the arts.";
-
-// Description for Commercial
-const commercialDescription =
-  "The Commercial Department is responsible for teaching and researching the commercial subjects. It includes subjects such as business, economics, and accounting. The department is also responsible for conducting research and experiments to advance the understanding of the commercial subjects.";
-
-// Description for Humanities
-const humanitiesDescription =
-  "The Humanities Department is responsible for teaching and researching the humanities. It includes subjects such as literature, history, and philosophy. The department is also responsible for conducting research and experiments to advance the understanding of the humanities.";
-
-// Description for Social Sciences
-const socialSciencesDescription =
-  "The Social Sciences Department is responsible for teaching and researching the social sciences. It includes subjects such as sociology, psychology, and economics. The department is also responsible for conducting research and experiments to advance the understanding of the social sciences.";
-
 function DepartmentCardSkeleton() {
   return (
     <Card className="p-5 border-border/50 bg-card/60 pointer-events-none">
