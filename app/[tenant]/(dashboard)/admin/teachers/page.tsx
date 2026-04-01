@@ -100,7 +100,7 @@ function getTeacherColumns(
 
     {
       accessorKey: "identifier",
-      header: "Matric Number",
+      header: "Staff ID",
     },
 
     {

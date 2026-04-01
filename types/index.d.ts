@@ -1,5 +1,6 @@
 import {
   addParentSchema,
+  addStaffSchema,
   addStudentSchema,
   addTeacherSchema,
   signInSchema,
@@ -11,6 +12,7 @@ type SignInFormValues = z.infer<typeof signInSchema>;
 type AddStudentFormValues = z.infer<typeof addStudentSchema>;
 type AddTeacherFormValues = z.infer<typeof addTeacherSchema>;
 type AddParentFormValues = z.infer<typeof addParentSchema>;
+type AddStaffFormValues = z.infer<typeof addStaffSchema>;
 
 type Gender = "MALE" | "FEMALE";
 
@@ -101,7 +103,19 @@ interface StudentProfile {
 interface GuardianProfile {
   occupation: string | null;
   relationship: string;
-  ward_ids: string[];
+  wards: Array<{
+    id: string;
+    last_name: string;
+    first_name: string;
+  }>;
+}
+
+interface StaffProfile {
+  staff_id: string;
+  staff_type: string;
+  department_id: string | null;
+  gender: Gender;
+  date_joined: string | null;
 }
 
 interface Student {
@@ -161,6 +175,25 @@ interface Parent {
   relationship: string | null;
   guardian_profile: GuardianProfile;
 }
+
+interface Staff {
+  id: string;
+  tenant_id: string;
+  role: string;
+  identifier: string;
+  first_name: string;
+  last_name: string;
+  gender: Gender;
+  email: string | null;
+  phone: string | null;
+  avatar: string | null;
+  status: string;
+  mfa_enabled: boolean;
+  last_login_at: string | null;
+  created_at: string;
+  updated_at: string;
+  staff_profile: StaffProfile;
+}
 interface Meta {
   total: number;
   page: number;
@@ -182,5 +215,10 @@ interface TeachersResponse {
 
 interface ParentsResponse {
   data: Parent[];
+  meta: Meta;
+}
+
+interface StaffResponse {
+  data: Staff[];
   meta: Meta;
 }

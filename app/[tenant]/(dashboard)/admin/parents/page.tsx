@@ -133,8 +133,10 @@ function getParentColumns(
       accessorKey: "wards",
       header: "Ward(s)",
       cell: ({ row }) => (
-        <div>
-          {(row.original.guardian_profile?.ward_ids ?? []).join(", ") || "—"}
+        <div className="max-w-40 text-wrap max-h-10 truncate">
+          {(row.original.guardian_profile?.wards ?? [])
+            .map((ward) => `${ward.first_name} ${ward.last_name}`)
+            .join(", ") || "—"}
         </div>
       ),
     },
