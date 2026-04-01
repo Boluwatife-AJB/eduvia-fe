@@ -112,10 +112,13 @@ interface GuardianProfile {
 
 interface StaffProfile {
   staff_id: string;
-  staff_type: string;
-  department_id: string | null;
+  staff_role: string;
+  qualification: string;
+  class_of_degree: string;
+  course_of_study: string;
+  year_of_graduation: string;
   gender: Gender;
-  date_joined: string | null;
+  date_joined: string;
 }
 
 interface Student {

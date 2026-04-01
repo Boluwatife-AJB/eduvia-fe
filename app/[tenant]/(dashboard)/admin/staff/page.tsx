@@ -39,6 +39,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { apiClient } from "@/lib/api";
 import {
   classOfDegreeOptions,
+  nonTeachingStaffRoles,
   qualificationOptions,
   userStatusOptions,
 } from "@/lib/data";
@@ -115,26 +116,38 @@ function getStaffColumns(
       ),
     },
     {
+      accessorKey: "staff_role",
+      header: "Staff Role",
+      cell: ({ row }) => (
+        <div className="capitalize">
+          {nonTeachingStaffRoles.find(
+            (option) =>
+              option.value ===
+              row.original.staff_profile?.staff_role?.toLowerCase(),
+          )?.label ?? "—"}
+        </div>
+      ),
+    },
+    {
       id: "qualification_course_of_study",
       header: "Qualification",
       cell: ({ row }) => {
-        const staffType = row.original.staff_profile?.staff_type;
+        const qualification = row.original.staff_profile?.qualification;
         return (
           <div>
-            {staffType
-              ? staffType
+            {qualification
+              ? qualification
                   .replace(/_/g, " ")
                   .replace(/\b\w/g, (c) => c.toUpperCase())
               : "—"}
+            {row.original.staff_profile?.course_of_study
+              ? `, ${row.original.staff_profile?.course_of_study}`
+              : ""}
           </div>
         );
       },
     },
-    {
-      accessorKey: "class_of_degree",
-      header: "Class of Degree",
-      cell: () => <div>—</div>,
-    },
+
     {
       accessorKey: "graduation_year",
       header: ({ column }) => (
@@ -152,7 +165,9 @@ function getStaffColumns(
           )}
         </Button>
       ),
-      cell: ({ row }) => <div>{row.original.staff_profile.date_joined}</div>,
+      cell: ({ row }) => (
+        <div>{row.original.staff_profile?.year_of_graduation}</div>
+      ),
     },
     {
       accessorKey: "status",
