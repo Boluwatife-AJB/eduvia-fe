@@ -38,7 +38,6 @@ import { Spinner } from "@/components/ui/spinner";
 import { apiClient } from "@/lib/api";
 import {
   classOfDegreeOptions,
-  genderOptions,
   qualificationOptions,
   userStatusOptions,
 } from "@/lib/data";
@@ -68,7 +67,21 @@ function getTeacherColumns(
   return [
     {
       accessorKey: "full_name",
-      header: "Full Name",
+      header: ({ column }) => (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="-ml-2 hover:bg-transparent"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Full Name
+          {column.getIsSorted() === "asc" ? (
+            <CaretUpIcon className="ml-1 size-3.5" />
+          ) : (
+            <CaretDownIcon className="ml-1 size-3.5" />
+          )}
+        </Button>
+      ),
       cell: ({ row }) => (
         <div className="flex items-center gap-3 pl-4">
           <Avatar>
@@ -102,7 +115,7 @@ function getTeacherColumns(
     },
     {
       id: "qualification_course_of_study",
-      header: "Qualification, Course of Study",
+      header: "Qualification",
       cell: ({ row }) => (
         <div>
           {`${
@@ -290,7 +303,6 @@ export default function Teachers() {
   const [isAddTeacherOpenModal, setIsAddTeacherOpenModal] = useState(false);
   const [search, setSearch] = useState("");
   const [filterOpen, setFilterOpen] = useState(false);
-  const [filterGender, setFilterGender] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
   const [page, setPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -319,7 +331,6 @@ export default function Teachers() {
   const activeFilterCount = useMemo(
     () =>
       [
-        filterGender,
         filterStatus,
         filterQualification,
         filterClassOfDegree,
@@ -327,7 +338,6 @@ export default function Teachers() {
         filterCourseOfStudy,
       ].filter(Boolean).length,
     [
-      filterGender,
       filterStatus,
       filterQualification,
       filterClassOfDegree,
@@ -364,7 +374,6 @@ export default function Teachers() {
   });
 
   const clearFilters = () => {
-    setFilterGender("");
     setFilterStatus("");
     setFilterQualification("");
     setFilterClassOfDegree("");
@@ -379,7 +388,6 @@ export default function Teachers() {
       "teachers",
       page,
       itemsPerPage,
-      filterGender,
       filterQualification,
       filterClassOfDegree,
       filterYearOfGraduation,
@@ -391,7 +399,6 @@ export default function Teachers() {
       fetchTeachers({
         page,
         limit: itemsPerPage,
-        gender: filterGender,
         qualification: filterQualification,
         classOfDegree: filterClassOfDegree,
         yearOfGraduation: filterYearOfGraduation,
@@ -424,7 +431,7 @@ export default function Teachers() {
         </Dialog>
       </div>
 
-      {/* Display Table with various filter by qualification, class of degree, year of graduation, course of study, gender, status */}
+      {/* Display Table with various filter by qualification, class of degree, year of graduation, course of study, and status */}
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           {/* Search Input */}
@@ -444,7 +451,7 @@ export default function Teachers() {
             </InputGroupAddon>
           </InputGroup>
 
-          {/* Filter by Qualification, Class of Degree, Year of Graduation, Course of Study, Gender, Status */}
+          {/* Filter by Qualification, Class of Degree, Year of Graduation, Course of Study, and Status */}
           <div className="flex items-center gap-2">
             {/* TODO: Move to a separate component */}
             <Popover open={filterOpen} onOpenChange={setFilterOpen}>
@@ -478,36 +485,6 @@ export default function Teachers() {
                       Clear all
                     </Button>
                   )}
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-muted-foreground">
-                    Gender
-                  </label>
-                  <div className="flex flex-wrap gap-1.5">
-                    {genderOptions.map((gender) => (
-                      <Button
-                        key={gender.value}
-                        variant={
-                          filterGender === gender.value ? "primary" : "outline"
-                        }
-                        size="sm"
-                        className={cn(
-                          "h-7 text-xs capitalize",
-                          filterGender === gender.value &&
-                            "bg-primary-blue hover:bg-primary-blue/90 text-white",
-                        )}
-                        onClick={() => {
-                          setFilterGender(
-                            filterGender === gender.value ? "" : gender.value,
-                          );
-                          setPage(1);
-                        }}
-                      >
-                        {gender.label}
-                      </Button>
-                    ))}
-                  </div>
                 </div>
 
                 <div className="space-y-1.5">

@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/select";
 import { useClasses } from "@/hooks/use-classes";
 import { apiClient } from "@/lib/api";
-import { genderOptions, userStatusOptions } from "@/lib/data";
+import { userStatusOptions } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import { SelectOption, Student, StudentsResponse } from "@/types";
 import {
@@ -73,7 +73,21 @@ function getStudentColumns(
   return [
     {
       accessorKey: "full_name",
-      header: "Full Name",
+      header: ({ column }) => (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="-ml-2 hover:bg-transparent"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Full Name
+          {column.getIsSorted() === "asc" ? (
+            <CaretUpIcon className="ml-1 size-3.5" />
+          ) : (
+            <CaretDownIcon className="ml-1 size-3.5" />
+          )}
+        </Button>
+      ),
       cell: ({ row }) => (
         <div className="flex items-center gap-3 pl-4">
           <Avatar>
@@ -116,7 +130,7 @@ function getStudentColumns(
         <Button
           variant="ghost"
           size="sm"
-          className="-ml-2 h-8 px-2"
+          className="-ml-2 hover:bg-transparent"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
           Level
@@ -257,7 +271,6 @@ export default function Students() {
   const queryClient = useQueryClient();
   const { classes } = useClasses();
   const [filterOpen, setFilterOpen] = useState(false);
-  const [filterGender, setFilterGender] = useState("");
   const [filterClass, setFilterClass] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
   const [search, setSearch] = useState("");
@@ -310,12 +323,11 @@ export default function Students() {
   });
 
   const activeFilterCount = useMemo(
-    () => [filterGender, filterClass, filterStatus].filter(Boolean).length,
-    [filterGender, filterClass, filterStatus],
+    () => [filterClass, filterStatus].filter(Boolean).length,
+    [filterClass, filterStatus],
   );
 
   const clearFilters = () => {
-    setFilterGender("");
     setFilterClass("");
     setFilterStatus("");
     setFilterOpen(false);
@@ -327,7 +339,6 @@ export default function Students() {
       "students",
       page,
       itemsPerPage,
-      filterGender,
       filterClass,
       filterStatus,
       search,
@@ -336,7 +347,6 @@ export default function Students() {
       fetchStudents({
         page,
         limit: itemsPerPage,
-        gender: filterGender,
         class_id: filterClass,
         status: filterStatus,
         search: search.trim() || undefined,
@@ -366,7 +376,7 @@ export default function Students() {
         </Dialog>
       </div>
 
-      {/* Display Table with various filter by class, gender, level */}
+      {/* Display Table with various filter by class and status */}
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           {/* Search Input */}
@@ -386,7 +396,7 @@ export default function Students() {
             </InputGroupAddon>
           </InputGroup>
 
-          {/* Filter by Class, Gender, Level */}
+          {/* Filter by Class and Status */}
           <div className="flex items-center gap-2">
             {/* TODO: Move to a separate component */}
             <Popover open={filterOpen} onOpenChange={setFilterOpen}>
@@ -420,36 +430,6 @@ export default function Students() {
                       Clear all
                     </Button>
                   )}
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-muted-foreground">
-                    Gender
-                  </label>
-                  <div className="flex flex-wrap gap-1.5">
-                    {genderOptions.map((gender) => (
-                      <Button
-                        key={gender.value}
-                        variant={
-                          filterGender === gender.value ? "primary" : "outline"
-                        }
-                        size="sm"
-                        className={cn(
-                          "h-7 text-xs capitalize",
-                          filterGender === gender.value &&
-                            "bg-primary-blue hover:bg-primary-blue/90 text-white",
-                        )}
-                        onClick={() => {
-                          setFilterGender(
-                            filterGender === gender.value ? "" : gender.value,
-                          );
-                          setPage(1);
-                        }}
-                      >
-                        {gender.label}
-                      </Button>
-                    ))}
-                  </div>
                 </div>
 
                 <div className="space-y-1.5">

@@ -331,7 +331,7 @@ export const schoolAdminNavSections: NavSection[] = [
         Icon: UsersThreeIcon,
       },
       {
-        title: "Staff",
+        title: "Non-Teaching Staff",
         href: "/admin/staff",
         Icon: BriefcaseMetalIcon,
       },
@@ -706,4 +706,109 @@ export const userStatusOptions = [
   "PENDING",
   "BLOCKED",
   "DELETED",
+];
+
+export const relationshipOptions = [
+  {
+    value: "father",
+    label: "Father",
+  },
+  {
+    value: "mother",
+    label: "Mother",
+  },
+  {
+    value: "guardian",
+    label: "Guardian",
+  },
+  {
+    value: "relative",
+    label: "Relative",
+  },
+];
+
+/*
+COUNSELOR
+  LAB_ATTENDANT
+  NURSE
+  LIBRARIAN
+  BURSAR
+  SUPPORT_STAFF
+  SECURITY_OFFICER
+  JANITOR
+  CLEANER
+  GARDENER
+  MAINTENANCE_STAFF
+  CLERK
+  RECEPTIONIST
+  SECRETARY
+  ADMINISTRATIVE_ASSISTANT
+  ADMINISTRATIVE_STAFF
+*/
+
+export const nonTeachingStaffRoles = [
+  {
+    value: "counselor",
+    label: "Counselor",
+  },
+  {
+    value: "lab_attendant",
+    label: "Lab Attendant",
+  },
+  {
+    value: "nurse",
+    label: "Nurse",
+  },
+  {
+    value: "librarian",
+    label: "Librarian",
+  },
+  {
+    value: "bursar",
+    label: "Bursar",
+  },
+  {
+    value: "support_staff",
+    label: "Support Staff",
+  },
+  {
+    value: "security_officer",
+    label: "Security Officer",
+  },
+  {
+    value: "janitor",
+    label: "Janitor",
+  },
+  {
+    value: "cleaner",
+    label: "Cleaner",
+  },
+  {
+    value: "gardener",
+    label: "Gardener",
+  },
+  {
+    value: "maintenance_staff",
+    label: "Maintenance Staff",
+  },
+  {
+    value: "clerk",
+    label: "Clerk",
+  },
+  {
+    value: "receptionist",
+    label: "Receptionist",
+  },
+  {
+    value: "secretary",
+    label: "Secretary",
+  },
+  {
+    value: "administrative_assistant",
+    label: "Administrative Assistant",
+  },
+  {
+    value: "administrative_staff",
+    label: "Administrative Staff",
+  },
 ];

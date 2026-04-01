@@ -1,10 +1,16 @@
-import { addStudentSchema, addTeacherSchema, signInSchema } from "@/lib/schema";
+import {
+  addParentSchema,
+  addStudentSchema,
+  addTeacherSchema,
+  signInSchema,
+} from "@/lib/schema";
 import { Icon } from "@phosphor-icons/react";
 import { z } from "zod";
 
 type SignInFormValues = z.infer<typeof signInSchema>;
 type AddStudentFormValues = z.infer<typeof addStudentSchema>;
 type AddTeacherFormValues = z.infer<typeof addTeacherSchema>;
+type AddParentFormValues = z.infer<typeof addParentSchema>;
 
 type Gender = "MALE" | "FEMALE";
 
@@ -92,6 +98,12 @@ interface StudentProfile {
   };
 }
 
+interface GuardianProfile {
+  occupation: string | null;
+  relationship: string;
+  ward_ids: string[];
+}
+
 interface Student {
   id: string;
   tenant_id: string;
@@ -130,6 +142,25 @@ interface Teacher {
   teacher_profile: TeacherProfile;
 }
 
+interface Parent {
+  id: string;
+  tenant_id: string;
+  role: "PARENT";
+  identifier: string;
+  first_name: string;
+  last_name: string;
+  gender: Gender;
+  email: string | null;
+  phone: string | null;
+  avatar: string | null;
+  status: string;
+  mfa_enabled: boolean;
+  last_login_at: string | null;
+  created_at: string;
+  updated_at: string;
+  relationship: string | null;
+  guardian_profile: GuardianProfile;
+}
 interface Meta {
   total: number;
   page: number;
@@ -146,5 +177,10 @@ interface StudentsResponse {
 
 interface TeachersResponse {
   data: Teacher[];
+  meta: Meta;
+}
+
+interface ParentsResponse {
+  data: Parent[];
   meta: Meta;
 }

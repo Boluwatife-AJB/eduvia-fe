@@ -1,6 +1,11 @@
 import { isValid, parse } from "date-fns";
 import { z } from "zod";
-import { classOfDegreeOptions, genderOptions } from "./data";
+import {
+  classOfDegreeOptions,
+  genderOptions,
+  nonTeachingStaffRoles,
+  relationshipOptions,
+} from "./data";
 
 export const DATE_OF_BIRTH_INPUT_FORMAT = "dd/MM/yyyy";
 
@@ -115,6 +120,7 @@ export const addStaffSchema = z
     gender: z.enum(genderOptions.map((option) => option.value)),
     identifier: z.string().min(1, { message: "Identifier is required" }),
     qualification: z.string().min(1, { message: "Qualification is required" }),
+    role: z.enum(nonTeachingStaffRoles.map((option) => option.value)),
     password: z.string().min(1, { message: "Password is required" }),
     confirmPassword: z
       .string()
@@ -130,6 +136,16 @@ export const addParentSchema = z.object({
   firstName: z.string().min(1, { message: "First name is required" }),
   lastName: z.string().min(1, { message: "Last name is required" }),
   gender: z.enum(genderOptions.map((option) => option.value)),
+  wards: z.array(z.string()).min(1, { message: "Wards are required" }),
+  relationship: z.enum(
+    relationshipOptions.map((option) => option.value),
+    {
+      message: "Relationship is required",
+    },
+  ),
+  occupation: z.string().optional(),
+  email: z.email({ message: "Invalid email address" }),
+  phone: z.string().min(1, { message: "Phone number is required" }),
   identifier: z.string().min(1, { message: "Identifier is required" }),
   password: z.string().min(1, { message: "Password is required" }),
   confirmPassword: z
