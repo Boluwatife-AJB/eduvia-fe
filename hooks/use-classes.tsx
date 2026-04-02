@@ -1,12 +1,10 @@
 "use client";
 
 import { apiClient } from "@/lib/api";
+import { ClassesResponse } from "@/types";
 import { useQuery } from "@tanstack/react-query";
 
-interface ClassResponse {
-  id: string;
-  name: string;
-}
+// Move all the hooks into the tenant context
 
 const fetchClasses = async () => {
   const response = await apiClient.get("/school-setup/classes/names");
@@ -27,7 +25,7 @@ export function useClasses() {
     retry: 2,
   });
 
-  const classes = classesData?.map((cls: ClassResponse) => ({
+  const classes = classesData?.map((cls: ClassesResponse) => ({
     value: cls.id,
     label: cls.name,
   }));

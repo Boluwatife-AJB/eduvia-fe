@@ -3,6 +3,8 @@ import {
   addStaffSchema,
   addStudentSchema,
   addTeacherSchema,
+  assignSubjectsToClassSchema,
+  assignTeacherToSubjectSchema,
   classSchema,
   createTimetableSlotSchema,
   departmentSchema,
@@ -21,6 +23,12 @@ type CreateTimetableSlotFormValues = z.infer<typeof createTimetableSlotSchema>;
 type ClassFormValues = z.infer<typeof classSchema>;
 type DepartmentFormValues = z.infer<typeof departmentSchema>;
 type SubjectFormValues = z.infer<typeof subjectSchema>;
+type AssignSubjectsToClassFormValues = z.infer<
+  typeof assignSubjectsToClassSchema
+>;
+type AssignTeacherToSubjectFormValues = z.infer<
+  typeof assignTeacherToSubjectSchema
+>;
 
 type Gender = "MALE" | "FEMALE";
 
@@ -358,4 +366,22 @@ interface ClassDetailsResponse {
   students: ClassStudentSlice[];
   student_count: number;
   subject_count: number;
+}
+
+interface SubjectDetailsResponse {
+  id: string;
+  tenant_id: string;
+  name: string;
+  code: string;
+  title: string;
+  description: string | null;
+  department: DepartmentSlice;
+  classes_assigned: Array<ClassSlice & { class_id: string }>;
+  teachers_assigned: Array<UserSlice & { user_id: string }>;
+  student_offering: Array<
+    UserSlice & { user_id: string; matric_number: string }
+  >;
+  classes_count: number;
+  teachers_count: number;
+  student_count: number;
 }

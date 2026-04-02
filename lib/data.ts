@@ -862,3 +862,18 @@ export const levels = [
     label: "SSS",
   },
 ];
+
+export const subjectTypes = [
+  {
+    value: "COMPULSORY",
+    label: "Compulsory",
+  },
+  {
+    value: "ELECTIVE",
+    label: "Elective",
+  },
+  {
+    value: "OPTIONAL",
+    label: "Optional",
+  },
+];

@@ -24,6 +24,7 @@ import {
   PlusIcon,
 } from "@phosphor-icons/react";
 import AddSubjectSlider from "../modal/add-subject-slider";
+import SubjectDetailsSheet from "../modal/subject-details-sheet";
 import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api";
 import { Subject } from "@/types";
@@ -79,6 +80,9 @@ const fetchSubjects = async (): Promise<Subject[]> => {
 export default function SubjectsTabView() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddSliderOpen, setIsAddSliderOpen] = useState(false);
+  const [selectedSubjectId, setSelectedSubjectId] = useState<string | null>(
+    null,
+  );
 
   const { data: subjects, isLoading: isLoadingSubjects } = useQuery({
     queryKey: ["subjects"],
@@ -151,7 +155,8 @@ export default function SubjectsTabView() {
                 filteredSubjects.map((subject) => (
                   <TableRow
                     key={subject.id}
-                    className="group hover:bg-muted/30 transition-colors"
+                    className="group hover:bg-muted/30 transition-colors cursor-pointer"
+                    onClick={() => setSelectedSubjectId(subject.id)}
                   >
                     <TableCell className="font-medium px-6 text-foreground">
                       {subject.code}
@@ -175,7 +180,10 @@ export default function SubjectsTabView() {
                         {subject.classes_assigned?.length ?? 0}
                       </div>
                     </TableCell>
-                    <TableCell className="text-right px-6">
+                    <TableCell
+                      className="text-right px-6"
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       <DropdownMenu>
                         <DropdownMenuTrigger
                           render={
@@ -190,7 +198,11 @@ export default function SubjectsTabView() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-40">
                           <DropdownMenuItem>Edit Subject</DropdownMenuItem>
-                          <DropdownMenuItem>View Details</DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => setSelectedSubjectId(subject.id)}
+                          >
+                            View Details
+                          </DropdownMenuItem>
                           <DropdownMenuItem className="text-destructive focus:bg-destructive/10 focus:text-destructive">
                             Delete Subject
                           </DropdownMenuItem>
@@ -208,6 +220,11 @@ export default function SubjectsTabView() {
       <AddSubjectSlider
         open={isAddSliderOpen}
         onClose={() => setIsAddSliderOpen(false)}
+      />
+
+      <SubjectDetailsSheet
+        subjectId={selectedSubjectId}
+        onClose={() => setSelectedSubjectId(null)}
       />
     </div>
   );

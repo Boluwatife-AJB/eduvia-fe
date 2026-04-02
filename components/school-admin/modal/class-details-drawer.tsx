@@ -47,6 +47,7 @@ export default function ClassDetailsDrawer({
   const { data: classData } = useQuery({
     queryKey: ["class-details", classId],
     queryFn: () => fetchClassDetails(classId!),
+    enabled: !!classId,
   });
 
   if (!classId) return null;

@@ -7,6 +7,7 @@ import {
   levels,
   nonTeachingStaffRoles,
   relationshipOptions,
+  subjectTypes,
 } from "./data";
 
 export const DATE_OF_BIRTH_INPUT_FORMAT = "dd/MM/yyyy";
@@ -163,4 +164,18 @@ export const classSchema = z.object({
   capacity: z.string().min(1, { message: "Class capacity is required" }),
   departmentId: z.string().optional(),
   classTeacherId: z.string().optional(),
+});
+
+export const assignSubjectsToClassSchema = z.object({
+  subjectType: z.enum(subjectTypes.map((option) => option.value)),
+  subjectId: z.string().min(1, { message: "Subject is required" }),
+  classId: z.string().min(1, { message: "Class is required" }),
+});
+
+export const assignTeacherToSubjectSchema = z.object({
+  teacherIds: z
+    .array(z.string())
+    .min(1, { message: "Select at least one teacher" }),
+  classId: z.string().min(1, { message: "Class is required" }),
+  subjectId: z.string().min(1, { message: "Subject is required" }),
 });
