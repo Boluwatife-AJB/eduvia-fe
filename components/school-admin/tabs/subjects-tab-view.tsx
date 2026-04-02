@@ -29,49 +29,6 @@ import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api";
 import { Subject } from "@/types";
 
-export const mockSubjects = [
-  {
-    id: "1",
-    code: "MTH101",
-    name: "Mathematics",
-    title: "General Mathematics",
-    department: "Sciences",
-    assignedClasses: 12,
-  },
-  {
-    id: "2",
-    code: "ENG101",
-    name: "English Language",
-    title: "Language & Comprehension",
-    department: "Arts",
-    assignedClasses: 15,
-  },
-  {
-    id: "3",
-    code: "PHY201",
-    name: "Physics",
-    title: "Core Physics",
-    department: "Sciences",
-    assignedClasses: 4,
-  },
-  {
-    id: "4",
-    code: "BIO202",
-    name: "Biology",
-    title: "Biology Practice",
-    department: "Sciences",
-    assignedClasses: 6,
-  },
-  {
-    id: "5",
-    code: "Gov101",
-    name: "Government",
-    title: "Civic Education",
-    department: "Arts",
-    assignedClasses: 8,
-  },
-];
-
 const fetchSubjects = async (): Promise<Subject[]> => {
   const response = await apiClient.get("/school-setup/subjects");
   return response.data.data;

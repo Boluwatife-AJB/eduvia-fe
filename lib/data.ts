@@ -815,31 +815,31 @@ export const nonTeachingStaffRoles = [
 
 export const days = [
   {
-    value: "monday",
+    value: "MONDAY",
     label: "Monday",
   },
   {
-    value: "tuesday",
+    value: "TUESDAY",
     label: "Tuesday",
   },
   {
-    value: "wednesday",
+    value: "WEDNESDAY",
     label: "Wednesday",
   },
   {
-    value: "thursday",
+    value: "THURSDAY",
     label: "Thursday",
   },
   {
-    value: "friday",
+    value: "FRIDAY",
     label: "Friday",
   },
   {
-    value: "saturday",
+    value: "SATURDAY",
     label: "Saturday",
   },
   {
-    value: "sunday",
+    value: "SUNDAY",
     label: "Sunday",
   },
 ];
@@ -876,4 +876,28 @@ export const subjectTypes = [
     value: "OPTIONAL",
     label: "Optional",
   },
+];
+
+export const times = [
+  // "07:00",
+  // "07:30",
+  "08:00",
+  "08:30",
+  "09:00",
+  "09:30",
+  "10:00",
+  "10:30",
+  "11:00",
+  "11:30",
+  "12:00",
+  "12:30",
+  "13:00",
+  "13:30",
+  "14:00",
+  "14:30",
+  "15:00",
+  "15:30",
+  "16:00",
+  // "16:30",
+  // "17:00",
 ];

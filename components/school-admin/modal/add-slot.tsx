@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Button } from "@/components/ui/button";
 import {
   DialogDescription,
@@ -21,43 +20,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Spinner } from "@/components/ui/spinner";
 import { useClasses } from "@/hooks/use-classes";
 import { useSubjects } from "@/hooks/use-subjects";
 import { useTeachers } from "@/hooks/use-teachers";
 import { apiClient } from "@/lib/api";
-import { days } from "@/lib/data";
+import { days, times } from "@/lib/data";
 import { createTimetableSlotSchema } from "@/lib/schema";
-import { CreateTimetableSlotFormValues } from "@/types";
+import { CreateTimetableSlotFormValues, SelectOption } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CheckIcon } from "@phosphor-icons/react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { DayOfWeek } from "react-day-picker";
+import { AxiosError } from "axios";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
-
-const timeOptions = [
-  "07:00",
-  "07:30",
-  "08:00",
-  "08:30",
-  "09:00",
-  "09:30",
-  "10:00",
-  "10:30",
-  "11:00",
-  "11:30",
-  "12:00",
-  "12:30",
-  "13:00",
-  "13:30",
-  "14:00",
-  "14:30",
-  "15:00",
-  "15:30",
-  "16:00",
-  "16:30",
-  "17:00",
-];
 
 const colorOptions = [
   {
@@ -89,7 +65,6 @@ const colorOptions = [
 
 interface AddSlotProps {
   onClose: () => void;
-  onSubmitSlot: (data: CreateTimetableSlotFormValues, id?: string) => void;
   defaultValues?: Partial<CreateTimetableSlotFormValues>;
   editingId?: string;
 }
@@ -111,13 +86,12 @@ const createTimetableSlot = async (data: CreateTimetableSlotFormValues) => {
 
 export default function AddSlotModal({
   onClose,
-  onSubmitSlot,
   defaultValues,
   editingId,
 }: AddSlotProps) {
   const { classes } = useClasses();
   const { teachers } = useTeachers();
-  const { subjects } = useSubjects();
+  const { subjects, isLoading } = useSubjects();
   const queryClient = useQueryClient();
 
   const isEdit = !!editingId;
@@ -148,8 +122,12 @@ export default function AddSlotModal({
       form.reset();
       onClose();
     },
-    onError: (error) => {
-      toast.error("Failed to create timetable slot");
+    onError: (error: AxiosError) => {
+      toast.error(
+        (error.response?.data as { message: string })?.message ||
+          "Failed to create timetable slot",
+      );
+      console.log(error);
     },
   });
 
@@ -162,6 +140,8 @@ export default function AddSlotModal({
   const onSubmit = (data: CreateTimetableSlotFormValues) => {
     createNewTimetableSlot(data);
   };
+
+  console.log(subjects);
 
   return (
     <div className="space-y-6">
@@ -191,7 +171,10 @@ export default function AddSlotModal({
                   <Select
                     value={field.value}
                     onValueChange={field.onChange}
-                    items={subjects}
+                    items={subjects.map((subject) => ({
+                      value: subject.value,
+                      label: subject.label,
+                    }))}
                   >
                     <SelectTrigger className="h-12! w-full px-3">
                       <SelectValue placeholder="Select subject" />
@@ -199,11 +182,15 @@ export default function AddSlotModal({
                     <SelectContent alignItemWithTrigger={false}>
                       <SelectGroup>
                         <SelectLabel>Subject</SelectLabel>
-                        {subjects.map((opt: any) => (
-                          <SelectItem key={opt.value} value={opt.value}>
-                            {opt.label}
-                          </SelectItem>
-                        ))}
+                        {isLoading ? (
+                          <SelectItem value="loading">Loading...</SelectItem>
+                        ) : (
+                          subjects?.map((opt: SelectOption) => (
+                            <SelectItem key={opt.value} value={opt.value}>
+                              {opt.label}
+                            </SelectItem>
+                          ))
+                        )}
                       </SelectGroup>
                     </SelectContent>
                   </Select>
@@ -234,7 +221,7 @@ export default function AddSlotModal({
                     <SelectContent alignItemWithTrigger={false}>
                       <SelectGroup>
                         <SelectLabel>Class</SelectLabel>
-                        {classes.map((opt: any) => (
+                        {classes.map((opt: SelectOption) => (
                           <SelectItem key={opt.value} value={opt.value}>
                             {opt.label}
                           </SelectItem>
@@ -269,7 +256,7 @@ export default function AddSlotModal({
                     <SelectContent alignItemWithTrigger={false}>
                       <SelectGroup>
                         <SelectLabel>Teacher</SelectLabel>
-                        {teachers.map((opt: any) => (
+                        {teachers.map((opt: SelectOption) => (
                           <SelectItem key={opt.value} value={opt.value}>
                             {opt.label}
                           </SelectItem>
@@ -304,7 +291,7 @@ export default function AddSlotModal({
                     <SelectContent alignItemWithTrigger={false}>
                       <SelectGroup>
                         <SelectLabel>Day</SelectLabel>
-                        {days.map((opt: any) => (
+                        {days.map((opt: SelectOption) => (
                           <SelectItem key={opt.value} value={opt.value}>
                             {opt.label}
                           </SelectItem>
@@ -352,7 +339,7 @@ export default function AddSlotModal({
                   <Select
                     value={field.value}
                     onValueChange={field.onChange}
-                    items={timeOptions.map((t) => ({ label: t, value: t }))}
+                    items={times.map((t) => ({ label: t, value: t }))}
                   >
                     <SelectTrigger className="h-12! w-full px-3">
                       <SelectValue placeholder="08:00" />
@@ -362,7 +349,7 @@ export default function AddSlotModal({
                       className="max-h-[300px]"
                     >
                       <SelectGroup>
-                        {timeOptions.map((opt: string) => (
+                        {times.map((opt: string) => (
                           <SelectItem key={opt} value={opt}>
                             {opt}
                           </SelectItem>
@@ -389,7 +376,7 @@ export default function AddSlotModal({
                   <Select
                     value={field.value}
                     onValueChange={field.onChange}
-                    items={timeOptions.map((t) => ({ label: t, value: t }))}
+                    items={times.map((t) => ({ label: t, value: t }))}
                   >
                     <SelectTrigger className="h-12! w-full px-3">
                       <SelectValue placeholder="09:00" />
@@ -399,7 +386,7 @@ export default function AddSlotModal({
                       className="max-h-[300px]"
                     >
                       <SelectGroup>
-                        {timeOptions.map((opt: string) => (
+                        {times.map((opt: string) => (
                           <SelectItem key={opt} value={opt}>
                             {opt}
                           </SelectItem>
@@ -469,9 +456,20 @@ export default function AddSlotModal({
               variant="primary"
               className="h-10 px-6"
               type="submit"
-              disabled={!isValid}
+              disabled={!isValid || isCreatingTimetableSlot}
             >
-              {isEdit ? "Update Slot" : "Create Slot"}
+              {isCreatingTimetableSlot ? (
+                <>
+                  <Spinner className="size-4" />
+                  <span>
+                    {isEdit ? "Updating slot..." : "Creating slot..."}
+                  </span>
+                </>
+              ) : isEdit ? (
+                "Update Slot"
+              ) : (
+                "Create Slot"
+              )}
             </Button>
           </div>
         </FieldGroup>

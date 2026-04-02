@@ -52,6 +52,8 @@ type AdminRoles =
 
 type SubjectType = "COMPULSORY" | "ELECTIVE" | "OPTIONAL";
 
+type DayOfWeek = "MONDAY" | "TUESDAY" | "WEDNESDAY" | "THURSDAY" | "FRIDAY";
+
 interface SelectOption {
   value: string;
   label: string;
@@ -248,6 +250,7 @@ interface SubjectSlice {
   id: string;
   name: string;
   code: string;
+  title?: string;
 }
 
 interface ClassSubject {
@@ -384,4 +387,33 @@ interface SubjectDetailsResponse {
   classes_count: number;
   teachers_count: number;
   student_count: number;
+}
+
+interface TimeTableSlot {
+  id: string;
+  tenant_id: string;
+  day_of_week: DayOfWeek;
+  start_time: string;
+  end_time: string;
+  venue: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  class: ClassSlice;
+  subject: SubjectSlice;
+  teacher: UserSlice;
+  academic_term: {
+    id: string;
+    name: string;
+    start_date: string;
+    end_date: string;
+    is_current: boolean;
+    academicSession: {
+      id: string;
+      name: string;
+      start_date: string;
+      end_date: string;
+      is_current: boolean;
+    };
+  };
 }
