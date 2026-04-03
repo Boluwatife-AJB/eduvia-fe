@@ -27,7 +27,11 @@ import { useTeachers } from "@/hooks/use-teachers";
 import { apiClient } from "@/lib/api";
 import { days, times } from "@/lib/data";
 import { createTimetableSlotSchema } from "@/lib/schema";
-import { CreateTimetableSlotFormValues, SelectOption } from "@/types";
+import {
+  CreateTimetableSlotFormValues,
+  SelectOption,
+  TimeTableSlot,
+} from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CheckIcon } from "@phosphor-icons/react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -65,7 +69,7 @@ const colorOptions = [
 
 interface AddSlotProps {
   onClose: () => void;
-  defaultValues?: Partial<CreateTimetableSlotFormValues>;
+  defaultValues?: TimeTableSlot;
   editingId?: string;
 }
 
@@ -81,6 +85,24 @@ const createTimetableSlot = async (data: CreateTimetableSlotFormValues) => {
   };
 
   const response = await apiClient.post("/timetable/slots", payload);
+  return response.data.data;
+};
+
+const updateTimetableSlot = async (
+  data: CreateTimetableSlotFormValues,
+  id: string,
+) => {
+  const payload = {
+    // class_id: data.classId,
+    // subject_id: data.subjectId,
+    teacher_id: data.teacherId,
+    day_of_week: data.day,
+    start_time: data.startTime,
+    end_time: data.endTime,
+    venue: data.venue,
+  };
+
+  const response = await apiClient.put(`/timetable/slots/${id}`, payload);
   return response.data.data;
 };
 
@@ -100,14 +122,14 @@ export default function AddSlotModal({
     resolver: zodResolver(createTimetableSlotSchema),
     mode: "onChange",
     defaultValues: {
-      classId: defaultValues?.classId || "",
-      teacherId: defaultValues?.teacherId || "",
-      subjectId: defaultValues?.subjectId || "",
-      startTime: defaultValues?.startTime || "",
-      endTime: defaultValues?.endTime || "",
-      // day: defaultValues?.day || ("" as DayOfWeek),
+      classId: defaultValues?.class.id || "",
+      teacherId: defaultValues?.teacher.user_id || "",
+      subjectId: defaultValues?.subject.id || "",
+      startTime: defaultValues?.start_time || "",
+      endTime: defaultValues?.end_time || "",
+      day: defaultValues?.day_of_week || "",
       venue: defaultValues?.venue || "",
-      color: defaultValues?.color || colorOptions[0].value,
+      // color: defaultValues?.subject.id ? SLOT_PALETTES[hashString(defaultValues?.subject.id)] : colorOptions[0].value,
     },
   });
 
@@ -141,7 +163,7 @@ export default function AddSlotModal({
     createNewTimetableSlot(data);
   };
 
-  console.log(subjects);
+  // console.log(teachers);
 
   return (
     <div className="space-y-6">

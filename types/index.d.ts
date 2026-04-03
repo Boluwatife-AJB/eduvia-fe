@@ -273,12 +273,15 @@ interface UserSlice {
   id: string;
   first_name: string;
   last_name: string;
+  user_id?: string;
+  matric_number?: string;
 }
 
 interface ClassSlice {
   id: string;
   name: string;
   level: string;
+  class_id?: string;
 }
 interface ClassesResponse {
   id: string;
@@ -379,11 +382,9 @@ interface SubjectDetailsResponse {
   title: string;
   description: string | null;
   department: DepartmentSlice;
-  classes_assigned: Array<ClassSlice & { class_id: string }>;
-  teachers_assigned: Array<UserSlice & { user_id: string }>;
-  student_offering: Array<
-    UserSlice & { user_id: string; matric_number: string }
-  >;
+  classes_assigned: ClassSlice[];
+  teachers_assigned: UserSlice[];
+  student_offering: UserSlice[];
   classes_count: number;
   teachers_count: number;
   student_count: number;

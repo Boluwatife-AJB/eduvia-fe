@@ -1,11 +1,9 @@
-// /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useMemo, useState } from "react";
+import AddSlotModal from "@/components/school-admin/modal/add-slot";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import AddSlotModal from "@/components/school-admin/modal/add-slot";
 import {
   Popover,
   PopoverContent,
@@ -20,7 +18,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useClasses } from "@/hooks/use-classes";
+import { useSubjects } from "@/hooks/use-subjects";
+import { useTeachers } from "@/hooks/use-teachers";
+import { apiClient } from "@/lib/api";
+import { days, times } from "@/lib/data";
 import { cn } from "@/lib/utils";
+import { SelectOption, TimeTableSlot } from "@/types";
 import {
   ClockIcon,
   FunnelSimpleIcon,
@@ -28,36 +32,14 @@ import {
   PlusIcon,
   UserCircleIcon,
   UsersIcon,
-  XIcon,
   WarningCircleIcon,
+  XIcon,
 } from "@phosphor-icons/react";
-import { useClasses } from "@/hooks/use-classes";
-import { useTeachers } from "@/hooks/use-teachers";
-import { useSubjects } from "@/hooks/use-subjects";
-import { days, times } from "@/lib/data";
-import { apiClient } from "@/lib/api";
 import { useQuery } from "@tanstack/react-query";
-import { SelectOption, TimeTableSlot } from "@/types";
+import { useMemo, useState } from "react";
 
 /** Must match `times` in lib/data — grid columns are repeat(TIME_SLOT_COUNT, …). */
 const TIME_SLOT_COUNT = times.length;
-
-type Slot = {
-  id: string;
-  day: number;
-  startIdx: number;
-  duration: number;
-  subject: string;
-  subjectName: string;
-  classAbr: string;
-  classId: string;
-  teacherInitials: string;
-  teacherName: string;
-  teacherId: string;
-  room: string;
-  color: string;
-  isConflict: boolean;
-};
 
 const SLOT_PALETTES = [
   "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800",
@@ -103,56 +85,57 @@ function timeEndIndex(label: string): number {
   return gt >= 0 ? gt : times.length;
 }
 
-function mapTimeTableSlotToGrid(api: TimeTableSlot): Slot | null {
-  const day = days.findIndex((d) => d.value === api.day_of_week);
-  if (day < 0) return null;
+// function mapTimeTableSlotToGrid(api: TimeTableSlot): Slot | null {
+//   const day = days.findIndex((d) => d.value === api.day_of_week);
+//   if (day < 0) return null;
 
-  const startLabel = normalizeWallTime(api.start_time);
-  const endLabel = normalizeWallTime(api.end_time);
-  const startIdx = timeStartIndex(startLabel);
-  const endIdx = timeEndIndex(endLabel);
-  const duration = Math.max(endIdx - startIdx, 1);
+//   const startLabel = normalizeWallTime(api.start_time);
+//   const endLabel = normalizeWallTime(api.end_time);
+//   const startIdx = timeStartIndex(startLabel);
+//   const endIdx = timeEndIndex(endLabel);
+//   const duration = Math.max(endIdx - startIdx, 1);
 
-  const subjectName =
-    api.subject?.name ?? api.subject?.title ?? api.subject?.code ?? "Subject";
-  const subject =
-    api.subject?.code?.slice(0, 3).toUpperCase() ||
-    subjectName.split(" ")[0]?.toUpperCase().slice(0, 3) ||
-    "SUB";
+//   const subjectName =
+//     api.subject?.name ?? api.subject?.title ?? api.subject?.code ?? "Subject";
+//   const subject =
+//     api.subject?.code?.slice(0, 3).toUpperCase() ||
+//     subjectName.split(" ")[0]?.toUpperCase().slice(0, 3) ||
+//     "SUB";
 
-  const t = api.teacher;
-  const teacherName = t
-    ? `${t.first_name ?? ""} ${t.last_name ?? ""}`.trim()
-    : "";
-  const teacherInitials = t
-    ? `${t.first_name?.[0] ?? ""}${t.last_name?.[0] ?? ""}`
-        .toUpperCase()
-        .slice(0, 2) || "T"
-    : "T";
+//   const t = api.teacher;
+//   const teacherName = t
+//     ? `${t.first_name ?? ""} ${t.last_name ?? ""}`.trim()
+//     : "";
+//   const teacherInitials = t
+//     ? `${t.first_name?.[0] ?? ""}${t.last_name?.[0] ?? ""}`
+//         .toUpperCase()
+//         .slice(0, 2) || "T"
+//     : "T";
 
-  return {
-    id: api.id,
-    day,
-    startIdx,
-    duration,
-    subject,
-    subjectName,
-    classAbr: api.class?.name ?? "",
-    classId: api.class?.id ?? "",
-    teacherInitials,
-    teacherName,
-    teacherId: api.teacher?.id ?? "",
-    room: api.venue ?? "",
-    color: paletteForId(api.subject?.id ?? api.id),
-    isConflict: false,
-  };
-}
+//   return {
+//     id: api.id,
+//     day,
+//     startIdx,
+//     duration,
+//     subject,
+//     subjectName,
+//     classAbr: api.class?.name ?? "",
+//     classId: api.class?.id ?? "",
+//     teacherInitials,
+//     teacherName,
+//     teacherId: api.teacher?.id ?? "",
+//     room: api.venue ?? "",
+//     color: paletteForId(api.subject?.id ?? api.id),
+//     isConflict: false,
+//   };
+// }
 
 /** True if two slots share any 30-min grid cell on the same day ([start, start + duration)). */
-function timeRangesOverlap(a: Slot, b: Slot): boolean {
-  if (a.day !== b.day) return false;
+function timeRangesOverlap(a: TimeTableSlot, b: TimeTableSlot): boolean {
+  if (a.day_of_week !== b.day_of_week) return false;
   return (
-    a.startIdx < b.startIdx + b.duration && b.startIdx < a.startIdx + a.duration
+    a.start_time < b.start_time + b.end_time &&
+    b.start_time < a.start_time + a.end_time
   );
 }
 
@@ -162,7 +145,7 @@ function timeRangesOverlap(a: Slot, b: Slot): boolean {
  * - Teacher: same teacher is scheduled in two overlapping slots (possibly different classes).
  * Empty classId/teacherId must not match — otherwise every overlapping pair falsely conflicts.
  */
-function markSlotConflicts(gridSlots: Slot[]): Slot[] {
+function markSlotConflicts(gridSlots: TimeTableSlot[]): TimeTableSlot[] {
   return gridSlots.map((s) => ({
     ...s,
     isConflict: gridSlots.some((o) => {
@@ -170,10 +153,10 @@ function markSlotConflicts(gridSlots: Slot[]): Slot[] {
       if (!timeRangesOverlap(s, o)) return false;
 
       const sameClass = Boolean(
-        s.classId && o.classId && s.classId === o.classId,
+        s.class.id && o.class.id && s.class.id === o.class.id,
       );
       const sameTeacher = Boolean(
-        s.teacherId && o.teacherId && s.teacherId === o.teacherId,
+        s.teacher.id && o.teacher.id && s.teacher.id === o.teacher.id,
       );
 
       return sameClass || sameTeacher;
@@ -200,11 +183,10 @@ export default function Timetable() {
   const [filterOpen, setFilterOpen] = useState(false);
   const [filterClass, setFilterClass] = useState("");
   const [filterTeacher, setFilterTeacher] = useState("");
-  const [draftSlots, setDraftSlots] = useState<Slot[]>([]);
   const [deletedSlotIds, setDeletedSlotIds] = useState<Set<string>>(
     () => new Set(),
   );
-  const [selectedSlot, setSelectedSlot] = useState<Slot | null>(null);
+  const [selectedSlot, setSelectedSlot] = useState<TimeTableSlot | null>(null);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingSlotId, setEditingSlotId] = useState<string | undefined>();
@@ -223,24 +205,13 @@ export default function Timetable() {
       }),
   });
 
-  const slotsFromApi = useMemo(() => {
-    const list = fetchedSlots ?? [];
-    return list
-      .filter((s) => s.is_active)
-      .map(mapTimeTableSlotToGrid)
-      .filter((s): s is Slot => s != null);
-  }, [fetchedSlots]);
-
   const slots = useMemo(() => {
-    const byId = new Map<string, Slot>();
-    for (const s of slotsFromApi) {
+    const byId = new Map<string, TimeTableSlot>();
+    for (const s of fetchedSlots ?? []) {
       if (!deletedSlotIds.has(s.id)) byId.set(s.id, s);
     }
-    for (const d of draftSlots) {
-      if (!deletedSlotIds.has(d.id)) byId.set(d.id, d);
-    }
     return markSlotConflicts([...byId.values()]);
-  }, [slotsFromApi, draftSlots, deletedSlotIds]);
+  }, [fetchedSlots, deletedSlotIds]);
 
   const activeFilterCount = useMemo(
     () => [filterClass, filterTeacher].filter(Boolean).length,
@@ -253,14 +224,9 @@ export default function Timetable() {
     setFilterOpen(false);
   };
 
-  const filteredSlots = useMemo(() => {
-    return slots.filter((slot) => {
-      let match = true;
-      if (filterClass && slot.classId !== filterClass) match = false;
-      if (filterTeacher && slot.teacherId !== filterTeacher) match = false;
-      return match;
-    });
-  }, [filterClass, filterTeacher, slots]);
+  // Class/teacher filters are applied server-side via query params. Do not filter
+  // again here — slot.classId / slot.teacherId may not match option values (e.g.
+  // nested user id vs directory id), which would hide every row despite a correct API response.
 
   const handleCreateNewClick = () => {
     setEditingSlotId(undefined);
@@ -276,27 +242,15 @@ export default function Timetable() {
   const handleDeleteSlot = () => {
     if (!selectedSlot) return;
     setDeletedSlotIds((prev) => new Set(prev).add(selectedSlot.id));
-    setDraftSlots((prev) => prev.filter((s) => s.id !== selectedSlot.id));
     setSelectedSlot(null);
   };
 
   // Build default values from selected slot properly mapping back strictly to schema matching values
   const editDefaultValues = useMemo(() => {
     if (!editingSlotId || !selectedSlot) return undefined;
-    return {
-      classId: selectedSlot.classId,
-      teacherId: selectedSlot.teacherId,
-      subjectId:
-        subjectOptions.find(
-          (s: SelectOption) => s.label === selectedSlot.subjectName,
-        )?.value || selectedSlot.subject.toLowerCase(),
-      startTime: times[selectedSlot.startIdx],
-      endTime: times[selectedSlot.startIdx + selectedSlot.duration] || "17:00",
-      day: days[selectedSlot.day]?.value ?? "MONDAY",
-      venue: selectedSlot.room,
-      color: selectedSlot.color,
-    };
-  }, [editingSlotId, selectedSlot, subjectOptions]);
+    // console.log(selectedSlot);
+    return selectedSlot;
+  }, [editingSlotId, selectedSlot]);
 
   return (
     <div className="px-8 py-6 h-full space-y-6">
@@ -463,12 +417,12 @@ export default function Timetable() {
             ))}
 
             {/* Timetable Overlaid Blocks */}
-            {filteredSlots.map((slot) => {
+            {slots.map((slot) => {
               const isSelected = selectedSlot?.id === slot.id;
               // Guard duration within visible time columns
               const validDuration = Math.min(
-                slot.duration,
-                TIME_SLOT_COUNT - slot.startIdx,
+                timeEndIndex(slot.end_time) - timeStartIndex(slot.start_time),
+                TIME_SLOT_COUNT - timeStartIndex(slot.start_time),
               );
               if (validDuration <= 0) return null;
 
@@ -484,15 +438,16 @@ export default function Timetable() {
                     isSelected
                       ? "z-30 ring-2 ring-primary ring-offset-2 ring-offset-background"
                       : "z-10",
-                    slot.color,
+                    paletteForId(slot.subject.id),
                   )}
                   style={{
-                    gridRow: slot.day + 2,
-                    gridColumn: `${slot.startIdx + 2} / span ${validDuration}`,
+                    gridRow:
+                      days.findIndex((d) => d.value === slot.day_of_week) + 2,
+                    gridColumn: `${timeStartIndex(slot.start_time) + 2} / span ${validDuration}`,
                   }}
                 >
                   {/* Conflict Striped Background */}
-                  {slot.isConflict && (
+                  {!slot.is_active && (
                     <div
                       className="absolute inset-0 opacity-15 pointer-events-none"
                       style={{
@@ -502,21 +457,24 @@ export default function Timetable() {
                   )}
 
                   <div className="font-bold text-sm tracking-tight relative z-10 truncate pr-4">
-                    {slot.subject}
+                    {slot.subject.name}
                   </div>
-                  {slot.isConflict && (
+                  {!slot.is_active && (
                     <WarningCircleIcon
                       weight="fill"
                       className="absolute top-2.5 right-2 size-4 text-destructive z-10"
                     />
                   )}
                   <div className="text-xs font-semibold opacity-90 title-font relative z-10 mt-1">
-                    {slot.classAbr}
+                    {slot.class.name}
                   </div>
                   <div className="text-[10px] uppercase font-bold mt-auto truncate relative z-10 opacity-80 pt-2 flex items-center justify-between">
-                    <span>{slot.teacherInitials}</span>
+                    <span>
+                      {slot.teacher.first_name?.[0] ?? ""}
+                      {slot.teacher.last_name?.[0] ?? ""}
+                    </span>
                     <span className="opacity-70 px-1 bg-black/5 dark:bg-white/10 rounded">
-                      {slot.room.trim() ? slot.room.split(" ")[0] : "—"}
+                      {slot.venue?.trim() ? slot.venue?.split(" ")[0] : "—"}
                     </span>
                   </div>
                 </div>
@@ -542,11 +500,16 @@ export default function Timetable() {
 
             <div className="p-5 flex flex-col flex-1 overflow-auto custom-scrollbar">
               <div className="mb-6">
-                <Badge className={cn("text-xs mb-2", selectedSlot.color)}>
-                  {selectedSlot.subject}
+                <Badge
+                  className={cn(
+                    "text-xs mb-2",
+                    paletteForId(selectedSlot.subject.id),
+                  )}
+                >
+                  {selectedSlot.subject.name}
                 </Badge>
                 <h3 className="text-xl font-assistant font-bold text-foreground">
-                  {selectedSlot.subjectName}
+                  {selectedSlot.subject.name}
                 </h3>
               </div>
 
@@ -560,8 +523,10 @@ export default function Timetable() {
                       Teacher
                     </span>
                     <span className="text-foreground font-semibold">
-                      {selectedSlot.teacherName} ({selectedSlot.teacherInitials}
-                      )
+                      {selectedSlot.teacher.first_name}{" "}
+                      {selectedSlot.teacher.last_name} (
+                      {selectedSlot.teacher.first_name?.[0] ?? ""}
+                      {selectedSlot.teacher.last_name?.[0] ?? ""})
                     </span>
                   </div>
                 </div>
@@ -575,7 +540,7 @@ export default function Timetable() {
                       Class
                     </span>
                     <span className="text-foreground font-semibold">
-                      {selectedSlot.classAbr}
+                      {selectedSlot.class.name}
                     </span>
                   </div>
                 </div>
@@ -589,10 +554,11 @@ export default function Timetable() {
                       Time
                     </span>
                     <span className="text-foreground font-semibold">
-                      {days[selectedSlot.day]?.label ?? "—"},{" "}
-                      {times[selectedSlot.startIdx]} -{" "}
-                      {times[selectedSlot.startIdx + selectedSlot.duration] ||
-                        "17:00"}
+                      {days.find((d) => d.value === selectedSlot.day_of_week)
+                        ?.label ?? "—"}
+                      , {normalizeWallTime(selectedSlot.start_time)} -{" "}
+                      {normalizeWallTime(selectedSlot.end_time) ||
+                        normalizeWallTime(selectedSlot.end_time)}
                     </span>
                   </div>
                 </div>
@@ -606,13 +572,13 @@ export default function Timetable() {
                       Room
                     </span>
                     <span className="text-foreground font-semibold">
-                      {selectedSlot.room}
+                      {selectedSlot.venue}
                     </span>
                   </div>
                 </div>
               </div>
 
-              {selectedSlot.isConflict && (
+              {!selectedSlot.is_active && (
                 <div className="mt-6 p-4 bg-destructive/10 text-destructive text-sm rounded-xl border border-destructive/20 text-center shadow-sm">
                   <WarningCircleIcon
                     weight="bold"
