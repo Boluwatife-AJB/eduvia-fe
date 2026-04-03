@@ -134,7 +134,7 @@ export const createTimetableSlotSchema = z
       },
     ),
     venue: z.string().min(1, { message: "Venue is required" }),
-    color: z.string().min(1, { message: "Color is required" }),
+    color: z.string().optional(),
   })
   .refine((data) => data.startTime < data.endTime, {
     message: "Start time must be before end time",

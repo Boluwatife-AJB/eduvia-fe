@@ -93,8 +93,8 @@ const updateTimetableSlot = async (
   id: string,
 ) => {
   const payload = {
-    // class_id: data.classId,
-    // subject_id: data.subjectId,
+    class_id: data.classId,
+    subject_id: data.subjectId,
     teacher_id: data.teacherId,
     day_of_week: data.day,
     start_time: data.startTime,
@@ -154,16 +154,39 @@ export default function AddSlotModal({
   });
 
   const {
+    mutateAsync: updateTimetableSlotMutation,
+    isPending: isUpdatingTimetableSlot,
+  } = useMutation({
+    mutationFn: (data: CreateTimetableSlotFormValues) =>
+      updateTimetableSlot(data, editingId!),
+    onSuccess: () => {
+      toast.success("Timetable slot updated successfully");
+      queryClient.invalidateQueries({ queryKey: ["timetable-slots"] });
+      form.reset();
+      onClose();
+    },
+    onError: (error: AxiosError) => {
+      toast.error(
+        (error.response?.data as { message: string })?.message ||
+          "Failed to update timetable slot",
+      );
+      console.log(error);
+    },
+  });
+
+  const {
     handleSubmit,
     control,
     formState: { isValid },
   } = form;
 
   const onSubmit = (data: CreateTimetableSlotFormValues) => {
-    createNewTimetableSlot(data);
+    if (isEdit && editingId) {
+      updateTimetableSlotMutation(data);
+    } else {
+      createNewTimetableSlot(data);
+    }
   };
-
-  // console.log(teachers);
 
   return (
     <div className="space-y-6">
@@ -478,9 +501,11 @@ export default function AddSlotModal({
               variant="primary"
               className="h-10 px-6"
               type="submit"
-              disabled={!isValid || isCreatingTimetableSlot}
+              disabled={
+                !isValid || isCreatingTimetableSlot || isUpdatingTimetableSlot
+              }
             >
-              {isCreatingTimetableSlot ? (
+              {isCreatingTimetableSlot || isUpdatingTimetableSlot ? (
                 <>
                   <Spinner className="size-4" />
                   <span>
