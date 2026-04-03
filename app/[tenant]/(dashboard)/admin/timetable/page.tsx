@@ -5,6 +5,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import {
+  Sheet,
+  SheetContent,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import {
   Popover,
   PopoverContent,
   PopoverTrigger,
@@ -19,7 +26,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useClasses } from "@/hooks/use-classes";
-import { useSubjects } from "@/hooks/use-subjects";
 import { useTeachers } from "@/hooks/use-teachers";
 import { apiClient } from "@/lib/api";
 import { days, times } from "@/lib/data";
@@ -194,7 +200,6 @@ export default function Timetable() {
   // Use Dynamic Data via our custom hooks
   const { classes: classOptions } = useClasses();
   const { teachers: teacherOptions } = useTeachers();
-  const { subjects: subjectOptions } = useSubjects();
 
   const { data: fetchedSlots, isLoading } = useQuery({
     queryKey: ["timetable-slots", filterClass, filterTeacher],
@@ -357,9 +362,9 @@ export default function Timetable() {
       </div>
 
       {/* Main Content Area */}
-      <div className="flex gap-6 min-h-0">
+      <div className="min-h-0">
         {/* Grid Container */}
-        <div className="relative flex-1 overflow-auto border border-border bg-card rounded-xl custom-scrollbar">
+        <div className="relative overflow-auto border border-border bg-card rounded-xl custom-scrollbar">
           {isLoading && (
             <div className="absolute inset-0 z-40 flex items-center justify-center rounded-xl bg-background/60 backdrop-blur-[2px]">
               <p className="text-sm font-medium text-muted-foreground">
@@ -482,119 +487,124 @@ export default function Timetable() {
             })}
           </div>
         </div>
+      </div>
 
-        {/* Conditional Right Sidebar Details */}
-        {selectedSlot && (
-          <div className="w-[300px] shrink-0 border border-border rounded-xl bg-card flex flex-col shadow-sm overflow-hidden animate-in slide-in-from-right-10 fade-in duration-300">
-            <div className="p-5 border-b border-border bg-muted/20 flex justify-between items-center">
-              <span className="font-bold text-lg">Slot Details</span>
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                className="size-6 rounded-full opacity-60 hover:opacity-100"
-                onClick={() => setSelectedSlot(null)}
-              >
-                <XIcon className="size-4" />
-              </Button>
-            </div>
+      <Sheet
+        open={selectedSlot !== null}
+        onOpenChange={(open) => {
+          if (!open) setSelectedSlot(null);
+        }}
+      >
+        <SheetContent
+          side="right"
+          showCloseButton
+          className="flex h-full w-full max-w-[min(100vw,400px)] flex-col gap-0 border-r p-0 sm:max-w-[400px]"
+        >
+          {selectedSlot && (
+            <>
+              <SheetHeader className="flex-row items-center justify-between space-y-0 border-b border-border bg-muted/20 p-5">
+                <SheetTitle className="font-bold text-lg">
+                  Slot Details
+                </SheetTitle>
+              </SheetHeader>
 
-            <div className="p-5 flex flex-col flex-1 overflow-auto custom-scrollbar">
-              <div className="mb-6">
-                <Badge
-                  className={cn(
-                    "text-xs mb-2",
-                    paletteForId(selectedSlot.subject.id),
-                  )}
-                >
-                  {selectedSlot.subject.name}
-                </Badge>
-                <h3 className="text-xl font-assistant font-bold text-foreground">
-                  {selectedSlot.subject.name}
-                </h3>
+              <div className="flex flex-1 flex-col overflow-y-auto p-5 custom-scrollbar">
+                <div className="mb-6">
+                  <Badge
+                    className={cn(
+                      "text-xs mb-2",
+                      paletteForId(selectedSlot.subject.id),
+                    )}
+                  >
+                    {selectedSlot.subject.name}
+                  </Badge>
+                  <h3 className="text-xl font-assistant font-bold text-foreground">
+                    {selectedSlot.subject.name}
+                  </h3>
+                </div>
+
+                <div className="space-y-4 text-sm bg-muted/30 p-4 rounded-xl border border-border/50">
+                  <div className="flex items-center gap-3">
+                    <div className="size-8 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                      <UserCircleIcon className="size-5" />
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-muted-foreground text-xs font-medium">
+                        Teacher
+                      </span>
+                      <span className="text-foreground font-semibold">
+                        {selectedSlot.teacher.first_name}{" "}
+                        {selectedSlot.teacher.last_name} (
+                        {selectedSlot.teacher.first_name?.[0] ?? ""}
+                        {selectedSlot.teacher.last_name?.[0] ?? ""})
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <div className="size-8 rounded-full bg-blue-500/10 text-blue-500 flex items-center justify-center shrink-0">
+                      <UsersIcon className="size-5" />
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-muted-foreground text-xs font-medium">
+                        Class
+                      </span>
+                      <span className="text-foreground font-semibold">
+                        {selectedSlot.class.name}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <div className="size-8 rounded-full bg-amber-500/10 text-amber-500 flex items-center justify-center shrink-0">
+                      <ClockIcon className="size-5" />
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-muted-foreground text-xs font-medium">
+                        Time
+                      </span>
+                      <span className="text-foreground font-semibold">
+                        {days.find((d) => d.value === selectedSlot.day_of_week)
+                          ?.label ?? "—"}
+                        , {normalizeWallTime(selectedSlot.start_time)} –{" "}
+                        {normalizeWallTime(selectedSlot.end_time)}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <div className="size-8 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center shrink-0">
+                      <MapPinIcon className="size-5" />
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-muted-foreground text-xs font-medium">
+                        Room
+                      </span>
+                      <span className="text-foreground font-semibold">
+                        {selectedSlot.venue}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {!selectedSlot.is_active && (
+                  <div className="mt-6 p-4 bg-destructive/10 text-destructive text-sm rounded-xl border border-destructive/20 text-center shadow-sm">
+                    <WarningCircleIcon
+                      weight="bold"
+                      className="size-6 mx-auto mb-2 text-destructive"
+                    />
+                    <div className="font-bold mb-1 text-base">
+                      Conflict Detected
+                    </div>
+                    <div className="opacity-90">
+                      This slot overlaps with another scheduled class or teacher
+                      assignment.
+                    </div>
+                  </div>
+                )}
               </div>
 
-              <div className="space-y-4 text-sm bg-muted/30 p-4 rounded-xl border border-border/50">
-                <div className="flex items-center gap-3">
-                  <div className="size-8 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0">
-                    <UserCircleIcon className="size-5" />
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="text-muted-foreground text-xs font-medium">
-                      Teacher
-                    </span>
-                    <span className="text-foreground font-semibold">
-                      {selectedSlot.teacher.first_name}{" "}
-                      {selectedSlot.teacher.last_name} (
-                      {selectedSlot.teacher.first_name?.[0] ?? ""}
-                      {selectedSlot.teacher.last_name?.[0] ?? ""})
-                    </span>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <div className="size-8 rounded-full bg-blue-500/10 text-blue-500 flex items-center justify-center shrink-0">
-                    <UsersIcon className="size-5" />
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="text-muted-foreground text-xs font-medium">
-                      Class
-                    </span>
-                    <span className="text-foreground font-semibold">
-                      {selectedSlot.class.name}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <div className="size-8 rounded-full bg-amber-500/10 text-amber-500 flex items-center justify-center shrink-0">
-                    <ClockIcon className="size-5" />
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="text-muted-foreground text-xs font-medium">
-                      Time
-                    </span>
-                    <span className="text-foreground font-semibold">
-                      {days.find((d) => d.value === selectedSlot.day_of_week)
-                        ?.label ?? "—"}
-                      , {normalizeWallTime(selectedSlot.start_time)} -{" "}
-                      {normalizeWallTime(selectedSlot.end_time) ||
-                        normalizeWallTime(selectedSlot.end_time)}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <div className="size-8 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center shrink-0">
-                    <MapPinIcon className="size-5" />
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="text-muted-foreground text-xs font-medium">
-                      Room
-                    </span>
-                    <span className="text-foreground font-semibold">
-                      {selectedSlot.venue}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {!selectedSlot.is_active && (
-                <div className="mt-6 p-4 bg-destructive/10 text-destructive text-sm rounded-xl border border-destructive/20 text-center shadow-sm">
-                  <WarningCircleIcon
-                    weight="bold"
-                    className="size-6 mx-auto mb-2 text-destructive"
-                  />
-                  <div className="font-bold mb-1 text-base">
-                    Conflict Detected
-                  </div>
-                  <div className="opacity-90">
-                    This slot overlaps with another scheduled class or teacher
-                    assignment.
-                  </div>
-                </div>
-              )}
-
-              <div className="mt-8 pt-6 border-t border-border flex flex-col gap-3">
+              <SheetFooter className="border-t border-border p-5 sm:flex-col">
                 <Button
                   variant="outline"
                   className="w-full h-11"
@@ -609,11 +619,11 @@ export default function Timetable() {
                 >
                   Delete Slot
                 </Button>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
+              </SheetFooter>
+            </>
+          )}
+        </SheetContent>
+      </Sheet>
 
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent className="max-w-[calc(100%-2rem)] sm:max-w-2xl p-6">
