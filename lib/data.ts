@@ -608,6 +608,14 @@ export const adminStatsCards = [
     iconColor: "#047857",
     backgroundColor: "#D1FAE5",
   },
+  {
+    title: "Pending Approvals",
+    value: 10,
+    change: "+1.2%",
+    Icon: ClipboardTextIcon,
+    iconColor: "#D97706",
+    backgroundColor: "#FEF3C7",
+  },
 ];
 
 export const genderOptions: SelectOption[] = [

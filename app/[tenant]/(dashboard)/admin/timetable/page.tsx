@@ -24,8 +24,9 @@ import { useTeachers } from "@/hooks/use-teachers";
 import { apiClient } from "@/lib/api";
 import { SelectOption, TimeTableSlot } from "@/types";
 import { FunnelSimpleIcon, PlusIcon, XIcon } from "@phosphor-icons/react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
+import { toast } from "sonner";
 
 /** True if two slots share any 30-min grid cell on the same day ([start, start + duration)). */
 function timeRangesOverlap(a: TimeTableSlot, b: TimeTableSlot): boolean {
@@ -76,7 +77,13 @@ const fetchTimeTableSlots = async (params: {
   return response.data.data;
 };
 
+const deleteTimetableSlot = async (id: string) => {
+  const response = await apiClient.delete(`/timetable/slots/${id}`);
+  return response.data.data;
+};
+
 export default function Timetable() {
+  const queryClient = useQueryClient();
   const [filterOpen, setFilterOpen] = useState(false);
   const [filterClass, setFilterClass] = useState("");
   const [filterTeacher, setFilterTeacher] = useState("");
@@ -99,6 +106,24 @@ export default function Timetable() {
         class_id: filterClass || undefined,
         teacher_id: filterTeacher || undefined,
       }),
+  });
+
+  const {
+    mutateAsync: deleteTimetableSlotMutation,
+    isPending: isDeletingTimetableSlot,
+  } = useMutation({
+    mutationFn: deleteTimetableSlot,
+    onSuccess: () => {
+      toast.success("Timetable slot deleted successfully");
+      setSelectedSlot(null);
+      setDeletedSlotIds(new Set());
+      queryClient.invalidateQueries({ queryKey: ["timetable-slots"] });
+    },
+    onError: () => {
+      toast.error("Failed to delete timetable slot");
+      setSelectedSlot(null);
+      setDeletedSlotIds(new Set());
+    },
   });
 
   const slots = useMemo(() => {
@@ -136,9 +161,11 @@ export default function Timetable() {
   };
 
   const handleDeleteSlot = () => {
-    if (!selectedSlot) return;
-    setDeletedSlotIds((prev) => new Set(prev).add(selectedSlot.id));
-    setSelectedSlot(null);
+    // if (!selectedSlot) return;
+    // setDeletedSlotIds((prev) => new Set(prev).add(selectedSlot.id));
+    // setSelectedSlot(null);
+    if (!selectedSlot?.id) return;
+    deleteTimetableSlotMutation(selectedSlot.id);
   };
 
   // Build default values from selected slot properly mapping back strictly to schema matching values
