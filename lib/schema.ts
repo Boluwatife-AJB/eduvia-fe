@@ -179,3 +179,10 @@ export const assignTeacherToSubjectSchema = z.object({
   classId: z.string().min(1, { message: "Class is required" }),
   subjectId: z.string().min(1, { message: "Subject is required" }),
 });
+
+export const createAcademicSessionSchema = z.object({
+  name: z.string().min(1, { message: "Name is required" }),
+  startDate: z.string().min(1, { message: "Start date is required" }),
+  endDate: z.string().min(1, { message: "End date is required" }),
+  isCurrent: z.boolean().default(false),
+});

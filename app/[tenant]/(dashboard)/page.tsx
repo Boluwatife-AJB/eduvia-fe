@@ -31,6 +31,7 @@ import {
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import AddStudent from "@/components/school-admin/modal/add-student";
 import AddTeacher from "@/components/school-admin/modal/add-teacher";
+import { useRouter } from "next/navigation";
 
 const fetchStats = async (): Promise<StatsResponse> => {
   const response = await apiClient.get("/users/stats");
@@ -115,6 +116,7 @@ const pendingApprovals = [
 
 export default function TenantDashboardPage() {
   const { user } = useUser();
+  const router = useRouter();
   const [addStudentModal, setAddStudentModal] = useState(false);
   const [addTeacherModal, setAddTeacherModal] = useState(false);
   // const [approveResultsModal, setApproveResultsModal] = useState(false);
@@ -351,6 +353,7 @@ export default function TenantDashboardPage() {
                 variant="ghost"
                 size="sm"
                 className="text-primary-blue hover:text-primary-blue/80 font-semibold text-xs h-8"
+                onClick={() => router.push("/admin/audit-logs")}
               >
                 View All
               </Button>

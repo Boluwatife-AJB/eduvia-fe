@@ -9,6 +9,7 @@ import {
 import {
   BankIcon,
   BookOpenTextIcon,
+  BooksIcon,
   BriefcaseMetalIcon,
   BuildingsIcon,
   CalendarBlankIcon,
@@ -26,16 +27,19 @@ import {
   FoldersIcon,
   GavelIcon,
   GearIcon,
+  GearSixIcon,
+  HeartbeatIcon,
   KeyIcon,
   ListMagnifyingGlassIcon,
   MegaphoneSimpleIcon,
   SoccerBallIcon,
   SquaresFourIcon,
   StudentIcon,
+  TrophyIcon,
   UserIcon,
   UsersThreeIcon,
   WalletIcon,
-} from "@phosphor-icons/react";
+} from "@phosphor-icons/react/dist/ssr";
 
 export const adminRoles: AdminRoles[] = [
   "ADMIN",
@@ -908,4 +912,59 @@ export const times = [
   "16:00",
   // "16:30",
   // "17:00",
+];
+
+export const schoolDocumentsScopes = [
+  {
+    id: "academic",
+    title: "Academic",
+    icon: BooksIcon,
+    items: [
+      "Class Documents",
+      "Subject Documents",
+      "Past Questions",
+      "Department Documents",
+    ],
+    active: true,
+  },
+  {
+    id: "administrative",
+    title: "Administrative",
+    icon: BuildingsIcon,
+    items: ["School Documents", "Staff Records", "Financial Records"],
+    active: true,
+  },
+  {
+    id: "welfare",
+    title: "Student Welfare",
+    icon: HeartbeatIcon,
+    items: ["Health", "Counseling", "Disciplinary"],
+    active: true,
+  },
+  {
+    id: "operations",
+    title: "Operations",
+    icon: GearSixIcon,
+    items: ["Library", "Laboratory", "Inventory", "Maintenance", "Visitors"],
+    active: true,
+  },
+  {
+    id: "events",
+    title: "Events",
+    icon: CalendarBlankIcon,
+    items: [
+      "PTA Meetings",
+      "Staff Meetings",
+      "School Events",
+      "Extracurricular",
+    ],
+    active: false,
+  },
+  {
+    id: "sport",
+    title: "Sport Records",
+    icon: TrophyIcon,
+    items: [],
+    active: false,
+  },
 ];
