@@ -258,7 +258,7 @@ export default function Timetable() {
   }, [editingSlotId, selectedSlot]);
 
   return (
-    <div className="px-8 py-6 h-full space-y-6">
+    <div className="px-8 pt-6 pb-4 h-full flex flex-col space-y-6 relative overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between shrink-0">
         <h1 className="text-3xl font-assistant font-bold">Timetable Builder</h1>
@@ -362,7 +362,7 @@ export default function Timetable() {
       </div>
 
       {/* Main Content Area */}
-      <div className="min-h-0">
+      <div className="flex flex-1 gap-6 min-h-0 overflow-hidden relative">
         {/* Grid Container */}
         <div className="relative overflow-auto border border-border bg-card rounded-xl custom-scrollbar">
           {isLoading && (
