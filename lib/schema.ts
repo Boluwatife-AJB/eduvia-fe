@@ -184,5 +184,5 @@ export const createAcademicSessionSchema = z.object({
   name: z.string().min(1, { message: "Name is required" }),
   startDate: z.string().min(1, { message: "Start date is required" }),
   endDate: z.string().min(1, { message: "End date is required" }),
-  isCurrent: z.boolean().default(false),
+  isCurrent: z.boolean(),
 });

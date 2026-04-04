@@ -1,4 +1,5 @@
 import { clsx, type ClassValue } from "clsx";
+import { isValid, parse } from "date-fns";
 import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
@@ -14,4 +15,12 @@ function formatDate(date: Date | undefined) {
     month: "long",
     year: "numeric",
   });
+}
+
+export function parseFormDate(value: string): Date | undefined {
+  if (!value?.trim()) return undefined;
+  const ymd = parse(value, "yyyy-MM-dd", new Date());
+  if (isValid(ymd)) return ymd;
+  const fromIso = new Date(value);
+  return isValid(fromIso) ? fromIso : undefined;
 }

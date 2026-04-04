@@ -21,6 +21,7 @@ import {
   CalendarBlankIcon,
   WarningCircleIcon,
 } from "@phosphor-icons/react";
+import AddAcademicSession from "@/components/school-admin/modal/add-academic-session";
 
 type TermInfo = {
   id: string;
@@ -108,6 +109,8 @@ export default function AcademicSessions() {
   );
   const [selectedTermId, setSelectedTermId] = useState<string | null>(null);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [isAddAcademicSessionOpen, setIsAddAcademicSessionOpen] =
+    useState(false);
 
   const selectedSession =
     sessions.find((s) => s.id === selectedSessionId) || null;
@@ -151,7 +154,11 @@ export default function AcademicSessions() {
             Manage academic sessions, terms, and their schedules.
           </p>
         </div>
-        <Button variant="primary" className="h-12 gap-2">
+        <Button
+          variant="primary"
+          className="h-12 gap-2"
+          onClick={() => setIsAddAcademicSessionOpen(true)}
+        >
           <PlusIcon className="size-4" />
           Create Session
         </Button>
@@ -432,6 +439,11 @@ export default function AcademicSessions() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AddAcademicSession
+        isOpen={isAddAcademicSessionOpen}
+        onClose={() => setIsAddAcademicSessionOpen(false)}
+      />
     </div>
   );
 }

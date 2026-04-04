@@ -6,6 +6,7 @@ import {
   assignSubjectsToClassSchema,
   assignTeacherToSubjectSchema,
   classSchema,
+  createAcademicSessionSchema,
   createTimetableSlotSchema,
   departmentSchema,
   signInSchema,
@@ -29,6 +30,7 @@ type AssignSubjectsToClassFormValues = z.infer<
 type AssignTeacherToSubjectFormValues = z.infer<
   typeof assignTeacherToSubjectSchema
 >;
+type AddAcademicSessionFormValues = z.infer<typeof createAcademicSessionSchema>;
 
 type Gender = "MALE" | "FEMALE";
 
