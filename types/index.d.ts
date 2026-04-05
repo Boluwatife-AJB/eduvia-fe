@@ -9,6 +9,7 @@ import {
   createAcademicSessionSchema,
   createTimetableSlotSchema,
   departmentSchema,
+  createAcademicTermSchema,
   signInSchema,
   subjectSchema,
 } from "@/lib/schema";
@@ -31,6 +32,7 @@ type AssignTeacherToSubjectFormValues = z.infer<
   typeof assignTeacherToSubjectSchema
 >;
 type AddAcademicSessionFormValues = z.infer<typeof createAcademicSessionSchema>;
+type AddAcademicTermFormValues = z.infer<typeof createAcademicTermSchema>;
 
 type Gender = "MALE" | "FEMALE";
 
@@ -419,4 +421,28 @@ interface TimeTableSlot {
       is_current: boolean;
     };
   };
+}
+
+interface AcademicTerm {
+  id: string;
+  tenant_id: string;
+  academic_session_id: string;
+  name: string;
+  start_date: string;
+  end_date: string;
+  is_current: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+interface AcademicSession {
+  id: string;
+  tenant_id: string;
+  name: string;
+  start_date: string;
+  end_date: string;
+  is_current: boolean;
+  created_at: string;
+  updated_at: string;
+  terms: AcademicTerm[];
 }

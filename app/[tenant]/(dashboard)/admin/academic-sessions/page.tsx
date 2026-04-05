@@ -22,73 +22,18 @@ import {
   WarningCircleIcon,
 } from "@phosphor-icons/react";
 import AddAcademicSession from "@/components/school-admin/modal/add-academic-session";
+import { apiClient } from "@/lib/api";
+import { useQuery } from "@tanstack/react-query";
+import { AcademicSession } from "@/types";
+import { format } from "date-fns";
+import AddTerm from "@/components/school-admin/modal/add-term";
 
-type TermInfo = {
-  id: string;
-  name: string;
-  startDate: string;
-  endDate: string;
-};
-
-type SessionInfo = {
-  id: string;
-  name: string;
-  isActive: boolean;
-  terms: TermInfo[];
-};
-
-const INITIAL_SESSIONS: SessionInfo[] = [
-  {
-    id: "sess_1",
-    name: "2024/2025 Academic Session",
-    isActive: true,
-    terms: [
-      {
-        id: "term_1",
-        name: "First Term",
-        startDate: "2024-09-09",
-        endDate: "2024-12-13",
-      },
-      {
-        id: "term_2",
-        name: "Second Term",
-        startDate: "2025-01-06",
-        endDate: "2025-04-11",
-      },
-      {
-        id: "term_3",
-        name: "Third Term",
-        startDate: "2025-04-28",
-        endDate: "2025-07-25",
-      },
-    ],
-  },
-  {
-    id: "sess_2",
-    name: "2025/2026 Academic Session",
-    isActive: false,
-    terms: [
-      {
-        id: "term_4",
-        name: "First Term",
-        startDate: "2025-09-08",
-        endDate: "2025-12-12",
-      },
-      {
-        id: "term_5",
-        name: "Second Term",
-        startDate: "2026-01-05",
-        endDate: "2026-04-10",
-      },
-      {
-        id: "term_6",
-        name: "Third Term",
-        startDate: "2026-04-27",
-        endDate: "2026-07-24",
-      },
-    ],
-  },
-];
+/** `<input type="date">` only accepts `yyyy-MM-dd`. */
+function toDateInputValue(value: string): string {
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return "";
+  return format(d, "yyyy-MM-dd");
+}
 
 function getTermProgress(startDate: string, endDate: string) {
   const start = new Date(startDate).getTime();
@@ -99,21 +44,31 @@ function getTermProgress(startDate: string, endDate: string) {
   return Math.round(((now - start) / (end - start)) * 100);
 }
 
+const fetchSessions = async (): Promise<AcademicSession[]> => {
+  const response = await apiClient.get("/school-setup/academic-sessions");
+  return response.data.data;
+};
+
 export default function AcademicSessions() {
-  const [sessions, setSessions] = useState(INITIAL_SESSIONS);
   const [expandedSessionId, setExpandedSessionId] = useState<string | null>(
-    "sess_1",
+    null,
   );
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(
-    "sess_1",
+    null,
   );
   const [selectedTermId, setSelectedTermId] = useState<string | null>(null);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [isAddAcademicSessionOpen, setIsAddAcademicSessionOpen] =
     useState(false);
+  const [isAddTermOpen, setIsAddTermOpen] = useState(false);
+
+  const { data: academicSessions } = useQuery({
+    queryKey: ["academic-sessions"],
+    queryFn: fetchSessions,
+  });
 
   const selectedSession =
-    sessions.find((s) => s.id === selectedSessionId) || null;
+    academicSessions?.find((s) => s.id === selectedSessionId) || null;
 
   const handleTermClick = (sessionId: string, termId: string) => {
     setExpandedSessionId(sessionId);
@@ -133,12 +88,6 @@ export default function AcademicSessions() {
 
   const handleSetCurrentSession = () => {
     if (!selectedSession) return;
-    setSessions((prev) =>
-      prev.map((s) => ({
-        ...s,
-        isActive: s.id === selectedSession.id,
-      })),
-    );
     setIsConfirmOpen(false);
   };
 
@@ -168,7 +117,7 @@ export default function AcademicSessions() {
         {/* Left Panel - 35% */}
         <div className="w-[35%] flex flex-col overflow-y-auto pr-4 custom-scrollbar h-full">
           <div className="relative border-l-2 border-muted ml-4 mb-4 space-y-8 pb-4">
-            {sessions.map((session) => {
+            {academicSessions?.map((session) => {
               const isExpanded = expandedSessionId === session.id;
 
               return (
@@ -177,7 +126,7 @@ export default function AcademicSessions() {
                   <div className="absolute -left-[11px] top-4 size-5 rounded-full border-4 border-background flex items-center justify-center bg-card shadow-sm z-10 transition-colors">
                     <div
                       className={`size-2.5 rounded-full ${
-                        session.isActive
+                        session.is_current
                           ? "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]"
                           : "bg-muted-foreground/30"
                       }`}
@@ -203,7 +152,7 @@ export default function AcademicSessions() {
                         <span className="font-semibold text-[15px]">
                           {session.name}
                         </span>
-                        {session.isActive && (
+                        {session.is_current && (
                           <span className="text-[10px] font-bold uppercase tracking-wider text-green-700 bg-green-500/20 px-2 py-0.5 rounded-full">
                             Active
                           </span>
@@ -223,8 +172,8 @@ export default function AcademicSessions() {
                         <div className="h-2" />
                         {session.terms.map((term) => {
                           const progress = getTermProgress(
-                            term.startDate,
-                            term.endDate,
+                            term.start_date,
+                            term.end_date,
                           );
                           const isTermSelected = selectedTermId === term.id;
                           return (
@@ -249,7 +198,7 @@ export default function AcademicSessions() {
                                   {term.name}
                                 </span>
                                 <span className="text-[11px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded-md whitespace-nowrap">
-                                  {new Date(term.startDate).toLocaleDateString(
+                                  {new Date(term.start_date).toLocaleDateString(
                                     undefined,
                                     { month: "short", day: "numeric" },
                                   )}
@@ -286,7 +235,7 @@ export default function AcademicSessions() {
                     <h2 className="text-2xl font-bold font-assistant text-card-foreground">
                       {selectedSession.name}
                     </h2>
-                    {selectedSession.isActive ? (
+                    {selectedSession.is_current ? (
                       <Badge className="bg-green-500/10 text-green-600 hover:bg-green-500/20 border-green-500/20 shadow-none">
                         Active Session
                       </Badge>
@@ -300,7 +249,7 @@ export default function AcademicSessions() {
                   </p>
                 </div>
 
-                {!selectedSession.isActive && (
+                {!selectedSession.is_current && (
                   <Button
                     variant="primary"
                     size="lg"
@@ -331,9 +280,19 @@ export default function AcademicSessions() {
 
                 {/* Terms Configuration */}
                 <div className="space-y-4">
-                  <h3 className="text-lg font-semibold flex items-center gap-2 text-foreground">
-                    Academic Terms
-                  </h3>
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-semibold flex items-center gap-2 text-foreground">
+                      Academic Terms
+                    </h3>
+                    <Button
+                      variant="primary-outline"
+                      className="h-10 gap-2"
+                      onClick={() => setIsAddTermOpen(true)}
+                    >
+                      <PlusIcon className="size-4" />
+                      Add Term
+                    </Button>
+                  </div>
                   <div className="grid grid-cols-1 gap-5">
                     {selectedSession.terms.map((term) => (
                       <div
@@ -352,7 +311,8 @@ export default function AcademicSessions() {
                             variant="outline"
                             className="font-mono text-xs"
                           >
-                            {term.startDate} to {term.endDate}
+                            {format(new Date(term.start_date), "dd/MM/yyyy")} to{" "}
+                            {format(new Date(term.end_date), "dd/MM/yyyy")}
                           </Badge>
                         </div>
 
@@ -361,7 +321,7 @@ export default function AcademicSessions() {
                             <FieldLabel>Start Date</FieldLabel>
                             <Input
                               type="date"
-                              defaultValue={term.startDate}
+                              defaultValue={toDateInputValue(term.start_date)}
                               className="h-10"
                             />
                           </Field>
@@ -369,7 +329,7 @@ export default function AcademicSessions() {
                             <FieldLabel>End Date</FieldLabel>
                             <Input
                               type="date"
-                              defaultValue={term.endDate}
+                              defaultValue={toDateInputValue(term.end_date)}
                               className="h-10"
                             />
                           </Field>
@@ -444,6 +404,13 @@ export default function AcademicSessions() {
         isOpen={isAddAcademicSessionOpen}
         onClose={() => setIsAddAcademicSessionOpen(false)}
       />
+      {selectedSessionId && (
+        <AddTerm
+          isOpen={isAddTermOpen}
+          onClose={() => setIsAddTermOpen(false)}
+          academicSessionId={selectedSessionId}
+        />
+      )}
     </div>
   );
 }
