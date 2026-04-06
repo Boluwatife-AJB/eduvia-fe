@@ -407,7 +407,10 @@ export default function AcademicSessions() {
       {selectedSessionId && (
         <AddTerm
           isOpen={isAddTermOpen}
-          onClose={() => setIsAddTermOpen(false)}
+          onClose={() => {
+            setIsAddTermOpen(false);
+            setSelectedSessionId(null);
+          }}
           academicSessionId={selectedSessionId}
         />
       )}
