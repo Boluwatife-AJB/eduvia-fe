@@ -1,26 +1,22 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import StatsCard from "@/components/layout/stats-card";
+import AddStudent from "@/components/school-admin/modal/add-student";
+import AddTeacher from "@/components/school-admin/modal/add-teacher";
+import { Button } from "@/components/ui/button";
+import {
+  type ChartConfig,
+  ChartContainer,
+  ChartLegend,
+  ChartLegendContent,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useUser } from "@/contexts/user-context";
 import { apiClient } from "@/lib/api";
 import { adminRoles, adminStatsCards } from "@/lib/data";
 import { AdminRoles, StatsResponse } from "@/types";
-import { useQuery } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Cell,
-  Legend,
-  Pie,
-  PieChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
 import {
   ChalkboardTeacherIcon,
   CheckCircleIcon,
@@ -28,10 +24,18 @@ import {
   MoneyIcon,
   UserPlusIcon,
 } from "@phosphor-icons/react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
-import AddStudent from "@/components/school-admin/modal/add-student";
-import AddTeacher from "@/components/school-admin/modal/add-teacher";
+import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
+import { useMemo, useState } from "react";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Pie,
+  PieChart,
+  XAxis,
+  YAxis,
+} from "recharts";
 
 const fetchStats = async (): Promise<StatsResponse> => {
   const response = await apiClient.get("/users/stats");
@@ -39,11 +43,10 @@ const fetchStats = async (): Promise<StatsResponse> => {
 };
 
 const enrollmentData = [
-  { name: "Primary", value: 450 },
-  { name: "JSS", value: 300 },
-  { name: "SSS", value: 250 },
+  { name: "Primary", value: 450, fill: "#3b82f6" },
+  { name: "JSS", value: 300, fill: "#10b981" },
+  { name: "SSS", value: 250, fill: "#f59e0b" },
 ];
-const ENROLLMENT_COLORS = ["#3b82f6", "#10b981", "#f59e0b"];
 
 const feeCollectionData = [
   { name: "Primary", collected: 8000, outstanding: 2000 },
@@ -114,6 +117,33 @@ const pendingApprovals = [
   },
 ];
 
+/** Keys must match `name` on each enrollment row — `ChartLegendContent` resolves labels via `nameKey="name"`. */
+const pieChartConfig = {
+  Primary: {
+    label: "Primary",
+    color: "#3b82f6",
+  },
+  JSS: {
+    label: "JSS",
+    color: "#10b981",
+  },
+  SSS: {
+    label: "SSS",
+    color: "#f59e0b",
+  },
+} satisfies ChartConfig;
+
+const barChartConfig = {
+  collected: {
+    label: "Collected",
+    color: "#10b981",
+  },
+  outstanding: {
+    label: "Outstanding",
+    color: "#ef4444",
+  },
+} satisfies ChartConfig;
+
 export default function TenantDashboardPage() {
   const { user } = useUser();
   const router = useRouter();
@@ -171,7 +201,10 @@ export default function TenantDashboardPage() {
               Enrollment Distribution
             </h2>
             <div className="flex-1 w-full min-h-[250px] relative">
-              <ResponsiveContainer width="100%" height="100%">
+              <ChartContainer
+                config={pieChartConfig}
+                className="max-h-[300px] w-full mx-auto aspect-square"
+              >
                 <PieChart>
                   <Pie
                     data={enrollmentData}
@@ -182,30 +215,20 @@ export default function TenantDashboardPage() {
                     paddingAngle={5}
                     dataKey="value"
                     stroke="none"
-                  >
-                    {enrollmentData.map((entry, index) => (
-                      <Cell
-                        key={`cell-${index}`}
-                        fill={
-                          ENROLLMENT_COLORS[index % ENROLLMENT_COLORS.length]
-                        }
-                      />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    contentStyle={{
-                      borderRadius: "8px",
-                      border: "none",
-                      boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
-                    }}
                   />
-                  <Legend
-                    verticalAlign="bottom"
-                    height={36}
-                    iconType="circle"
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <ChartLegend
+                    content={
+                      <ChartLegendContent
+                        nameKey="name"
+                        iconClassName="size-4 shrink-0 rounded-full ring-1 ring-slate-900/10 dark:ring-slate-100/15"
+                        itemClassName="gap-2"
+                        className="-translate-y-2 flex-wrap gap-3 *:basis-1/4 *:justify-center"
+                      />
+                    }
                   />
                 </PieChart>
-              </ResponsiveContainer>
+              </ChartContainer>
               <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none pb-8">
                 <span className="text-3xl font-black text-slate-800 dark:text-slate-100">
                   1,000
@@ -228,7 +251,10 @@ export default function TenantDashboardPage() {
               </p>
             </div>
             <div className="flex-1 w-full min-h-[250px]">
-              <ResponsiveContainer width="100%" height="100%">
+              <ChartContainer
+                config={barChartConfig}
+                className="max-h-[300px] w-full mx-auto aspect-square"
+              >
                 <BarChart
                   data={feeCollectionData}
                   layout="vertical"
@@ -249,18 +275,16 @@ export default function TenantDashboardPage() {
                     tickLine={false}
                     tick={{ fill: "#64748b", fontSize: 12, fontWeight: 500 }}
                   />
-                  <Tooltip
-                    cursor={{ fill: "transparent" }}
-                    contentStyle={{
-                      borderRadius: "8px",
-                      border: "none",
-                      boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
-                    }}
-                  />
-                  <Legend
-                    verticalAlign="bottom"
-                    height={36}
-                    iconType="circle"
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <ChartLegend
+                    content={
+                      <ChartLegendContent
+                        nameKey="name"
+                        iconClassName="size-3 shrink-0  ring-1 ring-slate-900/10 dark:ring-slate-100/15"
+                        itemClassName="gap-2"
+                        className="-translate-y-2 flex-wrap gap-3 *:basis-1/4 *:justify-center"
+                      />
+                    }
                   />
                   <Bar
                     dataKey="collected"
@@ -275,7 +299,7 @@ export default function TenantDashboardPage() {
                     radius={[0, 4, 4, 0]}
                   />
                 </BarChart>
-              </ResponsiveContainer>
+              </ChartContainer>
             </div>
           </div>
 

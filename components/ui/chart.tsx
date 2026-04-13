@@ -278,9 +278,15 @@ function ChartLegendContent({
   payload,
   verticalAlign = "bottom",
   nameKey,
+  iconClassName,
+  itemClassName,
 }: React.ComponentProps<"div"> & {
   hideIcon?: boolean;
   nameKey?: string;
+  /** Swatch for non-icon legend items (default: small square). */
+  iconClassName?: string;
+  /** Row wrapper (icon + label), e.g. `gap-2` when using a larger `iconClassName`). */
+  itemClassName?: string;
 } & RechartsPrimitive.DefaultLegendContentProps) {
   const { config } = useChart();
 
@@ -307,19 +313,27 @@ function ChartLegendContent({
               key={index}
               className={cn(
                 "flex items-center gap-1.5 [&>svg]:h-3 [&>svg]:w-3 [&>svg]:text-muted-foreground",
+                itemClassName,
               )}
             >
               {itemConfig?.icon && !hideIcon ? (
                 <itemConfig.icon />
               ) : (
                 <div
-                  className="h-2 w-2 shrink-0 rounded-[2px]"
+                  className={cn(
+                    "h-2 w-2 shrink-0 rounded-[2px]",
+                    iconClassName,
+                  )}
                   style={{
                     backgroundColor: item.color,
                   }}
                 />
               )}
-              {itemConfig?.label}
+              <span className="text-foreground">
+                {itemConfig?.label ??
+                  (typeof item.value === "string" ? item.value : null) ??
+                  (typeof item.dataKey === "string" ? item.dataKey : null)}
+              </span>
             </div>
           );
         })}
