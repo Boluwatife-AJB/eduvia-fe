@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -70,9 +73,20 @@ export default function AddTerm({
   const {
     handleSubmit,
     control,
-    formState: { isValid, isSubmitting },
+    formState: { isValid },
     reset,
   } = form;
+
+  useEffect(() => {
+    if (!isOpen) return;
+    reset({
+      name: "",
+      startDate: "",
+      endDate: "",
+      academicSessionId,
+      isCurrent: false,
+    });
+  }, [isOpen, academicSessionId, reset]);
 
   const { mutateAsync: createTermMutation, isPending: isCreatingTerm } =
     useMutation({

@@ -1,5 +1,5 @@
 import { clsx, type ClassValue } from "clsx";
-import { isValid, parse } from "date-fns";
+import { format, isValid, parse } from "date-fns";
 import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
@@ -23,4 +23,11 @@ export function parseFormDate(value: string): Date | undefined {
   if (isValid(ymd)) return ymd;
   const fromIso = new Date(value);
   return isValid(fromIso) ? fromIso : undefined;
+}
+
+/** Normalizes calendar / `<input type="date">` values to `yyyy-MM-dd` for school-setup APIs. */
+export function toApiDateString(value: string): string {
+  const d = parseFormDate(value);
+  if (!d) return value.trim();
+  return format(d, "yyyy-MM-dd");
 }
