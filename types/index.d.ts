@@ -448,3 +448,21 @@ interface AcademicSession {
   updated_at: string;
   terms: AcademicTerm[];
 }
+
+interface RepositoryFolder {
+  id: string;
+  tenant_id: string;
+  name: string;
+  scope: string;
+  scope_id: string | null;
+  parent_folder_id: string | null;
+  depth: number;
+  status: "ACTIVE" | "INACTIVE";
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+  children: RepositoryFolder[] | [];
+  _count: {
+    files: number;
+  };
+}

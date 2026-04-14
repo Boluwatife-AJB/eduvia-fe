@@ -36,6 +36,9 @@ import {
   FolderSimpleIcon,
 } from "@phosphor-icons/react/dist/ssr";
 import { schoolDocumentsScopes } from "@/lib/data";
+import { RepositoryFolder } from "@/types";
+import { apiClient } from "@/lib/api";
+import { useQuery } from "@tanstack/react-query";
 
 // Mock Data
 const FOLDERS = [
@@ -163,9 +166,33 @@ const getFileIcon = (type: string) => {
   }
 };
 
+const fetchFolders = async (
+  scope: string = "SCHOOL_DOCUMENTS",
+  parentId?: string,
+  scopeId?: string,
+): Promise<RepositoryFolder[]> => {
+  console.log(scope, parentId, scopeId);
+  const response = await apiClient.get("/repository/folders", {
+    params: {
+      scope: scope || "SCHOOL_DOCUMENTS",
+      parent_folder_id: parentId,
+      scope_id: scopeId,
+    },
+  });
+  return response.data.data;
+};
+
 export default function RepositoryView() {
-  const [activeScope, setActiveScope] = useState("School Documents");
+  const [activeScope, setActiveScope] = useState("SCHOOL_DOCUMENTS");
   const [selectedFile, setSelectedFile] = useState<FileRecord | null>(null);
+
+  const { data: folders } = useQuery({
+    queryKey: ["repository-folders", activeScope],
+    queryFn: () => fetchFolders(activeScope),
+    enabled: Boolean(activeScope),
+  });
+
+  console.log(folders);
 
   return (
     <div className="flex">
@@ -209,20 +236,22 @@ export default function RepositoryView() {
                   <div className="pl-6 space-y-0.5 mt-0.5 pb-2">
                     {scope.items.map((item) => (
                       <button
-                        key={item}
-                        onClick={() => setActiveScope(item)}
+                        key={item.value}
+                        onClick={() => setActiveScope(item.value)}
                         className={cn(
                           "w-full flex items-center gap-2.5 px-3 py-1.5 text-sm rounded-md transition-colors",
-                          activeScope === item
+                          activeScope === item.value
                             ? "bg-primary-blue/10 text-primary-blue font-medium"
                             : "text-muted-foreground hover:bg-muted hover:text-foreground",
                         )}
                       >
                         <FolderSimpleIcon
-                          weight={activeScope === item ? "fill" : "regular"}
+                          weight={
+                            activeScope === item.value ? "fill" : "regular"
+                          }
                           className="size-3.5 shrink-0"
                         />
-                        <span className="truncate text-left">{item}</span>
+                        <span className="truncate text-left">{item.label}</span>
                       </button>
                     ))}
                   </div>

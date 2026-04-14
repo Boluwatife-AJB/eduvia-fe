@@ -1,40 +1,23 @@
 "use client";
 
-import { useLayoutEffect, useRef, useState } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
+import CreateFolderModal from "@/components/school-admin/modal/create-folder";
 import RepositoryView from "@/components/school-admin/tabs/repository-view";
 import StorageView from "@/components/school-admin/tabs/storage-view";
-import CreateFolderModal from "@/components/school-admin/modal/create-folder";
-import {
-  UploadSimpleIcon,
-  PlusIcon,
-  MagnifyingGlassIcon,
-} from "@phosphor-icons/react";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  MagnifyingGlassIcon,
+  PlusIcon,
+  UploadSimpleIcon,
+} from "@phosphor-icons/react";
 import { motion } from "motion/react";
-import { apiClient } from "@/lib/api";
-import { useQuery } from "@tanstack/react-query";
+import { useLayoutEffect, useRef, useState } from "react";
 
 const docTabs = [
   { name: "Repository View", value: "repository" },
   { name: "Storage Usage", value: "usage" },
 ] as const;
-
-const fetchFolders = async (
-  scope: string = "SCHOOL_DOCUMENTS",
-  parentId?: string,
-  scopeId?: string,
-) => {
-  const response = await apiClient.get("/repository/folders", {
-    params: {
-      scope: scope || "SCHOOL_DOCUMENTS",
-      parent_folder_id: parentId,
-      scope_id: scopeId,
-    },
-  });
-  return response.data.data;
-};
 
 export default function SchoolDocuments() {
   const [activeTab, setActiveTab] = useState("repository");
@@ -54,14 +37,6 @@ export default function SchoolDocuments() {
       });
     }
   }, [activeTab]);
-
-  const { data: folders } = useQuery({
-    queryKey: ["repository-folders"],
-    queryFn: () => fetchFolders("SCHOOL_DOCUMENTS"),
-    enabled: !!activeTab,
-  });
-
-  console.log(folders);
 
   return (
     // <div className="flex flex-col h-[calc(100vh-4rem)]">

@@ -920,10 +920,22 @@ export const schoolDocumentsScopes = [
     title: "Academic",
     icon: BooksIcon,
     items: [
-      "Class Documents",
-      "Subject Documents",
-      "Past Questions",
-      "Department Documents",
+      {
+        label: "Class Documents",
+        value: "CLASS_DOCUMENTS",
+      },
+      {
+        label: "Subject Documents",
+        value: "SUBJECT_DOCUMENTS",
+      },
+      {
+        label: "Past Questions",
+        value: "PAST_QUESTIONS",
+      },
+      {
+        label: "Department Documents",
+        value: "DEPARTMENT_DOCUMENTS",
+      },
     ],
     active: true,
   },
@@ -931,21 +943,64 @@ export const schoolDocumentsScopes = [
     id: "administrative",
     title: "Administrative",
     icon: BuildingsIcon,
-    items: ["School Documents", "Staff Records", "Financial Records"],
+    items: [
+      {
+        label: "School Documents",
+        value: "SCHOOL_DOCUMENTS",
+      },
+      {
+        label: "Staff Records",
+        value: "STAFF_RECORDS",
+      },
+    ],
     active: true,
   },
   {
     id: "welfare",
     title: "Student Welfare",
     icon: HeartbeatIcon,
-    items: ["Health", "Counseling", "Disciplinary"],
+    items: [
+      {
+        label: "Health",
+        value: "HEALTH_RECORDS",
+      },
+      {
+        label: "Counseling",
+        value: "COUNSELING_RECORDS",
+      },
+      {
+        label: "Disciplinary",
+        value: "DISCIPLINARY_RECORDS",
+      },
+    ],
     active: true,
   },
   {
     id: "operations",
     title: "Operations",
     icon: GearSixIcon,
-    items: ["Library", "Laboratory", "Inventory", "Maintenance", "Visitors"],
+    items: [
+      {
+        label: "Library",
+        value: "LIBRARY_RECORDS",
+      },
+      {
+        label: "Laboratory",
+        value: "LABORATORY_RECORDS",
+      },
+      {
+        label: "Inventory",
+        value: "INVENTORY_RECORDS",
+      },
+      {
+        label: "Maintenance",
+        value: "MAINTENANCE_RECORDS",
+      },
+      {
+        label: "Visitors",
+        value: "VISITOR_LOGS",
+      },
+    ],
     active: true,
   },
   {
@@ -953,10 +1008,22 @@ export const schoolDocumentsScopes = [
     title: "Events",
     icon: CalendarBlankIcon,
     items: [
-      "PTA Meetings",
-      "Staff Meetings",
-      "School Events",
-      "Extracurricular",
+      {
+        label: "PTA Meetings",
+        value: "PTA_MEETINGS",
+      },
+      {
+        label: "Staff Meetings",
+        value: "STAFF_MEETINGS",
+      },
+      {
+        label: "School Events",
+        value: "SCHOOL_EVENTS",
+      },
+      {
+        label: "Extracurricular",
+        value: "EXTRACURRICULAR",
+      },
     ],
     active: false,
   },
@@ -968,30 +1035,6 @@ export const schoolDocumentsScopes = [
     active: false,
   },
 ];
-
-// CLASS_DOCUMENTS
-// SUBJECT_DOCUMENTS
-// PAST_QUESTIONS
-// DEPARTMENT_DOCUMENTS
-// SCHOOL_DOCUMENTS
-// STAFF_RECORDS
-// TUITION_PAYMENTS
-// STAFF_SALARY
-// SCHOOL_EXPENSES
-// HEALTH_RECORDS
-// COUNSELING_RECORDS
-// DISCIPLINARY_RECORDS
-// LIBRARY_RECORDS
-// LABORATORY_RECORDS
-// INVENTORY_RECORDS
-// MAINTENANCE_RECORDS
-// VISITOR_LOGS
-// PTA_MEETINGS
-// STAFF_MEETINGS
-// SCHOOL_EVENTS
-// EXTRACURRICULAR
-// SPORT_RECORDS
-// OTHER
 
 export const repositoryScopes = [
   {
