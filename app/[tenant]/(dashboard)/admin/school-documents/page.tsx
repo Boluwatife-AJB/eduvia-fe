@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import RepositoryView from "@/components/school-admin/tabs/repository-view";
 import StorageView from "@/components/school-admin/tabs/storage-view";
+import CreateFolderModal from "@/components/school-admin/modal/create-folder";
 import {
   UploadSimpleIcon,
   PlusIcon,
@@ -12,14 +13,32 @@ import {
 } from "@phosphor-icons/react";
 import { Input } from "@/components/ui/input";
 import { motion } from "motion/react";
+import { apiClient } from "@/lib/api";
+import { useQuery } from "@tanstack/react-query";
 
 const docTabs = [
   { name: "Repository View", value: "repository" },
   { name: "Storage Usage", value: "usage" },
 ] as const;
 
+const fetchFolders = async (
+  scope: string = "SCHOOL_DOCUMENTS",
+  parentId?: string,
+  scopeId?: string,
+) => {
+  const response = await apiClient.get("/repository/folders", {
+    params: {
+      scope: scope || "SCHOOL_DOCUMENTS",
+      parent_folder_id: parentId,
+      scope_id: scopeId,
+    },
+  });
+  return response.data.data;
+};
+
 export default function SchoolDocuments() {
   const [activeTab, setActiveTab] = useState("repository");
+  const [isCreateFolderModalOpen, setIsCreateFolderModalOpen] = useState(false);
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const [underlineStyle, setUnderlineStyle] = useState({ left: 0, width: 0 });
 
@@ -35,6 +54,14 @@ export default function SchoolDocuments() {
       });
     }
   }, [activeTab]);
+
+  const { data: folders } = useQuery({
+    queryKey: ["repository-folders"],
+    queryFn: () => fetchFolders("SCHOOL_DOCUMENTS"),
+    enabled: !!activeTab,
+  });
+
+  console.log(folders);
 
   return (
     // <div className="flex flex-col h-[calc(100vh-4rem)]">
@@ -64,6 +91,7 @@ export default function SchoolDocuments() {
           <Button
             variant="primary"
             className="h-10 gap-2 shrink-0 rounded-xl shadow-xs"
+            onClick={() => setIsCreateFolderModalOpen(true)}
           >
             <PlusIcon weight="bold" className="size-4" />
             New Folder
@@ -113,6 +141,10 @@ export default function SchoolDocuments() {
           </TabsContent>
         </Tabs>
       </div>
+      <CreateFolderModal
+        open={isCreateFolderModalOpen}
+        onClose={() => setIsCreateFolderModalOpen(false)}
+      />
       {/* <div className="flex-1 flex overflow-hidden">
         {activeTab === "repository" ? (
           <>

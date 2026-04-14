@@ -12,6 +12,7 @@ import {
   createAcademicTermSchema,
   signInSchema,
   subjectSchema,
+  createFolderSchema,
 } from "@/lib/schema";
 import { Icon } from "@phosphor-icons/react";
 import { z } from "zod";
@@ -33,6 +34,7 @@ type AssignTeacherToSubjectFormValues = z.infer<
 >;
 type AddAcademicSessionFormValues = z.infer<typeof createAcademicSessionSchema>;
 type AddAcademicTermFormValues = z.infer<typeof createAcademicTermSchema>;
+type CreateFolderFormValues = z.infer<typeof createFolderSchema>;
 
 type Gender = "MALE" | "FEMALE";
 

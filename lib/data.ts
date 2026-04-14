@@ -968,3 +968,122 @@ export const schoolDocumentsScopes = [
     active: false,
   },
 ];
+
+// CLASS_DOCUMENTS
+// SUBJECT_DOCUMENTS
+// PAST_QUESTIONS
+// DEPARTMENT_DOCUMENTS
+// SCHOOL_DOCUMENTS
+// STAFF_RECORDS
+// TUITION_PAYMENTS
+// STAFF_SALARY
+// SCHOOL_EXPENSES
+// HEALTH_RECORDS
+// COUNSELING_RECORDS
+// DISCIPLINARY_RECORDS
+// LIBRARY_RECORDS
+// LABORATORY_RECORDS
+// INVENTORY_RECORDS
+// MAINTENANCE_RECORDS
+// VISITOR_LOGS
+// PTA_MEETINGS
+// STAFF_MEETINGS
+// SCHOOL_EVENTS
+// EXTRACURRICULAR
+// SPORT_RECORDS
+// OTHER
+
+export const repositoryScopes = [
+  {
+    label: "Class Documents",
+    value: "CLASS_DOCUMENTS",
+  },
+  {
+    label: "Subject Documents",
+    value: "SUBJECT_DOCUMENTS",
+  },
+  {
+    label: "Past Questions",
+    value: "PAST_QUESTIONS",
+  },
+  {
+    label: "Department Documents",
+    value: "DEPARTMENT_DOCUMENTS",
+  },
+  {
+    label: "School Documents",
+    value: "SCHOOL_DOCUMENTS",
+  },
+  {
+    label: "Staff Records",
+    value: "STAFF_RECORDS",
+  },
+  {
+    label: "Tuition Payments",
+    value: "TUITION_PAYMENTS",
+  },
+  {
+    label: "Staff Salary",
+    value: "STAFF_SALARY",
+  },
+  {
+    label: "School Expenses",
+    value: "SCHOOL_EXPENSES",
+  },
+  {
+    label: "Health Records",
+    value: "HEALTH_RECORDS",
+  },
+  {
+    label: "Counseling Records",
+    value: "COUNSELING_RECORDS",
+  },
+  {
+    label: "Disciplinary Records",
+    value: "DISCIPLINARY_RECORDS",
+  },
+  {
+    label: "Library Records",
+    value: "LIBRARY_RECORDS",
+  },
+  {
+    label: "Laboratory Records",
+    value: "LABORATORY_RECORDS",
+  },
+  {
+    label: "Inventory Records",
+    value: "INVENTORY_RECORDS",
+  },
+  {
+    label: "Maintenance Records",
+    value: "MAINTENANCE_RECORDS",
+  },
+  {
+    label: "Visitor Logs",
+    value: "VISITOR_LOGS",
+  },
+  {
+    label: "PTA Meetings",
+    value: "PTA_MEETINGS",
+  },
+  {
+    label: "Staff Meetings",
+    value: "STAFF_MEETINGS",
+  },
+  {
+    label: "School Events",
+    value: "SCHOOL_EVENTS",
+  },
+  {
+    label: "Extracurricular",
+    value: "EXTRACURRICULAR",
+  },
+  {
+    label: "Sport Records",
+    value: "SPORT_RECORDS",
+  },
+  {
+    label: "Other",
+    value: "OTHER",
+  },
+];
