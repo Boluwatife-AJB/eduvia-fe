@@ -22,7 +22,7 @@ import {
 import { useClasses } from "@/hooks/use-classes";
 import { useTeachers } from "@/hooks/use-teachers";
 import { apiClient } from "@/lib/api";
-import { SelectOption, TimeTableSlot } from "@/types";
+import { AcademicSession, SelectOption, TimeTableSlot } from "@/types";
 import { FunnelSimpleIcon, PlusIcon, XIcon } from "@phosphor-icons/react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
@@ -77,6 +77,11 @@ const fetchTimeTableSlots = async (params: {
   return response.data.data;
 };
 
+const fetchAcademicSessions = async (): Promise<AcademicSession[]> => {
+  const response = await apiClient.get("/school-setup/academic-sessions");
+  return response.data.data;
+};
+
 const deleteTimetableSlot = async (id: string) => {
   const response = await apiClient.delete(`/timetable/slots/${id}`);
   return response.data.data;
@@ -87,6 +92,8 @@ export default function Timetable() {
   const [filterOpen, setFilterOpen] = useState(false);
   const [filterClass, setFilterClass] = useState("");
   const [filterTeacher, setFilterTeacher] = useState("");
+  const [filterAcademicSession, setFilterAcademicSession] = useState("");
+  const [filterAcademicTerm, setFilterAcademicTerm] = useState("");
   const [deletedSlotIds, setDeletedSlotIds] = useState<Set<string>>(
     () => new Set(),
   );
@@ -98,6 +105,10 @@ export default function Timetable() {
   // Use Dynamic Data via our custom hooks
   const { classes: classOptions } = useClasses();
   const { teachers: teacherOptions } = useTeachers();
+  const { data: academicSessions } = useQuery({
+    queryKey: ["academic-sessions"],
+    queryFn: fetchAcademicSessions,
+  });
 
   const { data: fetchedSlots, isLoading } = useQuery({
     queryKey: ["timetable-slots", filterClass, filterTeacher],
@@ -108,10 +119,7 @@ export default function Timetable() {
       }),
   });
 
-  const {
-    mutateAsync: deleteTimetableSlotMutation,
-    isPending: isDeletingTimetableSlot,
-  } = useMutation({
+  const { mutateAsync: deleteTimetableSlotMutation } = useMutation({
     mutationFn: deleteTimetableSlot,
     onSuccess: () => {
       toast.success("Timetable slot deleted successfully");
@@ -131,17 +139,64 @@ export default function Timetable() {
     for (const s of fetchedSlots ?? []) {
       if (!deletedSlotIds.has(s.id)) byId.set(s.id, s);
     }
-    return markSlotConflicts([...byId.values()]);
-  }, [fetchedSlots, deletedSlotIds]);
+    let filteredSlots = [...byId.values()];
+
+    if (filterAcademicSession) {
+      filteredSlots = filteredSlots.filter(
+        (slot) =>
+          slot.academic_term.academicSession.id === filterAcademicSession,
+      );
+    }
+
+    if (filterAcademicTerm) {
+      filteredSlots = filteredSlots.filter(
+        (slot) => slot.academic_term.id === filterAcademicTerm,
+      );
+    }
+
+    return markSlotConflicts(filteredSlots);
+  }, [fetchedSlots, deletedSlotIds, filterAcademicSession, filterAcademicTerm]);
+
+  const academicSessionOptions = useMemo<SelectOption[]>(
+    () =>
+      (academicSessions ?? []).map((session) => ({
+        value: session.id,
+        label: session.name,
+      })),
+    [academicSessions],
+  );
+
+  const academicTermOptions = useMemo<SelectOption[]>(() => {
+    const sessionsToUse = filterAcademicSession
+      ? (academicSessions ?? []).filter(
+          (session) => session.id === filterAcademicSession,
+        )
+      : (academicSessions ?? []);
+
+    return sessionsToUse.flatMap((session) =>
+      session.terms.map((term) => ({
+        value: term.id,
+        label: term.name,
+      })),
+    );
+  }, [academicSessions, filterAcademicSession]);
 
   const activeFilterCount = useMemo(
-    () => [filterClass, filterTeacher].filter(Boolean).length,
-    [filterClass, filterTeacher],
+    () =>
+      [
+        filterClass,
+        filterTeacher,
+        filterAcademicSession,
+        filterAcademicTerm,
+      ].filter(Boolean).length,
+    [filterClass, filterTeacher, filterAcademicSession, filterAcademicTerm],
   );
 
   const clearFilters = () => {
     setFilterClass("");
     setFilterTeacher("");
+    setFilterAcademicSession("");
+    setFilterAcademicTerm("");
     setFilterOpen(false);
   };
 
@@ -267,6 +322,61 @@ export default function Timetable() {
                   <SelectGroup>
                     <SelectLabel>Teachers</SelectLabel>
                     {teacherOptions?.map((opt: SelectOption) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-muted-foreground">
+                Academic Session
+              </label>
+              <Select
+                value={filterAcademicSession}
+                onValueChange={(value) => {
+                  const nextSessionId = value || "";
+                  setFilterAcademicSession(nextSessionId);
+                  // Term list depends on selected session; reset term to avoid stale filters.
+                  setFilterAcademicTerm("");
+                }}
+                items={academicSessionOptions}
+              >
+                <SelectTrigger className="w-full px-3">
+                  <SelectValue placeholder="Select academic session" />
+                </SelectTrigger>
+                <SelectContent alignItemWithTrigger={false}>
+                  <SelectGroup>
+                    <SelectLabel>Academic Sessions</SelectLabel>
+                    {academicSessionOptions?.map((opt: SelectOption) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-muted-foreground">
+                Academic Term
+              </label>
+              <Select
+                value={filterAcademicTerm}
+                onValueChange={(value) => setFilterAcademicTerm(value || "")}
+                items={academicTermOptions}
+              >
+                <SelectTrigger className="w-full px-3">
+                  <SelectValue placeholder="Select academic term" />
+                </SelectTrigger>
+                <SelectContent alignItemWithTrigger={false}>
+                  <SelectGroup>
+                    <SelectLabel>Academic Terms</SelectLabel>
+                    {academicTermOptions?.map((opt: SelectOption) => (
                       <SelectItem key={opt.value} value={opt.value}>
                         {opt.label}
                       </SelectItem>
