@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Table,
   TableBody,
@@ -171,7 +171,6 @@ const fetchFolders = async (
   parentId?: string,
   scopeId?: string,
 ): Promise<RepositoryFolder[]> => {
-  console.log(scope, parentId, scopeId);
   const response = await apiClient.get("/repository/folders", {
     params: {
       scope: scope || "SCHOOL_DOCUMENTS",
@@ -182,17 +181,78 @@ const fetchFolders = async (
   return response.data.data;
 };
 
+function ScopeFolderTree({
+  folders,
+  isLoading,
+}: {
+  folders: RepositoryFolder[] | undefined;
+  isLoading: boolean;
+}) {
+  if (isLoading) {
+    return (
+      <div className="mt-1.5 pl-2 ml-2 border-l border-border/50 py-1">
+        <p className="px-2 text-[11px] text-muted-foreground">
+          Loading folders…
+        </p>
+      </div>
+    );
+  }
+
+  if (!folders?.length) {
+    return (
+      <div className="mt-1.5 pl-2 ml-2 border-l border-border/50 py-1">
+        <p className="px-2 text-[11px] text-muted-foreground">No folders yet</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-1.5 pl-2 ml-2 space-y-2 border-l border-border/50">
+      {folders.map((folder) => (
+        <div key={folder.id} className="space-y-0.5">
+          <div className="flex items-center gap-1.5 px-1 py-0.5 text-[11px] font-medium text-foreground/90">
+            <FolderSimpleIcon weight="fill" className="size-4 shrink-0" />
+            <span className="truncate">{folder.name}</span>
+            {folder._count?.files != null ? (
+              <span className="ml-auto shrink-0 text-[10px] tabular-nums text-muted-foreground">
+                {folder._count.files}
+              </span>
+            ) : null}
+          </div>
+          {folder.children?.length ? (
+            <div className="space-y-0.5 pl-1">
+              {folder.children.map((child) => (
+                <button
+                  key={child.id}
+                  type="button"
+                  className="flex w-full items-center gap-1.5 rounded-md px-2 py-1 text-left text-[11px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                >
+                  <FolderSimpleIcon className="size-4 shrink-0 opacity-80" />
+                  <span className="truncate">{child.name}</span>
+                  {child._count?.files != null ? (
+                    <span className="ml-auto shrink-0 text-[10px] tabular-nums text-muted-foreground/80">
+                      {child._count.files}
+                    </span>
+                  ) : null}
+                </button>
+              ))}
+            </div>
+          ) : null}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function RepositoryView() {
   const [activeScope, setActiveScope] = useState("SCHOOL_DOCUMENTS");
   const [selectedFile, setSelectedFile] = useState<FileRecord | null>(null);
 
-  const { data: folders } = useQuery({
+  const { data: folders, isPending: isFoldersPending } = useQuery({
     queryKey: ["repository-folders", activeScope],
     queryFn: () => fetchFolders(activeScope),
     enabled: Boolean(activeScope),
   });
-
-  console.log(folders);
 
   return (
     <div className="flex">
@@ -235,24 +295,34 @@ export default function RepositoryView() {
                 {scope.items.length > 0 && scope.active && (
                   <div className="pl-6 space-y-0.5 mt-0.5 pb-2">
                     {scope.items.map((item) => (
-                      <button
-                        key={item.value}
-                        onClick={() => setActiveScope(item.value)}
-                        className={cn(
-                          "w-full flex items-center gap-2.5 px-3 py-1.5 text-sm rounded-md transition-colors",
-                          activeScope === item.value
-                            ? "bg-primary-blue/10 text-primary-blue font-medium"
-                            : "text-muted-foreground hover:bg-muted hover:text-foreground",
-                        )}
-                      >
-                        <FolderSimpleIcon
-                          weight={
-                            activeScope === item.value ? "fill" : "regular"
-                          }
-                          className="size-3.5 shrink-0"
-                        />
-                        <span className="truncate text-left">{item.label}</span>
-                      </button>
+                      <div key={item.value} className="space-y-0">
+                        <button
+                          type="button"
+                          onClick={() => setActiveScope(item.value)}
+                          className={cn(
+                            "w-full flex items-center gap-2.5 px-3 py-1.5 text-sm rounded-md transition-colors",
+                            activeScope === item.value
+                              ? "bg-primary-blue/10 text-primary-blue font-medium"
+                              : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                          )}
+                        >
+                          <FolderSimpleIcon
+                            weight={
+                              activeScope === item.value ? "fill" : "regular"
+                            }
+                            className="size-3.5 shrink-0"
+                          />
+                          <span className="truncate text-left">
+                            {item.label}
+                          </span>
+                        </button>
+                        {activeScope === item.value ? (
+                          <ScopeFolderTree
+                            folders={folders}
+                            isLoading={isFoldersPending}
+                          />
+                        ) : null}
+                      </div>
                     ))}
                   </div>
                 )}
