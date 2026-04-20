@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
 import {
   Dialog,
   DialogContent,
@@ -14,25 +15,22 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
+import { uploadRepositoryFileFormSchema } from "@/lib/schema";
+import { parseFormDate } from "@/lib/utils";
+import { UploadRepositoryFileFormValues } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { CaretDownIcon } from "@phosphor-icons/react";
+import { format } from "date-fns";
+import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
-import { useEffect } from "react";
-import { z } from "zod";
-import { ScrollArea } from "@/components/ui/scroll-area";
-
-const uploadRepositoryFileFormSchema = z.object({
-  name: z.string().min(1, { message: "File name is required" }),
-  description: z.string(),
-  tags: z.string(),
-  expires_at: z.string(),
-  change_note: z.string(),
-});
-
-export type UploadRepositoryFileFormValues = z.infer<
-  typeof uploadRepositoryFileFormSchema
->;
 
 interface UploadRepositoryFileModalProps {
   open: boolean;
@@ -49,6 +47,8 @@ export default function UploadRepositoryFileModal({
   isSubmitting,
   onSubmit,
 }: UploadRepositoryFileModalProps) {
+  const [datePickerOpen, setDatePickerOpen] = useState(false);
+
   const form = useForm<UploadRepositoryFileFormValues>({
     resolver: zodResolver(uploadRepositoryFileFormSchema),
     mode: "onChange",
@@ -56,7 +56,10 @@ export default function UploadRepositoryFileModal({
       name: "",
       description: "",
       tags: "",
-      expires_at: "",
+      expires_at: {
+        date: "",
+        time: "",
+      },
       change_note: "",
     },
   });
@@ -69,7 +72,10 @@ export default function UploadRepositoryFileModal({
         name: file.name,
         description: "",
         tags: "",
-        expires_at: "",
+        expires_at: {
+          date: "",
+          time: "",
+        },
         change_note: "",
       });
     }
@@ -81,9 +87,10 @@ export default function UploadRepositoryFileModal({
   };
 
   const internalSubmit = async (data: UploadRepositoryFileFormValues) => {
+    console.log(data);
     await onSubmit(data);
-    reset();
-    onClose();
+    // reset();
+    // onClose();
   };
 
   return (
@@ -105,10 +112,15 @@ export default function UploadRepositoryFileModal({
           </DialogDescription>
         </div>
 
-        <form onSubmit={handleSubmit(internalSubmit)} className="px-6 pb-6">
+        <form
+          onSubmit={handleSubmit(internalSubmit, (errors) => {
+            console.log(errors);
+          })}
+          className="px-6 pb-6"
+        >
           <FieldGroup>
             <ScrollArea className="h-[55vh]">
-              <div className="space-y-5 pr-2">
+              <div className="space-y-5 px-2">
                 <Controller
                   control={control}
                   name="name"
@@ -118,7 +130,7 @@ export default function UploadRepositoryFileModal({
                         File name <span className="text-destructive">*</span>
                       </FieldLabel>
                       <Input
-                        className="h-12 shadow-sm"
+                        className="h-10 md:h-13 placeholder:text-xs md:placeholder:text-sm focus-visible:ring-2 focus-visible:ring-primary-blue/20 focus-visible:border-primary-blue  rounded-md"
                         placeholder="e.g. Mathematics Past Question 2023"
                         disabled={!file || isSubmitting}
                         {...field}
@@ -137,7 +149,7 @@ export default function UploadRepositoryFileModal({
                     <Field>
                       <FieldLabel>Description</FieldLabel>
                       <Textarea
-                        className="min-h-[88px] shadow-sm resize-none"
+                        className="min-h-[88px] placeholder:text-xs md:placeholder:text-sm focus-visible:ring-2 focus-visible:ring-primary-blue/20 focus-visible:border-primary-blue resize-none  rounded-md"
                         placeholder="Optional description "
                         disabled={!file || isSubmitting}
                         {...field}
@@ -156,7 +168,7 @@ export default function UploadRepositoryFileModal({
                     <Field>
                       <FieldLabel>Tags</FieldLabel>
                       <Input
-                        className="h-12 shadow-sm"
+                        className="h-10 md:h-13 placeholder:text-xs md:placeholder:text-sm focus-visible:ring-2 focus-visible:ring-primary-blue/20 focus-visible:border-primary-blue rounded-md"
                         placeholder="mathematics, wassce, 2023"
                         disabled={!file || isSubmitting}
                         {...field}
@@ -171,7 +183,7 @@ export default function UploadRepositoryFileModal({
                   )}
                 />
 
-                <Controller
+                {/* <Controller
                   control={control}
                   name="expires_at"
                   render={({ field, fieldState }) => (
@@ -188,7 +200,85 @@ export default function UploadRepositoryFileModal({
                       )}
                     </Field>
                   )}
-                />
+                /> */}
+
+                <div className="grid grid-col-1 md:grid-cols-2 gap-5">
+                  <Controller
+                    control={control}
+                    name="expires_at.date"
+                    render={({ field, fieldState }) => {
+                      const selected = parseFormDate(field.value);
+
+                      return (
+                        <Field>
+                          <FieldLabel>Expires on</FieldLabel>
+                          <Popover
+                            open={datePickerOpen}
+                            onOpenChange={setDatePickerOpen}
+                          >
+                            <PopoverTrigger
+                              render={
+                                <Button
+                                  variant="outline"
+                                  id="date-picker-optional"
+                                  className="w-32 h-12  justify-between font-normal"
+                                  disabled={!file || isSubmitting}
+                                >
+                                  {selected ? (
+                                    format(selected, "dd/MM/yyyy")
+                                  ) : (
+                                    <span className="text-muted-foreground">
+                                      Select a date
+                                    </span>
+                                  )}
+                                  <CaretDownIcon data-icon="inline-end" />
+                                </Button>
+                              }
+                            />
+                            <PopoverContent
+                              className="w-auto overflow-hidden p-0"
+                              align="start"
+                            >
+                              <Calendar
+                                mode="single"
+                                selected={selected}
+                                captionLayout="dropdown"
+                                // defaultMonth={date}
+                                onSelect={(date) =>
+                                  field.onChange(
+                                    date ? format(date, "yyyy-MM-dd") : "",
+                                  )
+                                }
+                                defaultMonth={selected}
+                              />
+                            </PopoverContent>
+                          </Popover>
+                        </Field>
+                      );
+                    }}
+                  />
+                  <Controller
+                    control={control}
+                    name="expires_at.time"
+                    render={({ field, fieldState }) => (
+                      <Field>
+                        <FieldLabel>Expires at</FieldLabel>
+                        <Input
+                          type="time"
+                          id="time-picker-optional"
+                          step="60"
+                          className="appearance-none bg-background [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none h-12 placeholder:text-xs md:placeholder:text-sm focus-visible:ring-2 focus-visible:ring-primary-blue/20 focus-visible:border-primary-blue"
+                          placeholder="Select time"
+                          disabled={!file || isSubmitting}
+                          {...field}
+                        />
+                        {fieldState.invalid && (
+                          <FieldError errors={[fieldState.error]} />
+                        )}
+                      </Field>
+                    )}
+                  />
+                </div>
 
                 <Controller
                   control={control}
@@ -197,7 +287,7 @@ export default function UploadRepositoryFileModal({
                     <Field>
                       <FieldLabel>Change note</FieldLabel>
                       <Input
-                        className="h-12 shadow-sm"
+                        className="h-12 rounded-md focus-visible:ring-2 focus-visible:ring-primary-blue/20 focus-visible:border-primary-blue"
                         placeholder="e.g. Original document"
                         disabled={!file || isSubmitting}
                         {...field}
@@ -224,7 +314,7 @@ export default function UploadRepositoryFileModal({
                 className="h-12 gap-2 px-8"
                 variant="primary"
                 type="submit"
-                disabled={!file || !formState.isValid || isSubmitting}
+                // disabled={!file || !formState.isValid || isSubmitting}
               >
                 {isSubmitting ? (
                   <>

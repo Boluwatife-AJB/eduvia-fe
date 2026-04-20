@@ -1,4 +1,4 @@
-import { isValid, parse } from "date-fns";
+import { isAfter, isSameDay, isValid, parse } from "date-fns";
 import { z } from "zod";
 import {
   classOfDegreeOptions,
@@ -236,3 +236,63 @@ export const createFolderSchema = z
       });
     }
   });
+
+export const uploadRepositoryFileFormSchema = z.object({
+  name: z.string().min(1, { message: "File name is required" }),
+  description: z.string(),
+  tags: z.string(),
+  // Date should always be a future date or today. And if it is today, the time should be after the current time. If date is filled and time is not filled, the default time should be 12:00 PM.
+  expires_at: z.object({
+    date: z
+      .string()
+      .min(1, { message: "Date is required" })
+      .refine(
+        (date) => {
+          const d = parse(date.trim(), "yyyy-MM-dd", new Date());
+          return (
+            isValid(d) && (isAfter(d, new Date()) || isSameDay(d, new Date()))
+          );
+        },
+        {
+          message: "Date must be a future date or today",
+        },
+      ),
+    time: z.string().optional().nullable(),
+    // time: z.string().min(1, { message: "Time is required" }).refine((time) => {
+    //   const t = parse(time.trim().toUpperCase(), "HH:mm a", new Date());
+    //   return isValid(t);
+    // },
+    //   {
+    //     message: "Enter a valid time",
+    //   },
+    // ),
+  }),
+  // .superRefine((value, ctx) => {
+  //   const selectedDate = parse(value.date.trim(), "yyyy-MM-dd", new Date());
+  //   const selectedDateTime = parse(
+  //     `${value.date.trim()} ${value.time.trim()}`,
+  //     "yyyy-MM-dd HH:mm",
+  //     new Date(),
+  //   );
+
+  //   if (!isValid(selectedDateTime)) {
+  //     ctx.addIssue({
+  //       code: "custom",
+  //       path: ["time"],
+  //       message: "Enter a valid time",
+  //     });
+  //     return;
+  //   }
+
+  //   if (isSameDay(selectedDate, new Date()) && !isAfter(selectedDateTime, new Date())) {
+  //     ctx.addIssue({
+  //       code: "custom",
+  //       path: ["time"],
+  //       message: "Time must be in the future for today's date",
+  //     });
+  //   }
+  // })
+  // .optional()
+  // .nullable(),
+  change_note: z.string().optional(),
+});

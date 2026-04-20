@@ -35,8 +35,17 @@ type AssignTeacherToSubjectFormValues = z.infer<
 type AddAcademicSessionFormValues = z.infer<typeof createAcademicSessionSchema>;
 type AddAcademicTermFormValues = z.infer<typeof createAcademicTermSchema>;
 type CreateFolderFormValues = z.infer<typeof createFolderSchema>;
+type UploadRepositoryFileFormValues = z.infer<
+  typeof uploadRepositoryFileFormSchema
+>;
 
 type Gender = "MALE" | "FEMALE";
+
+type ApiEnvelope<T> = {
+  data: T;
+};
+
+type NullableString = string | null;
 
 type Role =
   | "TEACHER"
@@ -465,4 +474,91 @@ interface RepositoryFolder {
   _count: {
     files: number;
   };
+}
+
+interface CreateRepositoryFileInput {
+  scope: string;
+  scope_id: NullableString;
+  folder_id: string;
+  name: string;
+  file_url: string;
+  file_key: string;
+  description?: NullableString;
+  tags?: string[];
+  expires_at?: NullableString;
+  change_note?: NullableString;
+  linked_record_type?: NullableString;
+  linked_record_id?: NullableString;
+}
+
+interface RepositoryFileRecord {
+  id: string;
+  scope: string;
+  scope_id: NullableString;
+  folder_id: string;
+  name: string;
+  description: NullableString;
+  tags: string[];
+  file_url: string;
+  file_key: string;
+  expires_at: NullableString;
+  change_note: NullableString;
+  linked_record_type: NullableString;
+  linked_record_id: NullableString;
+}
+
+interface Folder {
+  id: string;
+  tenant_id: string;
+  name: string;
+  scope: string;
+  scope_id: string | null;
+  parent_folder_id: string | null;
+  depth: number;
+  status: "ACTIVE" | "INACTIVE";
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
+interface FileVersion {
+  id: string;
+  tenant_id: string;
+  file_id: string;
+  version_number: number;
+  file_key: string;
+  file_url: string;
+  mime_type: string;
+  file_size_bytes: string;
+  uploaded_by: string;
+  change_note: string;
+  created_at: string;
+  updated_at: string;
+}
+
+interface RepositoryFile {
+  id: string;
+  tenant_id: string;
+  folder_id: string;
+  scope_id: string | null;
+  scope: string;
+  name: string;
+  description: string | null;
+  tags: string[];
+  current_version_id: string;
+  total_versions: number;
+  status: "ACTIVE" | "INACTIVE";
+  is_global_search: boolean;
+  expires_at: string | null;
+  link_record_type: string | null;
+  link_record_id: string | null;
+  created_at: string;
+  updated_at: string;
+  versions: FileVersion[];
+}
+
+interface FolderContent {
+  folder: Folder;
+  sub_folders: Folder[];
+  files: RepositoryFile[];
 }

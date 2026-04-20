@@ -36,7 +36,7 @@ import {
   FolderSimpleIcon,
 } from "@phosphor-icons/react/dist/ssr";
 import { schoolDocumentsScopes } from "@/lib/data";
-import { RepositoryFolder } from "@/types";
+import { FolderContent, RepositoryFolder } from "@/types";
 import { apiClient } from "@/lib/api";
 import { useQuery } from "@tanstack/react-query";
 
@@ -181,6 +181,13 @@ const fetchFolders = async (
   return response.data.data;
 };
 
+const fetchFolderContent = async (folderId: string): Promise<FolderContent> => {
+  const response = await apiClient.get(
+    `/repository/folders/${folderId}/contents`,
+  );
+  return response.data.data;
+};
+
 export type UploadTargetSelection = {
   scope: string;
   scopeId: string | null;
@@ -272,6 +279,12 @@ export default function RepositoryView({
 }: RepositoryViewProps) {
   const [selectedFile, setSelectedFile] = useState<FileRecord | null>(null);
 
+  const { data: folderContent, isPending: isFolderContentPending } = useQuery({
+    queryKey: ["repository-folder-content", selectedFolderId],
+    queryFn: () => fetchFolderContent(selectedFolderId ?? ""),
+    enabled: Boolean(selectedFolderId && selectedFolderId !== null),
+  });
+
   const { data: folders, isPending: isFoldersPending } = useQuery({
     queryKey: ["repository-folders", activeScope],
     queryFn: () => fetchFolders(activeScope),
@@ -329,6 +342,7 @@ export default function RepositoryView({
                               scopeId: null,
                               folderId: null,
                             });
+                            // setSelectedFolderId(null);
                           }}
                           className={cn(
                             "w-full flex items-center gap-2.5 px-3 py-1.5 text-sm rounded-md transition-colors",
@@ -362,6 +376,18 @@ export default function RepositoryView({
                           />
                         ) : null}
                       </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* TODO: Display files and folders in the selected folder */}
+                {selectedFolderId === scope.id && (
+                  <div className="pl-3 space-y-1 mt-0 5 pb-2">
+                    {folderContent?.sub_folders.map((folder) => (
+                      <div key={folder.id}>{folder.name}</div>
+                    ))}
+                    {folderContent?.files.map((file) => (
+                      <div key={file.id}>{file.name}</div>
                     ))}
                   </div>
                 )}

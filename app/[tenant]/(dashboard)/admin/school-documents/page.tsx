@@ -1,23 +1,24 @@
 "use client";
 
 import CreateFolderModal from "@/components/school-admin/modal/create-folder";
-import UploadRepositoryFileModal, {
-  type UploadRepositoryFileFormValues,
-} from "@/components/school-admin/modal/upload-repository-file";
-import RepositoryView from "@/components/school-admin/tabs/repository-view";
-import { UploadTargetSelection } from "@/components/school-admin/tabs/repository-view";
+import UploadRepositoryFileModal from "@/components/school-admin/modal/upload-repository-file";
+import RepositoryView, {
+  UploadTargetSelection,
+} from "@/components/school-admin/tabs/repository-view";
 import StorageView from "@/components/school-admin/tabs/storage-view";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { createRepositoryFile } from "@/lib/services/repository-files";
-import { uploadFileToStorage } from "@/lib/services/file-upload";
-import { useMutation } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { uploadFileToStorage } from "@/lib/services/file-upload";
+import { createRepositoryFile } from "@/lib/services/repository-files";
+import { toApiDateString } from "@/lib/utils";
+import { UploadRepositoryFileFormValues } from "@/types";
 import {
   MagnifyingGlassIcon,
   PlusIcon,
   UploadSimpleIcon,
 } from "@phosphor-icons/react";
+import { useMutation } from "@tanstack/react-query";
 import { motion } from "motion/react";
 import { ChangeEvent, useLayoutEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -59,19 +60,14 @@ export default function SchoolDocuments() {
 
         const tags = form.tags
           .split(",")
-          .map((tag) => tag.trim())
+          .map((tag: string) => tag.trim())
           .filter(Boolean);
 
         const descriptionTrimmed = form.description.trim();
-        const expiresTrimmed = form.expires_at.trim();
-        let expires_at = "";
-        if (expiresTrimmed !== "") {
-          const expiresDate = new Date(expiresTrimmed);
-          if (Number.isNaN(expiresDate.getTime())) {
-            throw new Error("Please enter a valid expiry date.");
-          }
-          expires_at = expiresDate.toISOString();
-        }
+
+        const expires_at = toApiDateString(
+          form.expires_at.date + " " + form.expires_at.time,
+        );
 
         const changeTrimmed = form.change_note.trim();
         const change_note = changeTrimmed === "" ? "" : changeTrimmed;
@@ -85,7 +81,7 @@ export default function SchoolDocuments() {
           tags,
           file_url: uploadedFile.file_url,
           file_key: uploadedFile.file_key,
-          expires_at,
+          expires_at: expires_at ? expires_at : null,
           change_note,
           linked_record_type: null,
           linked_record_id: null,

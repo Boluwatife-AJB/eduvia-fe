@@ -1,41 +1,9 @@
 import { apiClient } from "@/lib/api";
-
-type ApiEnvelope<T> = {
-  data: T;
-};
-
-type NullableString = string | null;
-
-export type CreateRepositoryFileInput = {
-  scope: string;
-  scope_id: NullableString;
-  folder_id: string;
-  name: string;
-  file_url: string;
-  file_key: string;
-  description?: NullableString;
-  tags?: string[];
-  expires_at?: NullableString;
-  change_note?: NullableString;
-  linked_record_type?: NullableString;
-  linked_record_id?: NullableString;
-};
-
-export type RepositoryFileRecord = {
-  id: string;
-  scope: string;
-  scope_id: NullableString;
-  folder_id: string;
-  name: string;
-  description: NullableString;
-  tags: string[];
-  file_url: string;
-  file_key: string;
-  expires_at: NullableString;
-  change_note: NullableString;
-  linked_record_type: NullableString;
-  linked_record_id: NullableString;
-};
+import {
+  ApiEnvelope,
+  CreateRepositoryFileInput,
+  RepositoryFileRecord,
+} from "@/types";
 
 function normalizeCreatePayload(
   payload: CreateRepositoryFileInput,
