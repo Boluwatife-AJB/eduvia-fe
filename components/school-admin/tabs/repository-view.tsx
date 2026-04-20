@@ -181,12 +181,29 @@ const fetchFolders = async (
   return response.data.data;
 };
 
+export type UploadTargetSelection = {
+  scope: string;
+  scopeId: string | null;
+  folderId: string | null;
+};
+
+interface RepositoryViewProps {
+  activeScope: string;
+  selectedFolderId: string | null;
+  onActiveScopeChange: (scope: string) => void;
+  onUploadTargetChange: (target: UploadTargetSelection) => void;
+}
+
 function ScopeFolderTree({
   folders,
   isLoading,
+  selectedFolderId,
+  onSelectFolder,
 }: {
   folders: RepositoryFolder[] | undefined;
   isLoading: boolean;
+  selectedFolderId: string | null;
+  onSelectFolder: (folder: RepositoryFolder) => void;
 }) {
   if (isLoading) {
     return (
@@ -206,46 +223,53 @@ function ScopeFolderTree({
     );
   }
 
+  const renderFolderNode = (folder: RepositoryFolder, depth = 0) => (
+    <div key={folder.id} className="space-y-0.5">
+      <button
+        type="button"
+        onClick={() => onSelectFolder(folder)}
+        className={cn(
+          "flex w-full items-center gap-1.5 rounded-md px-2 py-1 text-left text-[11px] transition-colors",
+          depth > 0
+            ? "text-muted-foreground hover:bg-muted hover:text-foreground"
+            : "font-medium text-foreground/90 hover:bg-muted/70",
+          selectedFolderId === folder.id &&
+            "bg-primary-blue/10 text-primary-blue hover:bg-primary-blue/15",
+        )}
+      >
+        <FolderSimpleIcon
+          weight={selectedFolderId === folder.id ? "fill" : "regular"}
+          className="size-4 shrink-0"
+        />
+        <span className="truncate">{folder.name}</span>
+        {folder._count?.files != null ? (
+          <span className="ml-auto shrink-0 text-[10px] tabular-nums text-muted-foreground/80">
+            {folder._count.files}
+          </span>
+        ) : null}
+      </button>
+
+      {folder.children?.length ? (
+        <div className="space-y-0.5 pl-3">
+          {folder.children.map((child) => renderFolderNode(child, depth + 1))}
+        </div>
+      ) : null}
+    </div>
+  );
+
   return (
     <div className="mt-1.5 pl-2 ml-2 space-y-2 border-l border-border/50">
-      {folders.map((folder) => (
-        <div key={folder.id} className="space-y-0.5">
-          <div className="flex items-center gap-1.5 px-1 py-0.5 text-[11px] font-medium text-foreground/90">
-            <FolderSimpleIcon weight="fill" className="size-4 shrink-0" />
-            <span className="truncate">{folder.name}</span>
-            {folder._count?.files != null ? (
-              <span className="ml-auto shrink-0 text-[10px] tabular-nums text-muted-foreground">
-                {folder._count.files}
-              </span>
-            ) : null}
-          </div>
-          {folder.children?.length ? (
-            <div className="space-y-0.5 pl-1">
-              {folder.children.map((child) => (
-                <button
-                  key={child.id}
-                  type="button"
-                  className="flex w-full items-center gap-1.5 rounded-md px-2 py-1 text-left text-[11px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                >
-                  <FolderSimpleIcon className="size-4 shrink-0 opacity-80" />
-                  <span className="truncate">{child.name}</span>
-                  {child._count?.files != null ? (
-                    <span className="ml-auto shrink-0 text-[10px] tabular-nums text-muted-foreground/80">
-                      {child._count.files}
-                    </span>
-                  ) : null}
-                </button>
-              ))}
-            </div>
-          ) : null}
-        </div>
-      ))}
+      {folders.map((folder) => renderFolderNode(folder))}
     </div>
   );
 }
 
-export default function RepositoryView() {
-  const [activeScope, setActiveScope] = useState("SCHOOL_DOCUMENTS");
+export default function RepositoryView({
+  activeScope,
+  selectedFolderId,
+  onActiveScopeChange,
+  onUploadTargetChange,
+}: RepositoryViewProps) {
   const [selectedFile, setSelectedFile] = useState<FileRecord | null>(null);
 
   const { data: folders, isPending: isFoldersPending } = useQuery({
@@ -298,7 +322,14 @@ export default function RepositoryView() {
                       <div key={item.value} className="space-y-0">
                         <button
                           type="button"
-                          onClick={() => setActiveScope(item.value)}
+                          onClick={() => {
+                            onActiveScopeChange(item.value);
+                            onUploadTargetChange({
+                              scope: item.value,
+                              scopeId: null,
+                              folderId: null,
+                            });
+                          }}
                           className={cn(
                             "w-full flex items-center gap-2.5 px-3 py-1.5 text-sm rounded-md transition-colors",
                             activeScope === item.value
@@ -320,6 +351,14 @@ export default function RepositoryView() {
                           <ScopeFolderTree
                             folders={folders}
                             isLoading={isFoldersPending}
+                            selectedFolderId={selectedFolderId}
+                            onSelectFolder={(folder) => {
+                              onUploadTargetChange({
+                                scope: folder.scope,
+                                scopeId: folder.scope_id,
+                                folderId: folder.id,
+                              });
+                            }}
                           />
                         ) : null}
                       </div>

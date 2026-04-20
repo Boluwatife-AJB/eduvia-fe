@@ -1,10 +1,17 @@
 "use client";
 
 import CreateFolderModal from "@/components/school-admin/modal/create-folder";
+import UploadRepositoryFileModal, {
+  type UploadRepositoryFileFormValues,
+} from "@/components/school-admin/modal/upload-repository-file";
 import RepositoryView from "@/components/school-admin/tabs/repository-view";
+import { UploadTargetSelection } from "@/components/school-admin/tabs/repository-view";
 import StorageView from "@/components/school-admin/tabs/storage-view";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { createRepositoryFile } from "@/lib/services/repository-files";
+import { uploadFileToStorage } from "@/lib/services/file-upload";
+import { useMutation } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   MagnifyingGlassIcon,
@@ -12,7 +19,8 @@ import {
   UploadSimpleIcon,
 } from "@phosphor-icons/react";
 import { motion } from "motion/react";
-import { useLayoutEffect, useRef, useState } from "react";
+import { ChangeEvent, useLayoutEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 
 const docTabs = [
   { name: "Repository View", value: "repository" },
@@ -22,8 +30,76 @@ const docTabs = [
 export default function SchoolDocuments() {
   const [activeTab, setActiveTab] = useState("repository");
   const [isCreateFolderModalOpen, setIsCreateFolderModalOpen] = useState(false);
+  const [activeScope, setActiveScope] = useState("SCHOOL_DOCUMENTS");
+  const [uploadTarget, setUploadTarget] = useState<UploadTargetSelection>({
+    scope: "SCHOOL_DOCUMENTS",
+    scopeId: null,
+    folderId: null,
+  });
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [pendingUploadFile, setPendingUploadFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const [underlineStyle, setUnderlineStyle] = useState({ left: 0, width: 0 });
+
+  const { mutateAsync: uploadRepositoryFile, isPending: isUploadingFile } =
+    useMutation({
+      mutationFn: async ({
+        file,
+        form,
+      }: {
+        file: File;
+        form: UploadRepositoryFileFormValues;
+      }) => {
+        if (!uploadTarget.folderId) {
+          throw new Error("Please select a folder before uploading a file.");
+        }
+
+        const uploadedFile = await uploadFileToStorage(file);
+
+        const tags = form.tags
+          .split(",")
+          .map((tag) => tag.trim())
+          .filter(Boolean);
+
+        const descriptionTrimmed = form.description.trim();
+        const expiresTrimmed = form.expires_at.trim();
+        let expires_at = "";
+        if (expiresTrimmed !== "") {
+          const expiresDate = new Date(expiresTrimmed);
+          if (Number.isNaN(expiresDate.getTime())) {
+            throw new Error("Please enter a valid expiry date.");
+          }
+          expires_at = expiresDate.toISOString();
+        }
+
+        const changeTrimmed = form.change_note.trim();
+        const change_note = changeTrimmed === "" ? "" : changeTrimmed;
+
+        return createRepositoryFile({
+          scope: uploadTarget.scope,
+          scope_id: uploadTarget.scopeId,
+          folder_id: uploadTarget.folderId,
+          name: form.name.trim(),
+          description: descriptionTrimmed === "" ? null : descriptionTrimmed,
+          tags,
+          file_url: uploadedFile.file_url,
+          file_key: uploadedFile.file_key,
+          expires_at,
+          change_note,
+          linked_record_type: null,
+          linked_record_id: null,
+        });
+      },
+      onSuccess: () => {
+        toast.success("File uploaded successfully");
+      },
+      onError: (error) => {
+        const message =
+          error instanceof Error ? error.message : "Failed to upload file";
+        toast.error(message);
+      },
+    });
 
   useLayoutEffect(() => {
     const activeIndex = docTabs.findIndex((tab) => tab.value === activeTab);
@@ -37,6 +113,41 @@ export default function SchoolDocuments() {
       });
     }
   }, [activeTab]);
+
+  const handleUploadClick = () => {
+    if (activeTab !== "repository") {
+      toast.error("Switch to Repository View before uploading.");
+      return;
+    }
+
+    if (!uploadTarget.folderId) {
+      toast.error("Please select a folder before uploading a file.");
+      return;
+    }
+
+    fileInputRef.current?.click();
+  };
+
+  const handleFileSelection = (event: ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = event.target.files?.[0];
+    if (!selectedFile) return;
+
+    setPendingUploadFile(selectedFile);
+    setIsUploadModalOpen(true);
+    event.target.value = "";
+  };
+
+  const handleUploadModalClose = () => {
+    setIsUploadModalOpen(false);
+    setPendingUploadFile(null);
+  };
+
+  const handleUploadModalSubmit = async (
+    values: UploadRepositoryFileFormValues,
+  ) => {
+    if (!pendingUploadFile) return;
+    await uploadRepositoryFile({ file: pendingUploadFile, form: values });
+  };
 
   return (
     // <div className="flex flex-col h-[calc(100vh-4rem)]">
@@ -59,9 +170,20 @@ export default function SchoolDocuments() {
             />
             <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
           </div>
-          <Button variant="outline" className="h-10 gap-2 shrink-0 rounded-xl">
+          <input
+            ref={fileInputRef}
+            type="file"
+            className="sr-only"
+            onChange={handleFileSelection}
+          />
+          <Button
+            variant="outline"
+            className="h-10 gap-2 shrink-0 rounded-xl"
+            onClick={handleUploadClick}
+            disabled={isUploadingFile}
+          >
             <UploadSimpleIcon weight="bold" className="size-4" />
-            Upload File
+            {isUploadingFile ? "Uploading..." : "Upload File"}
           </Button>
           <Button
             variant="primary"
@@ -109,7 +231,12 @@ export default function SchoolDocuments() {
           </TabsList>
 
           <TabsContent value="repository">
-            <RepositoryView />
+            <RepositoryView
+              activeScope={activeScope}
+              selectedFolderId={uploadTarget.folderId}
+              onActiveScopeChange={setActiveScope}
+              onUploadTargetChange={setUploadTarget}
+            />
           </TabsContent>
           <TabsContent value="usage">
             <StorageView />
@@ -119,6 +246,13 @@ export default function SchoolDocuments() {
       <CreateFolderModal
         open={isCreateFolderModalOpen}
         onClose={() => setIsCreateFolderModalOpen(false)}
+      />
+      <UploadRepositoryFileModal
+        open={isUploadModalOpen}
+        file={pendingUploadFile}
+        isSubmitting={isUploadingFile}
+        onClose={handleUploadModalClose}
+        onSubmit={handleUploadModalSubmit}
       />
       {/* <div className="flex-1 flex overflow-hidden">
         {activeTab === "repository" ? (
