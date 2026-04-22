@@ -65,9 +65,11 @@ export default function SchoolDocuments() {
 
         const descriptionTrimmed = form.description.trim();
 
-        const expires_at = toApiDateString(
-          form.expires_at.date + " " + form.expires_at.time,
-        );
+        const expiryDate = form.expires_at.date?.trim() ?? "";
+        const expiryTime = form.expires_at.time?.trim() ?? "";
+        const expires_at = expiryDate
+          ? toApiDateString(`${expiryDate} ${expiryTime || "12:00"}`)
+          : null;
 
         const changeTrimmed = form.change_note.trim();
         const change_note = changeTrimmed === "" ? "" : changeTrimmed;
@@ -81,7 +83,7 @@ export default function SchoolDocuments() {
           tags,
           file_url: uploadedFile.file_url,
           file_key: uploadedFile.file_key,
-          expires_at: expires_at ? expires_at : null,
+          expires_at,
           change_note,
           linked_record_type: null,
           linked_record_id: null,

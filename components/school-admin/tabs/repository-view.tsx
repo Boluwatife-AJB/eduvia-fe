@@ -33,7 +33,14 @@ import {
 import FileDetailSheet from "../modal/file-detail-sheet";
 import {
   CaretDownIcon,
+  FileDocIcon,
+  FileIcon,
+  FilePdfIcon,
+  FileXlsIcon,
   FolderSimpleIcon,
+  ImageIcon,
+  MusicNoteIcon,
+  VideoIcon,
 } from "@phosphor-icons/react/dist/ssr";
 import { schoolDocumentsScopes } from "@/lib/data";
 import { FolderContent, RepositoryFolder } from "@/types";
@@ -163,6 +170,25 @@ const getFileIcon = (type: string) => {
       return (
         <div className="p-2 bg-gray-500/10 text-gray-500 rounded-md">FILE</div>
       );
+  }
+};
+
+const getMimeTypeIcon = (mimeType: string) => {
+  switch (mimeType) {
+    case "application/pdf":
+      return <FilePdfIcon weight="fill" className="size-4 shrink-0" />;
+    case "video/mp4":
+      return <VideoIcon weight="fill" className="size-4 shrink-0" />;
+    case "audio/mp3":
+      return <MusicNoteIcon weight="fill" className="size-4 shrink-0" />;
+    case "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":
+      return <FileXlsIcon weight="fill" className="size-4 shrink-0" />;
+    case "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+      return <FileDocIcon weight="fill" className="size-4 shrink-0" />;
+    case "image/jpeg":
+      return <ImageIcon weight="fill" className="size-4 shrink-0" />;
+    default:
+      return <FileIcon weight="fill" className="size-4 shrink-0" />;
   }
 };
 
@@ -362,32 +388,75 @@ export default function RepositoryView({
                           </span>
                         </button>
                         {activeScope === item.value ? (
-                          <ScopeFolderTree
-                            folders={folders}
-                            isLoading={isFoldersPending}
-                            selectedFolderId={selectedFolderId}
-                            onSelectFolder={(folder) => {
-                              onUploadTargetChange({
-                                scope: folder.scope,
-                                scopeId: folder.scope_id,
-                                folderId: folder.id,
-                              });
-                            }}
-                          />
+                          <>
+                            <ScopeFolderTree
+                              folders={folders}
+                              isLoading={isFoldersPending}
+                              selectedFolderId={selectedFolderId}
+                              onSelectFolder={(folder) => {
+                                onUploadTargetChange({
+                                  scope: folder.scope,
+                                  scopeId: folder.scope_id,
+                                  folderId: folder.id,
+                                });
+                              }}
+                            />
+                            {selectedFolderId ? (
+                              <div className="mt-1.5 pl-2 ml-2 space-y-0.5 border-l border-border/50 py-1">
+                                {isFolderContentPending ? (
+                                  <p className="px-2 text-[11px] text-muted-foreground">
+                                    Loading folder content…
+                                  </p>
+                                ) : null}
+                                {folderContent &&
+                                folderContent.sub_folders.length === 0 &&
+                                folderContent.files.length === 0 ? (
+                                  <p className="px-2 text-[11px] text-muted-foreground">
+                                    Folder is empty
+                                  </p>
+                                ) : null}
+                                {folderContent?.sub_folders.map((folder) => (
+                                  <button
+                                    key={folder.id}
+                                    type="button"
+                                    onClick={() =>
+                                      onUploadTargetChange({
+                                        scope: folder.scope,
+                                        scopeId: folder.scope_id,
+                                        folderId: folder.id,
+                                      })
+                                    }
+                                    className="flex w-full items-center gap-1.5 rounded-md px-2 py-1 text-left text-[11px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                                  >
+                                    <FolderSimpleIcon className="size-4 shrink-0" />
+                                    <span className="truncate">
+                                      {folder.name}
+                                    </span>
+                                  </button>
+                                ))}
+                                {folderContent?.files.map((file) => (
+                                  <div
+                                    key={file.id}
+                                    className="flex items-center gap-1.5 rounded-md px-2 py-1 text-[11px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                                  >
+                                    {/* {getFileIcon(
+                                      file.versions[0].mime_type.split(
+                                        "/"
+                                      )[1] as string
+                                    )} */}
+                                    {getMimeTypeIcon(
+                                      file.versions[0].mime_type,
+                                    )}
+                                    <span className="truncate">
+                                      {file.name}
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : null}
+                          </>
                         ) : null}
                       </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* TODO: Display files and folders in the selected folder */}
-                {selectedFolderId === scope.id && (
-                  <div className="pl-3 space-y-1 mt-0 5 pb-2">
-                    {folderContent?.sub_folders.map((folder) => (
-                      <div key={folder.id}>{folder.name}</div>
-                    ))}
-                    {folderContent?.files.map((file) => (
-                      <div key={file.id}>{file.name}</div>
                     ))}
                   </div>
                 )}

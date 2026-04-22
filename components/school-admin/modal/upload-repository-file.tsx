@@ -64,7 +64,7 @@ export default function UploadRepositoryFileModal({
     },
   });
 
-  const { handleSubmit, control, reset, formState } = form;
+  const { handleSubmit, control, reset } = form;
 
   useEffect(() => {
     if (open && file) {
@@ -206,7 +206,7 @@ export default function UploadRepositoryFileModal({
                   <Controller
                     control={control}
                     name="expires_at.date"
-                    render={({ field, fieldState }) => {
+                    render={({ field }) => {
                       const selected = parseFormDate(field.value);
 
                       return (

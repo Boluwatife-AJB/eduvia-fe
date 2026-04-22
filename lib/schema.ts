@@ -241,58 +241,75 @@ export const uploadRepositoryFileFormSchema = z.object({
   name: z.string().min(1, { message: "File name is required" }),
   description: z.string(),
   tags: z.string(),
-  // Date should always be a future date or today. And if it is today, the time should be after the current time. If date is filled and time is not filled, the default time should be 12:00 PM.
-  expires_at: z.object({
-    date: z
-      .string()
-      .min(1, { message: "Date is required" })
-      .refine(
-        (date) => {
-          const d = parse(date.trim(), "yyyy-MM-dd", new Date());
-          return (
-            isValid(d) && (isAfter(d, new Date()) || isSameDay(d, new Date()))
-          );
-        },
-        {
-          message: "Date must be a future date or today",
-        },
-      ),
-    time: z.string().optional().nullable(),
-    // time: z.string().min(1, { message: "Time is required" }).refine((time) => {
-    //   const t = parse(time.trim().toUpperCase(), "HH:mm a", new Date());
-    //   return isValid(t);
-    // },
-    //   {
-    //     message: "Enter a valid time",
-    //   },
-    // ),
-  }),
-  // .superRefine((value, ctx) => {
-  //   const selectedDate = parse(value.date.trim(), "yyyy-MM-dd", new Date());
-  //   const selectedDateTime = parse(
-  //     `${value.date.trim()} ${value.time.trim()}`,
-  //     "yyyy-MM-dd HH:mm",
-  //     new Date(),
-  //   );
+  // Expires date/time are optional. If only date is provided, time defaults to 12:00 (noon).
+  expires_at: z
+    .object({
+      date: z.string().optional().nullable(),
+      time: z.string().optional().nullable(),
+    })
+    .superRefine((value, ctx) => {
+      const date = value.date?.trim() ?? "";
+      const time = value.time?.trim() ?? "";
 
-  //   if (!isValid(selectedDateTime)) {
-  //     ctx.addIssue({
-  //       code: "custom",
-  //       path: ["time"],
-  //       message: "Enter a valid time",
-  //     });
-  //     return;
-  //   }
+      if (!date && !time) return;
 
-  //   if (isSameDay(selectedDate, new Date()) && !isAfter(selectedDateTime, new Date())) {
-  //     ctx.addIssue({
-  //       code: "custom",
-  //       path: ["time"],
-  //       message: "Time must be in the future for today's date",
-  //     });
-  //   }
-  // })
-  // .optional()
-  // .nullable(),
+      if (!date && time) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["date"],
+          message: "Select a date when providing an expiry time",
+        });
+        return;
+      }
+
+      const selectedDate = parse(date, "yyyy-MM-dd", new Date());
+      if (!isValid(selectedDate)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["date"],
+          message: "Enter a valid date",
+        });
+        return;
+      }
+
+      if (
+        !isAfter(selectedDate, new Date()) &&
+        !isSameDay(selectedDate, new Date())
+      ) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["date"],
+          message: "Date must be today or in the future",
+        });
+        return;
+      }
+
+      if (time && !/^([01]\d|2[0-3]):[0-5]\d$/.test(time)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["time"],
+          message: "Enter a valid time",
+        });
+        return;
+      }
+
+      const effectiveTime = time || "12:00";
+      const selectedDateTime = parse(
+        `${date} ${effectiveTime}`,
+        "yyyy-MM-dd HH:mm",
+        new Date(),
+      );
+
+      if (
+        isSameDay(selectedDate, new Date()) &&
+        !isAfter(selectedDateTime, new Date())
+      ) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["time"],
+          message: "Expiry must be in the future",
+        });
+      }
+    }),
   change_note: z.string().optional(),
 });
