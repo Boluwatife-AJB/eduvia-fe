@@ -54,7 +54,7 @@ export default function SchoolDocuments() {
         file: File;
         form: UploadRepositoryFileFormValues;
         target: UploadTargetSelection;
-        /** Nav scope; used when the API omits `scope` on the selected folder. */
+
         activeScopeFallback: string;
       }) => {
         if (!target.folderId) {
@@ -272,68 +272,6 @@ export default function SchoolDocuments() {
         uploadContext={uploadTarget}
         activeScopeFallback={activeScope}
       />
-      {/* <div className="flex-1 flex overflow-hidden">
-        {activeTab === "repository" ? (
-          <>
-            
-            <div className="w-[240px] shrink-0 border-r bg-muted/10 overflow-y-auto flex flex-col p-4">
-              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4 px-2">Navigation Scopes</span>
-              <div className="space-y-1">
-                {SCOPES.map((scope) => {
-                  const Icon = scope.icon;
-                  return (
-                    <div key={scope.id} className="space-y-0.5">
-                      <Button
-                        variant="ghost"
-                        className={cn(
-                          "w-full justify-between px-2 h-9 text-sm font-medium",
-                          !scope.active && "opacity-50 grayscale cursor-not-allowed hover:bg-transparent"
-                        )}
-                        disabled={!scope.active}
-                      >
-                        <div className="flex items-center gap-2.5">
-                          <Icon weight={scope.active ? "fill" : "regular"} className={cn("size-4", scope.active ? "text-primary-blue text-opacity-80" : "text-muted-foreground")} />
-                          <span className="truncate">{scope.title}</span>
-                        </div>
-                        {scope.items.length > 0 && <CaretDownIcon className="size-3 text-muted-foreground" />}
-                      </Button>
-                      
-                      
-                      {scope.items.length > 0 && scope.active && (
-                        <div className="pl-6 space-y-0.5 mt-0.5 pb-2">
-                          {scope.items.map((item) => (
-                            <button
-                              key={item}
-                              onClick={() => setActiveScope(item)}
-                              className={cn(
-                                "w-full flex items-center gap-2.5 px-3 py-1.5 text-sm rounded-md transition-colors",
-                                activeScope === item 
-                                  ? "bg-primary-blue/10 text-primary-blue font-medium" 
-                                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                              )}
-                            >
-                              <FolderSimpleIcon weight={activeScope === item ? "fill" : "regular"} className="size-3.5 shrink-0" />
-                              <span className="truncate text-left">{item}</span>
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-           
-            
-            <RepositoryView />
-          </>
-        ) : (
-          <div className="flex-1 overflow-y-auto">
-            <StorageView />
-          </div>
-        )}
-      </div> */}
     </div>
   );
 }

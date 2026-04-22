@@ -32,7 +32,6 @@ import {
 } from "@phosphor-icons/react";
 import FileDetailSheet from "../modal/file-detail-sheet";
 import {
-  CaretDownIcon,
   FileDocIcon,
   FileIcon,
   FilePdfIcon,
@@ -46,6 +45,16 @@ import { schoolDocumentsScopes } from "@/lib/data";
 import { FolderContent, RepositoryFolder } from "@/types";
 import { apiClient } from "@/lib/api";
 import { useQuery } from "@tanstack/react-query";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+
+const DEFAULT_OPEN_NAV_SCOPE_IDS = schoolDocumentsScopes
+  .filter((s) => s.active && s.items.length > 0)
+  .map((s) => s.id);
 
 // Mock Data
 const FOLDERS = [
@@ -227,16 +236,37 @@ interface RepositoryViewProps {
   onUploadTargetChange: (target: UploadTargetSelection) => void;
 }
 
+type SelectableFolder = Pick<
+  RepositoryFolder,
+  "id" | "scope" | "scope_id" | "name"
+>;
+
+function folderInTree(
+  list: RepositoryFolder[] | undefined,
+  id: string,
+): boolean {
+  if (!list?.length) return false;
+  for (const f of list) {
+    if (f.id === id) return true;
+    if (folderInTree(f.children, id)) return true;
+  }
+  return false;
+}
+
 function ScopeFolderTree({
   folders,
   isLoading,
   selectedFolderId,
   onSelectFolder,
+  folderContent,
+  isFolderContentPending,
 }: {
   folders: RepositoryFolder[] | undefined;
   isLoading: boolean;
   selectedFolderId: string | null;
-  onSelectFolder: (folder: RepositoryFolder) => void;
+  onSelectFolder: (folder: SelectableFolder) => void;
+  folderContent: FolderContent | undefined;
+  isFolderContentPending: boolean;
 }) {
   if (isLoading) {
     return (
@@ -256,39 +286,80 @@ function ScopeFolderTree({
     );
   }
 
-  const renderFolderNode = (folder: RepositoryFolder, depth = 0) => (
-    <div key={folder.id} className="space-y-0.5">
-      <button
-        type="button"
-        onClick={() => onSelectFolder(folder)}
-        className={cn(
-          "flex w-full items-center gap-1.5 rounded-md px-2 py-1 text-left text-[11px] transition-colors",
-          depth > 0
-            ? "text-muted-foreground hover:bg-muted hover:text-foreground"
-            : "font-medium text-foreground/90 hover:bg-muted/70",
-          selectedFolderId === folder.id &&
-            "bg-primary-blue/10 text-primary-blue hover:bg-primary-blue/15",
-        )}
-      >
-        <FolderSimpleIcon
-          weight={selectedFolderId === folder.id ? "fill" : "regular"}
-          className="size-4 shrink-0"
-        />
-        <span className="truncate">{folder.name}</span>
-        {folder._count?.files != null ? (
-          <span className="ml-auto shrink-0 text-[10px] tabular-nums text-muted-foreground/80">
-            {folder._count.files}
-          </span>
-        ) : null}
-      </button>
+  const renderFolderNode = (folder: RepositoryFolder, depth = 0) => {
+    const isSelected = selectedFolderId === folder.id;
+    return (
+      <div key={folder.id} className="space-y-0.5">
+        <button
+          type="button"
+          onClick={() => onSelectFolder(folder)}
+          className={cn(
+            "flex w-full items-center gap-1.5 rounded-md px-2 py-1 text-left text-[11px] transition-colors",
+            depth > 0
+              ? "text-muted-foreground hover:bg-muted hover:text-foreground"
+              : "font-medium text-foreground/90 hover:bg-muted/70",
+            isSelected &&
+              "bg-primary-blue/10 text-primary-blue hover:bg-primary-blue/15",
+          )}
+        >
+          <FolderSimpleIcon
+            weight={isSelected ? "fill" : "regular"}
+            className="size-4 shrink-0"
+          />
+          <span className="truncate">{folder.name}</span>
+          {folder._count?.files != null ? (
+            <span className="ml-auto shrink-0 text-[10px] tabular-nums text-muted-foreground/80">
+              {folder._count.files}
+            </span>
+          ) : null}
+        </button>
 
-      {folder.children?.length ? (
-        <div className="space-y-0.5 pl-3">
-          {folder.children.map((child) => renderFolderNode(child, depth + 1))}
-        </div>
-      ) : null}
-    </div>
-  );
+        {isSelected ? (
+          <div className="mt-0.5 pl-2 ml-0.5 space-y-0.5 border-l border-border/50 py-0.5">
+            {isFolderContentPending ? (
+              <p className="px-1 text-[11px] text-muted-foreground">
+                Loading folder content…
+              </p>
+            ) : null}
+            {!isFolderContentPending &&
+            folderContent &&
+            folderContent.sub_folders.length === 0 &&
+            folderContent.files.length === 0 ? (
+              <p className="px-1 text-[11px] text-muted-foreground">
+                Folder is empty
+              </p>
+            ) : null}
+            {folderContent?.sub_folders.map((sub) => (
+              <button
+                key={sub.id}
+                type="button"
+                onClick={() => onSelectFolder(sub)}
+                className="flex w-full items-center gap-1.5 rounded-md px-1.5 py-0.5 text-left text-[11px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              >
+                <FolderSimpleIcon className="size-4 shrink-0" />
+                <span className="truncate">{sub.name}</span>
+              </button>
+            ))}
+            {folderContent?.files.map((file) => (
+              <div
+                key={file.id}
+                className="flex items-center gap-1.5 rounded-md px-1.5 py-0.5 text-[11px] text-muted-foreground"
+              >
+                {getMimeTypeIcon(file.versions[0].mime_type)}
+                <span className="truncate">{file.name}</span>
+              </div>
+            ))}
+          </div>
+        ) : null}
+
+        {folder.children?.length ? (
+          <div className="space-y-0.5 pl-3">
+            {folder.children.map((child) => renderFolderNode(child, depth + 1))}
+          </div>
+        ) : null}
+      </div>
+    );
+  };
 
   return (
     <div className="mt-1.5 pl-2 ml-2 space-y-2 border-l border-border/50">
@@ -317,32 +388,52 @@ export default function RepositoryView({
     enabled: Boolean(activeScope),
   });
 
+  const selectedFolderIsInTree = Boolean(
+    selectedFolderId && folders && folderInTree(folders, selectedFolderId),
+  );
+
   return (
     <div className="flex">
       {/* Navigation Scopes */}
-      <div className="w-[240px] h-[calc(100vh-16rem)] shrink-0 border-r bg-muted/10 overflow-y-auto flex flex-col p-4 custom-scrollbar">
+      <div className="w-[240px] h-[calc(100vh-16rem)] shrink-0 border-r bg-muted/10 overflow-y-auto flex flex-col p-1 custom-scrollbar">
         <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4 px-2">
           Navigation Scopes
         </span>
-        <div className="space-y-1">
+        <Accordion
+          multiple
+          defaultValue={DEFAULT_OPEN_NAV_SCOPE_IDS}
+          className="w-full gap-0.5"
+        >
           {schoolDocumentsScopes.map((scope) => {
             const Icon = scope.icon;
+            const hasNavItems = scope.items.length > 0 && scope.active;
+
             return (
-              <div key={scope.id} className="space-y-0.5">
-                <Button
-                  variant="ghost"
+              <AccordionItem
+                key={scope.id}
+                value={scope.id}
+                disabled={!scope.active}
+                className="border-0 last:border-0 not-last:border-0"
+              >
+                <AccordionTrigger
                   className={cn(
-                    "w-full justify-between px-2 h-9 text-sm font-medium",
-                    !scope.active &&
-                      "opacity-50 grayscale cursor-not-allowed hover:bg-transparent",
+                    "h-9 min-h-9 gap-0 py-0 px-2 w-full",
+                    "flex-nowrap items-center justify-between",
+                    "rounded-md border-0 bg-transparent shadow-none",
+                    "text-left text-sm font-medium",
+                    "hover:no-underline",
+                    "focus-visible:ring-2 focus-visible:ring-ring/40",
+                    "data-open:bg-transparent",
+                    scope.active
+                      ? "text-foreground hover:bg-muted/50"
+                      : "cursor-not-allowed opacity-50 grayscale",
                   )}
-                  disabled={!scope.active}
                 >
-                  <div className="flex items-center gap-2.5">
+                  <div className="flex min-w-0 flex-1 items-center gap-2.5 pr-1">
                     <Icon
                       weight={scope.active ? "fill" : "regular"}
                       className={cn(
-                        "size-4",
+                        "size-4 shrink-0",
                         scope.active
                           ? "text-primary-blue text-opacity-80"
                           : "text-muted-foreground",
@@ -350,120 +441,114 @@ export default function RepositoryView({
                     />
                     <span className="truncate">{scope.title}</span>
                   </div>
-                  {scope.items.length > 0 && (
-                    <CaretDownIcon className="size-3 text-muted-foreground" />
-                  )}
-                </Button>
-
-                {scope.items.length > 0 && scope.active && (
-                  <div className="pl-6 space-y-0.5 mt-0.5 pb-2">
-                    {scope.items.map((item) => (
-                      <div key={item.value} className="space-y-0">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            onActiveScopeChange(item.value);
-                            onUploadTargetChange({
-                              scope: item.value,
-                              scopeId: null,
-                              folderId: null,
-                            });
-                            // setSelectedFolderId(null);
-                          }}
-                          className={cn(
-                            "w-full flex items-center gap-2.5 px-3 py-1.5 text-sm rounded-md transition-colors",
-                            activeScope === item.value
-                              ? "bg-primary-blue/10 text-primary-blue font-medium"
-                              : "text-muted-foreground hover:bg-muted hover:text-foreground",
-                          )}
-                        >
-                          <FolderSimpleIcon
-                            weight={
-                              activeScope === item.value ? "fill" : "regular"
-                            }
-                            className="size-3.5 shrink-0"
-                          />
-                          <span className="truncate text-left">
-                            {item.label}
-                          </span>
-                        </button>
-                        {activeScope === item.value ? (
-                          <>
-                            <ScopeFolderTree
-                              folders={folders}
-                              isLoading={isFoldersPending}
-                              selectedFolderId={selectedFolderId}
-                              onSelectFolder={(folder) => {
-                                onUploadTargetChange({
-                                  scope: folder.scope,
-                                  scopeId: folder.scope_id,
-                                  folderId: folder.id,
-                                });
-                              }}
+                </AccordionTrigger>
+                {hasNavItems ? (
+                  <AccordionContent className="p-0 pt-0.5 pb-2 [&>div]:h-auto [&>div]:p-0">
+                    <div className="space-y-0.5 pl-6 pr-0 pb-0.5">
+                      {scope.items.map((item) => (
+                        <div key={item.value} className="space-y-0">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              onActiveScopeChange(item.value);
+                              onUploadTargetChange({
+                                scope: item.value,
+                                scopeId: null,
+                                folderId: null,
+                              });
+                            }}
+                            className={cn(
+                              "w-full flex items-center gap-2.5 px-3 py-1.5 text-sm rounded-md transition-colors",
+                              activeScope === item.value
+                                ? "bg-primary-blue/10 text-primary-blue font-medium"
+                                : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                            )}
+                          >
+                            <FolderSimpleIcon
+                              weight={
+                                activeScope === item.value ? "fill" : "regular"
+                              }
+                              className="size-3.5 shrink-0"
                             />
-                            {selectedFolderId ? (
-                              <div className="mt-1.5 pl-2 ml-2 space-y-0.5 border-l border-border/50 py-1">
-                                {isFolderContentPending ? (
-                                  <p className="px-2 text-[11px] text-muted-foreground">
-                                    Loading folder content…
-                                  </p>
-                                ) : null}
-                                {folderContent &&
-                                folderContent.sub_folders.length === 0 &&
-                                folderContent.files.length === 0 ? (
-                                  <p className="px-2 text-[11px] text-muted-foreground">
-                                    Folder is empty
-                                  </p>
-                                ) : null}
-                                {folderContent?.sub_folders.map((folder) => (
-                                  <button
-                                    key={folder.id}
-                                    type="button"
-                                    onClick={() =>
-                                      onUploadTargetChange({
-                                        scope: folder.scope,
-                                        scopeId: folder.scope_id,
-                                        folderId: folder.id,
-                                      })
-                                    }
-                                    className="flex w-full items-center gap-1.5 rounded-md px-2 py-1 text-left text-[11px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                                  >
-                                    <FolderSimpleIcon className="size-4 shrink-0" />
-                                    <span className="truncate">
-                                      {folder.name}
-                                    </span>
-                                  </button>
-                                ))}
-                                {folderContent?.files.map((file) => (
-                                  <div
-                                    key={file.id}
-                                    className="flex items-center gap-1.5 rounded-md px-2 py-1 text-[11px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                                  >
-                                    {/* {getFileIcon(
-                                      file.versions[0].mime_type.split(
-                                        "/"
-                                      )[1] as string
-                                    )} */}
-                                    {getMimeTypeIcon(
-                                      file.versions[0].mime_type,
-                                    )}
-                                    <span className="truncate">
-                                      {file.name}
-                                    </span>
-                                  </div>
-                                ))}
-                              </div>
-                            ) : null}
-                          </>
-                        ) : null}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+                            <span className="truncate text-left">
+                              {item.label}
+                            </span>
+                          </button>
+                          {activeScope === item.value ? (
+                            <>
+                              <ScopeFolderTree
+                                folders={folders}
+                                isLoading={isFoldersPending}
+                                selectedFolderId={selectedFolderId}
+                                folderContent={folderContent}
+                                isFolderContentPending={isFolderContentPending}
+                                onSelectFolder={(folder) => {
+                                  onUploadTargetChange({
+                                    scope: folder.scope,
+                                    scopeId: folder.scope_id,
+                                    folderId: folder.id,
+                                  });
+                                }}
+                              />
+                              {selectedFolderId &&
+                              !selectedFolderIsInTree &&
+                              !isFoldersPending ? (
+                                <div className="mt-1.5 pl-2 ml-2 space-y-0.5 border-l border-border/50 py-1">
+                                  {isFolderContentPending ? (
+                                    <p className="px-2 text-[11px] text-muted-foreground">
+                                      Loading folder content…
+                                    </p>
+                                  ) : null}
+                                  {folderContent &&
+                                  folderContent.sub_folders.length === 0 &&
+                                  folderContent.files.length === 0 ? (
+                                    <p className="px-2 text-[11px] text-muted-foreground">
+                                      Folder is empty
+                                    </p>
+                                  ) : null}
+                                  {folderContent?.sub_folders.map((f) => (
+                                    <button
+                                      key={f.id}
+                                      type="button"
+                                      onClick={() =>
+                                        onUploadTargetChange({
+                                          scope: f.scope,
+                                          scopeId: f.scope_id,
+                                          folderId: f.id,
+                                        })
+                                      }
+                                      className="flex w-full items-center gap-1.5 rounded-md px-2 py-1 text-left text-[11px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                                    >
+                                      <FolderSimpleIcon className="size-4 shrink-0" />
+                                      <span className="truncate">{f.name}</span>
+                                    </button>
+                                  ))}
+                                  {folderContent?.files.map((file) => (
+                                    <div
+                                      key={file.id}
+                                      className="flex items-center gap-1.5 rounded-md px-2 py-1 text-[11px] text-muted-foreground"
+                                    >
+                                      {getMimeTypeIcon(
+                                        file.versions[0].mime_type,
+                                      )}
+                                      <span className="truncate">
+                                        {file.name}
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : null}
+                            </>
+                          ) : null}
+                        </div>
+                      ))}
+                    </div>
+                  </AccordionContent>
+                ) : null}
+              </AccordionItem>
             );
           })}
-        </div>
+        </Accordion>
       </div>
 
       {/* Repository View */}
