@@ -51,6 +51,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { Spinner } from "@/components/ui/spinner";
 
 const DEFAULT_OPEN_NAV_SCOPE_IDS = schoolDocumentsScopes
   .filter((s) => s.active && s.items.length > 0)
@@ -271,8 +272,9 @@ function ScopeFolderTree({
   if (isLoading) {
     return (
       <div className="mt-1.5 pl-2 ml-2 border-l border-border/50 py-1">
-        <p className="px-2 text-[11px] text-muted-foreground">
-          Loading folders…
+        <p className="px-2 text-[11px] text-muted-foreground flex items-center">
+          <Spinner className="size-4 " />
+          <span className="ml-2">Loading folders…</span>
         </p>
       </div>
     );
@@ -288,13 +290,25 @@ function ScopeFolderTree({
 
   const renderFolderNode = (folder: RepositoryFolder, depth = 0) => {
     const isSelected = selectedFolderId === folder.id;
+    const isContentForThisFolder =
+      isSelected && folderContent && folderContent.folder.id === folder.id;
+    // Subfolders in the /contents response usually mirror `folder.children` from
+    // the folder tree; listing both caused duplicate rows (often in different order).
+    const subfoldersOnlyInContents =
+      isContentForThisFolder && !isFolderContentPending
+        ? folderContent.sub_folders.filter(
+            (s) => !folder.children?.some((c) => c.id === s.id),
+          )
+        : [];
+    const hasOrphanSubfolders = subfoldersOnlyInContents.length > 0;
+    const hasNoChildren = !folder.children?.length;
     return (
       <div key={folder.id} className="space-y-0.5">
         <button
           type="button"
           onClick={() => onSelectFolder(folder)}
           className={cn(
-            "flex w-full items-center gap-1.5 rounded-md px-2 py-1 text-left text-[11px] transition-colors",
+            "flex w-full items-center gap-1.5 rounded-md px-2 py-2 text-left text-[11px] transition-colors",
             depth > 0
               ? "text-muted-foreground hover:bg-muted hover:text-foreground"
               : "font-medium text-foreground/90 hover:bg-muted/70",
@@ -317,38 +331,44 @@ function ScopeFolderTree({
         {isSelected ? (
           <div className="mt-0.5 pl-2 ml-0.5 space-y-0.5 border-l border-border/50 py-0.5">
             {isFolderContentPending ? (
-              <p className="px-1 text-[11px] text-muted-foreground">
-                Loading folder content…
+              <p className="px-1 text-[11px] text-muted-foreground flex items-center">
+                <Spinner className="size-4 " />
+                <span className="ml-2">Loading folder content…</span>
               </p>
             ) : null}
+            {!isFolderContentPending && isContentForThisFolder
+              ? subfoldersOnlyInContents.map((sub) => (
+                  <button
+                    key={sub.id}
+                    type="button"
+                    onClick={() => onSelectFolder(sub)}
+                    className="flex w-full items-center gap-1.5 rounded-md px-1.5 py-0.5 text-left text-[11px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  >
+                    <FolderSimpleIcon className="size-4 shrink-0" />
+                    <span className="truncate">{sub.name}</span>
+                  </button>
+                ))
+              : null}
+            {isContentForThisFolder && !isFolderContentPending
+              ? folderContent.files.map((file) => (
+                  <div
+                    key={file.id}
+                    className="flex items-center gap-1.5 rounded-md px-1.5 py-1 text-[11px] text-muted-foreground"
+                  >
+                    {getMimeTypeIcon(file.versions[0].mime_type)}
+                    <span className="truncate">{file.name}</span>
+                  </div>
+                ))
+              : null}
             {!isFolderContentPending &&
-            folderContent &&
-            folderContent.sub_folders.length === 0 &&
-            folderContent.files.length === 0 ? (
+            isContentForThisFolder &&
+            !hasOrphanSubfolders &&
+            !folderContent?.files.length &&
+            hasNoChildren ? (
               <p className="px-1 text-[11px] text-muted-foreground">
                 Folder is empty
               </p>
             ) : null}
-            {folderContent?.sub_folders.map((sub) => (
-              <button
-                key={sub.id}
-                type="button"
-                onClick={() => onSelectFolder(sub)}
-                className="flex w-full items-center gap-1.5 rounded-md px-1.5 py-0.5 text-left text-[11px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-              >
-                <FolderSimpleIcon className="size-4 shrink-0" />
-                <span className="truncate">{sub.name}</span>
-              </button>
-            ))}
-            {folderContent?.files.map((file) => (
-              <div
-                key={file.id}
-                className="flex items-center gap-1.5 rounded-md px-1.5 py-0.5 text-[11px] text-muted-foreground"
-              >
-                {getMimeTypeIcon(file.versions[0].mime_type)}
-                <span className="truncate">{file.name}</span>
-              </div>
-            ))}
           </div>
         ) : null}
 
