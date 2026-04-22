@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
+import { cn, formatBytes } from "@/lib/utils";
 import {
   FolderIcon,
   DotsThreeIcon,
@@ -28,7 +28,6 @@ import {
   ShareNetworkIcon,
   TrashSimpleIcon,
   ClockCounterClockwiseIcon,
-  CaretRightIcon,
 } from "@phosphor-icons/react";
 import FileDetailSheet from "../modal/file-detail-sheet";
 import {
@@ -45,6 +44,7 @@ import { schoolDocumentsScopes } from "@/lib/data";
 import { FolderContent, RepositoryFolder } from "@/types";
 import { apiClient } from "@/lib/api";
 import { useQuery } from "@tanstack/react-query";
+import { format } from "date-fns";
 import {
   Accordion,
   AccordionContent,
@@ -52,41 +52,46 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Spinner } from "@/components/ui/spinner";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 
 const DEFAULT_OPEN_NAV_SCOPE_IDS = schoolDocumentsScopes
   .filter((s) => s.active && s.items.length > 0)
   .map((s) => s.id);
 
-// Mock Data
-const FOLDERS = [
-  {
-    id: "1",
-    name: "Policy Documents",
-    fileCount: 42,
-    lastModified: "2 days ago",
-    creator: { name: "Admin Setup", avatar: "" },
-    color: "text-blue-500",
-    bg: "bg-blue-500/10",
-  },
-  {
-    id: "2",
-    name: "Handbooks",
-    fileCount: 15,
-    lastModified: "1 week ago",
-    creator: { name: "System", avatar: "" },
-    color: "text-indigo-500",
-    bg: "bg-indigo-500/10",
-  },
-  {
-    id: "3",
-    name: "Forms & Templates",
-    fileCount: 28,
-    lastModified: "1 month ago",
-    creator: { name: "Principal Office", avatar: "" },
-    color: "text-emerald-500",
-    bg: "bg-emerald-500/10",
-  },
-];
+const FOLDER_CARD_PALETTE = [
+  { color: "text-blue-500", bg: "bg-blue-500/10" },
+  { color: "text-indigo-500", bg: "bg-indigo-500/10" },
+  { color: "text-emerald-500", bg: "bg-emerald-500/10" },
+  { color: "text-amber-500", bg: "bg-amber-500/10" },
+  { color: "text-violet-500", bg: "bg-violet-500/10" },
+] as const;
+
+type SubfolderGridItem =
+  | RepositoryFolder
+  | FolderContent["sub_folders"][number];
+
+function getFolderListFileCount(f: SubfolderGridItem): number | null {
+  if ("_count" in f && f._count != null && typeof f._count.files === "number") {
+    return f._count.files;
+  }
+  return null;
+}
+
+function formatFolderUpdatedAt(iso: string | undefined) {
+  if (!iso) return "—";
+  try {
+    return format(new Date(iso), "MMM d, yyyy");
+  } catch {
+    return "—";
+  }
+}
 
 export type FileRecord = {
   id: string;
@@ -242,6 +247,12 @@ type SelectableFolder = Pick<
   "id" | "scope" | "scope_id" | "name"
 >;
 
+type BreadcrumbSeg =
+  | { type: "root" }
+  | { type: "group"; label: string }
+  | { type: "scope"; label: string }
+  | { type: "folder"; id: string; name: string };
+
 function folderInTree(
   list: RepositoryFolder[] | undefined,
   id: string,
@@ -252,6 +263,34 @@ function folderInTree(
     if (folderInTree(f.children, id)) return true;
   }
   return false;
+}
+
+function findFolderById(
+  list: RepositoryFolder[] | undefined,
+  id: string,
+): RepositoryFolder | null {
+  if (!list?.length) return null;
+  for (const f of list) {
+    if (f.id === id) return f;
+    const inChild = findFolderById(f.children, id);
+    if (inChild) return inChild;
+  }
+  return null;
+}
+
+function getFolderNamePath(
+  list: RepositoryFolder[] | undefined,
+  targetId: string,
+  path: { id: string; name: string }[] = [],
+): { id: string; name: string }[] | null {
+  if (!list?.length) return null;
+  for (const f of list) {
+    const next = [...path, { id: f.id, name: f.name }];
+    if (f.id === targetId) return next;
+    const inChild = getFolderNamePath(f.children, targetId, next);
+    if (inChild) return inChild;
+  }
+  return null;
 }
 
 function ScopeFolderTree({
@@ -412,6 +451,70 @@ export default function RepositoryView({
     selectedFolderId && folders && folderInTree(folders, selectedFolderId),
   );
 
+  const folderNamePath = useMemo(() => {
+    if (!selectedFolderId) return null;
+    const fromTree = getFolderNamePath(folders, selectedFolderId);
+    if (fromTree) return fromTree;
+    if (folderContent?.folder?.id === selectedFolderId) {
+      return [{ id: folderContent.folder.id, name: folderContent.folder.name }];
+    }
+    return null;
+  }, [selectedFolderId, folders, folderContent]);
+
+  /** Folders to show in the main grid: scope root when no folder is selected, otherwise children of the selected folder. */
+  const scopeOrParentFolders = useMemo((): SubfolderGridItem[] | null => {
+    if (!activeScope) return null;
+    if (!selectedFolderId) {
+      if (isFoldersPending) return null;
+      if (!folders?.length) return [];
+      return folders;
+    }
+    if (isFolderContentPending) return null;
+    if (!folderContent || folderContent.folder.id !== selectedFolderId) {
+      return null;
+    }
+    if (folderContent.sub_folders.length > 0) {
+      return folderContent.sub_folders;
+    }
+    const node = findFolderById(folders, selectedFolderId);
+    if (node?.children?.length) {
+      return node.children;
+    }
+    return [];
+  }, [
+    activeScope,
+    selectedFolderId,
+    isFoldersPending,
+    isFolderContentPending,
+    folderContent,
+    folders,
+  ]);
+
+  let groupTitle: string | null = null;
+  let itemLabel = activeScope;
+  for (const s of schoolDocumentsScopes) {
+    const item = s.items.find((i) => i.value === activeScope);
+    if (item) {
+      groupTitle = s.title;
+      itemLabel = item.label;
+      break;
+    }
+  }
+
+  const breadcrumbSegments: BreadcrumbSeg[] = (() => {
+    const segs: BreadcrumbSeg[] = [{ type: "root" }];
+    if (groupTitle) {
+      segs.push({ type: "group", label: groupTitle });
+    }
+    segs.push({ type: "scope", label: itemLabel });
+    if (folderNamePath) {
+      for (const f of folderNamePath) {
+        segs.push({ type: "folder", id: f.id, name: f.name });
+      }
+    }
+    return segs;
+  })();
+
   return (
     <div className="flex">
       {/* Navigation Scopes */}
@@ -424,6 +527,7 @@ export default function RepositoryView({
           defaultValue={DEFAULT_OPEN_NAV_SCOPE_IDS}
           className="w-full gap-0.5"
         >
+          {/* TODO: Add drag and drop functionality to reorder the scopes, files and folders. */}
           {schoolDocumentsScopes.map((scope) => {
             const Icon = scope.icon;
             const hasNavItems = scope.items.length > 0 && scope.active;
@@ -570,86 +674,201 @@ export default function RepositoryView({
           })}
         </Accordion>
       </div>
-
-      {/* Repository View */}
+      ;{/* Repository View */}
       <div className="flex-1 pl-6 pr-4 h-[calc(100vh-16rem)] pt-6 space-y-8 min-h-0 overflow-y-auto custom-scrollbar pb-6">
-        {/* Breadcrumbs */}
-        <div className="flex items-center text-sm text-muted-foreground">
-          <span className="hover:text-foreground cursor-pointer transition-colors">
-            School Repository
-          </span>
-          <CaretRightIcon className="size-3 mx-2" />
-          <span className="hover:text-foreground cursor-pointer transition-colors">
-            Administrative
-          </span>
-          <CaretRightIcon className="size-3 mx-2" />
-          <span className="text-foreground font-medium">School Documents</span>
-        </div>
+        <Breadcrumb>
+          <BreadcrumbList>
+            {breadcrumbSegments.map((seg, index) => {
+              const isCurrent = index === breadcrumbSegments.length - 1;
+              const key =
+                seg.type === "root"
+                  ? "root"
+                  : seg.type === "group"
+                    ? "group"
+                    : seg.type === "scope"
+                      ? "scope"
+                      : `folder-${seg.id}`;
+              const label =
+                seg.type === "root"
+                  ? "School Repository"
+                  : seg.type === "group" || seg.type === "scope"
+                    ? seg.label
+                    : seg.name;
 
-        {/* Folders Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {FOLDERS.map((folder) => (
-            <Card
-              key={folder.id}
-              className="p-5 hover:shadow-md transition-shadow cursor-pointer flex flex-col gap-4 border border-border/50"
-            >
-              <div className="flex justify-between items-start">
-                <div className={cn("p-3 rounded-xl", folder.bg, folder.color)}>
-                  <FolderIcon weight="fill" className="size-6" />
-                </div>
-                <DropdownMenu>
-                  <DropdownMenuTrigger
-                    onClick={(e) => e.stopPropagation()}
-                    render={
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-muted-foreground hover:text-foreground"
+              const goToScopeRoot = () => {
+                onUploadTargetChange({
+                  scope: activeScope,
+                  scopeId: null,
+                  folderId: null,
+                });
+              };
+
+              return (
+                <Fragment key={key}>
+                  {index > 0 ? (
+                    <BreadcrumbSeparator className="mx-0.5" />
+                  ) : null}
+                  <BreadcrumbItem>
+                    {isCurrent ? (
+                      <BreadcrumbPage className="font-assistant font-medium text-foreground">
+                        {label}
+                      </BreadcrumbPage>
+                    ) : null}
+                    {!isCurrent && seg.type === "root" ? (
+                      <BreadcrumbLink
+                        className="text-sm"
+                        render={
+                          <button
+                            type="button"
+                            className="text-muted-foreground"
+                            onClick={goToScopeRoot}
+                          />
+                        }
                       >
-                        <DotsThreeIcon weight="bold" className="size-5" />
-                      </Button>
-                    }
-                  />
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem>Open Folder</DropdownMenuItem>
-                    <DropdownMenuItem>Share</DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem className="text-destructive focus:text-destructive">
-                      Delete
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
+                        {label}
+                      </BreadcrumbLink>
+                    ) : null}
+                    {!isCurrent && seg.type === "group" ? (
+                      <span className="text-muted-foreground max-w-40 truncate sm:max-w-none text-sm">
+                        {label}
+                      </span>
+                    ) : null}
+                    {!isCurrent && seg.type === "scope" ? (
+                      <BreadcrumbLink
+                        className="text-sm"
+                        render={
+                          <button
+                            type="button"
+                            className="text-muted-foreground"
+                            onClick={goToScopeRoot}
+                          />
+                        }
+                      >
+                        {label}
+                      </BreadcrumbLink>
+                    ) : null}
+                    {!isCurrent && seg.type === "folder" ? (
+                      <BreadcrumbLink
+                        className="text-sm"
+                        render={
+                          <button
+                            type="button"
+                            className="text-muted-foreground max-w-40 truncate"
+                            onClick={() => {
+                              const f = findFolderById(folders, seg.id);
+                              if (f) {
+                                onUploadTargetChange({
+                                  scope: f.scope,
+                                  scopeId: f.scope_id,
+                                  folderId: f.id,
+                                });
+                              }
+                            }}
+                          />
+                        }
+                      >
+                        {label}
+                      </BreadcrumbLink>
+                    ) : null}
+                  </BreadcrumbItem>
+                </Fragment>
+              );
+            })}
+          </BreadcrumbList>
+        </Breadcrumb>
 
-              <div>
-                <h3 className="font-semibold text-lg text-foreground">
-                  {folder.name}
-                </h3>
-                <p className="text-sm text-muted-foreground mt-1 flex items-center gap-2">
-                  <span>{folder.fileCount} files</span>
-                  <span className="w-1 h-1 rounded-full bg-border" />
-                  <span>Modified {folder.lastModified}</span>
-                </p>
-              </div>
+        {scopeOrParentFolders && scopeOrParentFolders.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {scopeOrParentFolders.map((folder, index) => {
+              const palette =
+                FOLDER_CARD_PALETTE[index % FOLDER_CARD_PALETTE.length];
+              const fileCount = getFolderListFileCount(folder);
+              return (
+                <Card
+                  key={folder.id}
+                  className="p-5 hover:shadow-md transition-shadow cursor-pointer flex flex-col gap-4 border border-border/50"
+                  onClick={() =>
+                    onUploadTargetChange({
+                      scope: folder.scope,
+                      scopeId: folder.scope_id,
+                      folderId: folder.id,
+                    })
+                  }
+                >
+                  <div className="flex justify-between items-start">
+                    <div
+                      className={cn(
+                        "p-3 rounded-xl",
+                        palette.bg,
+                        palette.color,
+                      )}
+                    >
+                      <FolderIcon weight="fill" className="size-6" />
+                    </div>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger
+                        onClick={(e) => e.stopPropagation()}
+                        render={
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                          >
+                            <DotsThreeIcon weight="bold" className="size-5" />
+                          </Button>
+                        }
+                      />
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem>Open Folder</DropdownMenuItem>
+                        <DropdownMenuItem>Share</DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem className="text-destructive focus:text-destructive">
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
 
-              <div className="flex items-center gap-2 mt-auto pt-4 border-t border-border/50">
-                <Avatar className="size-6">
-                  <AvatarFallback className="text-[10px]">
-                    {folder.creator.name.charAt(0)}
-                  </AvatarFallback>
-                </Avatar>
-                <span className="text-xs text-muted-foreground">
-                  Created by {folder.creator.name}
-                </span>
-              </div>
-            </Card>
-          ))}
-        </div>
+                  <div>
+                    <h3 className="font-semibold text-lg text-foreground line-clamp-2">
+                      {folder.name}
+                    </h3>
+                    <p className="text-sm text-muted-foreground mt-1 flex items-center flex-wrap gap-x-2 gap-y-1">
+                      {fileCount != null ? (
+                        <span>
+                          {fileCount} {fileCount === 1 ? "file" : "files"}
+                        </span>
+                      ) : null}
+                      {fileCount != null ? (
+                        <span className="w-1 h-1 rounded-full bg-border" />
+                      ) : null}
+                      <span>
+                        Updated {formatFolderUpdatedAt(folder.updated_at)}
+                      </span>
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-2 mt-auto pt-4 border-t border-border/50">
+                    <Avatar className="size-6">
+                      <AvatarFallback className="text-[10px]">
+                        {folder.name.charAt(0).toUpperCase() || "F"}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="text-xs text-muted-foreground line-clamp-2">
+                      Created {formatFolderUpdatedAt(folder.created_at)}
+                    </span>
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+        ) : null}
 
         {/* File List */}
         <div className="space-y-4">
           <h3 className="text-lg font-semibold font-assistant">
-            Files in School Documents
+            Files in{" "}
+            {selectedFolderId ? folderContent?.folder.name : activeScope}
           </h3>
           <Card className="overflow-hidden border border-border/50">
             <Table>
@@ -665,7 +884,95 @@ export default function RepositoryView({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {FILES.map((file) => (
+                {folderContent?.files.map((file) => (
+                  <TableRow
+                    key={file.id}
+                    className="cursor-pointer hover:bg-muted/20"
+                    // onClick={() => setSelectedFile(file)}
+                  >
+                    <TableCell>
+                      {getFileIcon(file.versions[0].mime_type)}
+                    </TableCell>
+                    <TableCell className="font-medium">{file.name}</TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {formatBytes(Number(file.versions[0].file_size_bytes))}
+                    </TableCell>
+                    <TableCell>
+                      {file.versions.length > 1 ? (
+                        <Badge
+                          variant="outline"
+                          className="text-[10px] h-5 bg-blue-500/10 text-blue-600 border-blue-500/20"
+                        >
+                          V{file.versions.length}
+                        </Badge>
+                      ) : (
+                        <span className="text-muted-foreground text-sm pl-2">
+                          -
+                        </span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {format(new Date(file.created_at), "MMM d, yyyy")}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Avatar className="size-6">
+                          <AvatarFallback className="text-[10px]">
+                            {/* {file.versions[0].uploaded_by.charAt(0)} */}
+                            BW
+                          </AvatarFallback>
+                        </Avatar>
+                        <span className="text-sm text-foreground">
+                          {/* {file.versions[0].uploaded_by} */}
+                          Bolu Wale
+                        </span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div
+                        className="flex justify-end pr-2"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <DropdownMenu>
+                          <DropdownMenuTrigger
+                            render={
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                              >
+                                <DotsThreeIcon
+                                  weight="bold"
+                                  className="size-5"
+                                />
+                              </Button>
+                            }
+                          />
+                          <DropdownMenuContent align="end" className="w-40">
+                            <DropdownMenuItem>
+                              <DownloadSimpleIcon className="size-4 mr-2" />
+                              Download
+                            </DropdownMenuItem>
+                            <DropdownMenuItem>
+                              <ShareNetworkIcon className="size-4 mr-2" />
+                              Share
+                            </DropdownMenuItem>
+                            <DropdownMenuItem>
+                              <ClockCounterClockwiseIcon className="size-4 mr-2" />
+                              Version History
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem className="text-destructive focus:text-destructive">
+                              <TrashSimpleIcon className="size-4 mr-2" />
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {/* {FILES.map((file) => (
                   <TableRow
                     key={file.id}
                     className="cursor-pointer hover:bg-muted/20"
@@ -748,7 +1055,7 @@ export default function RepositoryView({
                       </div>
                     </TableCell>
                   </TableRow>
-                ))}
+                ))} */}
               </TableBody>
             </Table>
           </Card>
@@ -760,6 +1067,7 @@ export default function RepositoryView({
           onOpenChange={(open) => !open && setSelectedFile(null)}
         />
       </div>
+      ; ; ; ; ;
     </div>
   );
 }
