@@ -31,3 +31,16 @@ export function toApiDateString(value: string): string {
   if (!d) return value.trim();
   return format(d, "yyyy-MM-dd");
 }
+
+/** Builds an ISO 8601 instant from a calendar date and optional time (local), defaulting time to 12:00. */
+export function localDateTimeToIso8601(
+  dateStr: string,
+  timeStr?: string | null,
+): string | null {
+  const date = dateStr?.trim() ?? "";
+  if (!date) return null;
+  const time = (timeStr?.trim() || "12:00").slice(0, 5);
+  const d = parse(`${date} ${time}`, "yyyy-MM-dd HH:mm", new Date());
+  if (!isValid(d)) return null;
+  return d.toISOString();
+}

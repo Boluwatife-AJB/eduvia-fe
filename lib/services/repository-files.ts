@@ -11,7 +11,7 @@ function normalizeCreatePayload(
   const expiresRaw = payload.expires_at;
   const expires_at =
     expiresRaw === undefined || expiresRaw === null || expiresRaw.trim() === ""
-      ? ""
+      ? null
       : expiresRaw.trim();
 
   const changeRaw = payload.change_note;

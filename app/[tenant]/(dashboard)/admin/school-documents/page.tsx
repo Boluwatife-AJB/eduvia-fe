@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { uploadFileToStorage } from "@/lib/services/file-upload";
 import { createRepositoryFile } from "@/lib/services/repository-files";
-import { toApiDateString } from "@/lib/utils";
+import { localDateTimeToIso8601 } from "@/lib/utils";
 import { UploadRepositoryFileFormValues } from "@/types";
 import {
   MagnifyingGlassIcon,
@@ -48,13 +48,26 @@ export default function SchoolDocuments() {
       mutationFn: async ({
         file,
         form,
+        target,
+        activeScopeFallback,
       }: {
         file: File;
         form: UploadRepositoryFileFormValues;
+        target: UploadTargetSelection;
+        /** Nav scope; used when the API omits `scope` on the selected folder. */
+        activeScopeFallback: string;
       }) => {
-        if (!uploadTarget.folderId) {
+        if (!target.folderId) {
           throw new Error("Please select a folder before uploading a file.");
         }
+        const scope = target.scope?.trim() || activeScopeFallback.trim();
+        if (!scope) {
+          throw new Error(
+            "Missing document scope. Select a folder and try again.",
+          );
+        }
+        // API expects this to be the selected nav scope’s `value` (e.g. CLASS_DOCUMENTS).
+        const scopeId = activeScopeFallback.trim() || scope || null;
 
         const uploadedFile = await uploadFileToStorage(file);
 
@@ -68,16 +81,16 @@ export default function SchoolDocuments() {
         const expiryDate = form.expires_at.date?.trim() ?? "";
         const expiryTime = form.expires_at.time?.trim() ?? "";
         const expires_at = expiryDate
-          ? toApiDateString(`${expiryDate} ${expiryTime || "12:00"}`)
+          ? localDateTimeToIso8601(expiryDate, expiryTime || "12:00")
           : null;
 
         const changeTrimmed = form.change_note.trim();
         const change_note = changeTrimmed === "" ? "" : changeTrimmed;
 
         return createRepositoryFile({
-          scope: uploadTarget.scope,
-          scope_id: uploadTarget.scopeId,
-          folder_id: uploadTarget.folderId,
+          scope,
+          scope_id: scopeId,
+          folder_id: target.folderId,
           name: form.name.trim(),
           description: descriptionTrimmed === "" ? null : descriptionTrimmed,
           tags,
@@ -144,7 +157,12 @@ export default function SchoolDocuments() {
     values: UploadRepositoryFileFormValues,
   ) => {
     if (!pendingUploadFile) return;
-    await uploadRepositoryFile({ file: pendingUploadFile, form: values });
+    await uploadRepositoryFile({
+      file: pendingUploadFile,
+      form: values,
+      target: uploadTarget,
+      activeScopeFallback: activeScope,
+    });
   };
 
   return (
@@ -251,6 +269,8 @@ export default function SchoolDocuments() {
         isSubmitting={isUploadingFile}
         onClose={handleUploadModalClose}
         onSubmit={handleUploadModalSubmit}
+        uploadContext={uploadTarget}
+        activeScopeFallback={activeScope}
       />
       {/* <div className="flex-1 flex overflow-hidden">
         {activeTab === "repository" ? (

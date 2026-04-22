@@ -23,8 +23,10 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
+import { repositoryScopes } from "@/lib/data";
 import { uploadRepositoryFileFormSchema } from "@/lib/schema";
 import { parseFormDate } from "@/lib/utils";
+import type { UploadTargetSelection } from "@/components/school-admin/tabs/repository-view";
 import { UploadRepositoryFileFormValues } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CaretDownIcon } from "@phosphor-icons/react";
@@ -38,6 +40,10 @@ interface UploadRepositoryFileModalProps {
   file: File | null;
   isSubmitting: boolean;
   onSubmit: (values: UploadRepositoryFileFormValues) => Promise<void>;
+  /** Selected folder + repository scope (must match the folder’s scope on the server). */
+  uploadContext: UploadTargetSelection;
+  /** Left-nav scope when the folder payload omits `scope` (same source as the upload API fallback). */
+  activeScopeFallback: string;
 }
 
 export default function UploadRepositoryFileModal({
@@ -46,6 +52,8 @@ export default function UploadRepositoryFileModal({
   file,
   isSubmitting,
   onSubmit,
+  uploadContext,
+  activeScopeFallback,
 }: UploadRepositoryFileModalProps) {
   const [datePickerOpen, setDatePickerOpen] = useState(false);
 
@@ -87,11 +95,14 @@ export default function UploadRepositoryFileModal({
   };
 
   const internalSubmit = async (data: UploadRepositoryFileFormValues) => {
-    console.log(data);
     await onSubmit(data);
-    // reset();
-    // onClose();
   };
+
+  const resolvedScopeValue =
+    uploadContext.scope?.trim() || activeScopeFallback.trim();
+  const scopeLabel =
+    repositoryScopes.find((s) => s.value === resolvedScopeValue)?.label ??
+    resolvedScopeValue;
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && handleClose()}>
@@ -105,6 +116,14 @@ export default function UploadRepositoryFileModal({
               <>
                 Selected:{" "}
                 <span className="font-medium text-foreground">{file.name}</span>
+                {uploadContext.folderId ? (
+                  <span className="mt-1 block text-xs text-muted-foreground">
+                    Repository scope:{" "}
+                    <span className="font-medium text-foreground/90">
+                      {scopeLabel}
+                    </span>
+                  </span>
+                ) : null}
               </>
             ) : (
               "Choose a file, then add details before uploading."
@@ -112,12 +131,7 @@ export default function UploadRepositoryFileModal({
           </DialogDescription>
         </div>
 
-        <form
-          onSubmit={handleSubmit(internalSubmit, (errors) => {
-            console.log(errors);
-          })}
-          className="px-6 pb-6"
-        >
+        <form onSubmit={handleSubmit(internalSubmit)} className="px-6 pb-6">
           <FieldGroup>
             <ScrollArea className="h-[55vh]">
               <div className="space-y-5 px-2">
