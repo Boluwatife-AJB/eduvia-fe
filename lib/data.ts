@@ -1130,3 +1130,69 @@ export const repositoryScopes = [
     value: "OTHER",
   },
 ];
+
+export const foldersTestData = [
+  {
+    id: "1",
+    name: "Mathematics",
+    type: "folder",
+    created_at: "2021-01-01",
+    updated_at: "2021-01-01",
+    created_by: {
+      first_name: "John",
+      last_name: "Doe",
+      img: "https://via.placeholder.com/150",
+      id: "123",
+    },
+    file_count: 10,
+    children: [
+      {
+        id: "1-1",
+        name: "Algebra",
+        type: "folder",
+      },
+    ],
+  },
+  {
+    id: "2",
+    name: "English",
+    type: "folder",
+    created_at: "2021-01-01",
+    updated_at: "2021-01-01",
+    created_by: {
+      first_name: "John",
+      last_name: "Doe",
+      img: "https://via.placeholder.com/150",
+      id: "123",
+    },
+    file_count: 10,
+    children: [
+      {
+        id: "2-1",
+        name: "Grammar",
+        type: "folder",
+      },
+    ],
+  },
+  {
+    id: "3",
+    name: "Science",
+    type: "folder",
+    created_at: "2021-01-01",
+    updated_at: "2021-01-01",
+    created_by: {
+      first_name: "John",
+      last_name: "Doe",
+      img: "https://via.placeholder.com/150",
+      id: "123",
+    },
+    file_count: 10,
+    children: [
+      {
+        id: "3-1",
+        name: "Physics",
+        type: "folder",
+      },
+    ],
+  },
+];
