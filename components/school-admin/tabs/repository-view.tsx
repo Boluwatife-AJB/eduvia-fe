@@ -41,7 +41,12 @@ import {
   VideoIcon,
 } from "@phosphor-icons/react/dist/ssr";
 import { schoolDocumentsScopes } from "@/lib/data";
-import { FolderContent, RepositoryFolder } from "@/types";
+import {
+  FolderContent,
+  RepositoryFolder,
+  SelectableFolder,
+  UploadTargetSelection,
+} from "@/types";
 import { apiClient } from "@/lib/api";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
@@ -229,23 +234,12 @@ const fetchFolderContent = async (folderId: string): Promise<FolderContent> => {
   return response.data.data;
 };
 
-export type UploadTargetSelection = {
-  scope: string;
-  scopeId: string | null;
-  folderId: string | null;
-};
-
 interface RepositoryViewProps {
   activeScope: string;
   selectedFolderId: string | null;
   onActiveScopeChange: (scope: string) => void;
   onUploadTargetChange: (target: UploadTargetSelection) => void;
 }
-
-type SelectableFolder = Pick<
-  RepositoryFolder,
-  "id" | "scope" | "scope_id" | "name"
->;
 
 type BreadcrumbSeg =
   | { type: "root" }
@@ -1067,7 +1061,7 @@ export default function RepositoryView({
           onOpenChange={(open) => !open && setSelectedFile(null)}
         />
       </div>
-      ; ; ; ; ;
+      ;;
     </div>
   );
 }

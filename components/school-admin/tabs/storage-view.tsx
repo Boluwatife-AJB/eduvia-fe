@@ -14,7 +14,6 @@ import {
 import {
   PieChart,
   Pie,
-  Cell,
   BarChart,
   Bar,
   XAxis,
@@ -29,17 +28,16 @@ import {
   TrendUpIcon,
 } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
+import { ChartContainer } from "@/components/ui/chart";
 
 const STORAGE_TOTAL = 500; // GB
 const STORAGE_USED = 412; // GB
 const USAGE_PERCENTAGE = (STORAGE_USED / STORAGE_TOTAL) * 100;
 
 const DONUT_DATA = [
-  { name: "Used", value: STORAGE_USED },
-  { name: "Free", value: STORAGE_TOTAL - STORAGE_USED },
+  { name: "Used", value: STORAGE_USED, fill: "#3b82f6" },
+  { name: "Free", value: STORAGE_TOTAL - STORAGE_USED, fill: "#e2e8f0" },
 ];
-
-const COLORS = ["#3b82f6", "#e2e8f0"]; // Primary Blue and Muted
 
 const SCOPE_DATA = [
   { name: "Academic", value: 185 },
@@ -98,11 +96,49 @@ const RECENT_UPLOADS = [
   },
 ];
 
+const barChartConfig = {
+  academic: {
+    label: "Academic",
+    color: "#3b82f6",
+  },
+  administrative: {
+    label: "Administrative",
+    color: "#e2e8f0",
+  },
+  events: {
+    label: "Events",
+    color: "#e2e8f0",
+  },
+  operations: {
+    label: "Operations",
+    color: "#e2e8f0",
+  },
+  welfare: {
+    label: "Student Welfare",
+    color: "#e2e8f0",
+  },
+  sport: {
+    label: "Sport",
+    color: "#e2e8f0",
+  },
+};
+
+const donutChartConfig = {
+  used: {
+    label: "Used",
+    color: "#3b82f6",
+  },
+  free: {
+    label: "Free",
+    color: "#e2e8f0",
+  },
+};
+
 export default function StorageView() {
   const isNearLimit = USAGE_PERCENTAGE > 80;
 
   return (
-    <div className="flex-1 p-6 space-y-8 overflow-y-auto">
+    <div className="flex-1 p-4 space-y-8 overflow-y-auto h-[calc(100vh-16rem)] custom-scrollbar">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Storage Gauge/Donut */}
         <Card className="p-6 col-span-1 border border-border/50 flex flex-col items-center justify-center relative shadow-sm">
@@ -116,7 +152,10 @@ export default function StorageView() {
           </div>
 
           <div className="h-64 w-full mt-8 relative">
-            <ResponsiveContainer width="100%" height="100%">
+            <ChartContainer
+              config={donutChartConfig}
+              className="h-full w-full min-h-0 aspect-auto"
+            >
               <PieChart>
                 <Pie
                   data={DONUT_DATA}
@@ -128,21 +167,16 @@ export default function StorageView() {
                   endAngle={-270}
                   dataKey="value"
                   stroke="none"
-                >
-                  {DONUT_DATA.map((entry, index) => (
-                    <Cell
-                      key={`cell-${index}`}
-                      fill={COLORS[index % COLORS.length]}
-                    />
-                  ))}
-                </Pie>
+                />
               </PieChart>
-            </ResponsiveContainer>
-            <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-4xl font-bold text-foreground">
+            </ChartContainer>
+            <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-0.5">
+              <span className="text-4xl font-bold leading-none tabular-nums text-foreground">
                 {USAGE_PERCENTAGE.toFixed(0)}%
               </span>
-              <span className="text-sm text-muted-foreground mt-1">Used</span>
+              <span className="text-sm leading-none text-muted-foreground">
+                Used
+              </span>
             </div>
           </div>
 
@@ -220,7 +254,10 @@ export default function StorageView() {
             </Button>
           </div>
           <div className="flex-1 min-h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
+            <ChartContainer
+              config={barChartConfig}
+              className="min-h-[200px] w-full"
+            >
               <BarChart
                 data={SCOPE_DATA}
                 layout="vertical"
@@ -251,13 +288,13 @@ export default function StorageView() {
                   barSize={24}
                 />
               </BarChart>
-            </ResponsiveContainer>
+            </ChartContainer>
           </div>
         </Card>
       </div>
 
       {/* Recent Uploads Table */}
-      <div className="space-y-4">
+      {/* <div className="space-y-4">
         <h3 className="text-lg font-semibold font-assistant">
           Recent Uploads (All Scopes)
         </h3>
@@ -309,7 +346,7 @@ export default function StorageView() {
             </TableBody>
           </Table>
         </Card>
-      </div>
+      </div> */}
     </div>
   );
 }

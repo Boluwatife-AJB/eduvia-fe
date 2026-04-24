@@ -69,6 +69,17 @@ type SubjectType = "COMPULSORY" | "ELECTIVE" | "OPTIONAL";
 
 type DayOfWeek = "MONDAY" | "TUESDAY" | "WEDNESDAY" | "THURSDAY" | "FRIDAY";
 
+type SelectableFolder = Pick<
+  RepositoryFolder,
+  "id" | "scope" | "scope_id" | "name"
+>;
+
+type UploadTargetSelection = {
+  scope: string;
+  scopeId: string | null;
+  folderId: string | null;
+};
+
 interface SelectOption {
   value: string;
   label: string;

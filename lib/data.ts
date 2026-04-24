@@ -1196,3 +1196,141 @@ export const foldersTestData = [
     ],
   },
 ];
+
+export const filesTestData = [
+  {
+    id: "1",
+    file_name: "Algebra.pdf",
+    file_size_bytes: "100000",
+    mime_type: "application/pdf",
+    created_at: "2021-01-01",
+    updated_at: "2021-01-01",
+    created_by: {
+      first_name: "John",
+      last_name: "Doe",
+      img: "https://via.placeholder.com/150",
+    },
+    file_versions: [
+      {
+        id: "1-1",
+        version_number: 1,
+        file_size_bytes: "100000",
+        file_type: "application/pdf",
+        file_version: "1.0",
+        uploaded_at: "2021-01-01",
+        uploaded_by: {
+          first_name: "John",
+          last_name: "Doe",
+          img: "https://via.placeholder.com/150",
+          id: "123",
+        },
+      },
+      {
+        id: "1-2",
+        version_number: 2,
+        file_size_bytes: "100000",
+        file_type: "application/pdf",
+        file_version: "2.0",
+        uploaded_at: "2021-01-01",
+        uploaded_by: {
+          first_name: "John",
+          last_name: "Doe",
+          img: "https://via.placeholder.com/150",
+          id: "123",
+        },
+      },
+    ],
+  },
+  {
+    id: "2",
+    file_name: "Geometry.xlsx",
+    file_size_bytes: "100000",
+    mime_type:
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    created_at: "2021-01-01",
+    updated_at: "2021-01-01",
+    created_by: {
+      first_name: "John",
+      last_name: "Doe",
+      img: "https://via.placeholder.com/150",
+      id: "123",
+    },
+    file_versions: [
+      {
+        id: "2-1",
+        version_number: 1,
+        file_size_bytes: "100000",
+        file_type:
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        file_version: "1.0",
+        uploaded_at: "2021-01-01",
+        uploaded_by: {
+          first_name: "John",
+          last_name: "Doe",
+          img: "https://via.placeholder.com/150",
+          id: "123",
+        },
+      },
+    ],
+  },
+  {
+    id: "3",
+    file_name: "Physics.png",
+    file_size_bytes: "100000",
+    mime_type: "image/png",
+    created_at: "2021-01-01",
+    updated_at: "2021-01-01",
+    created_by: {
+      first_name: "John",
+      last_name: "Doe",
+      img: "https://via.placeholder.com/150",
+      id: "123",
+    },
+    file_versions: [
+      {
+        id: "3-1",
+        version_number: 1,
+        file_size_bytes: "100000",
+        file_type: "image/png",
+        file_version: "1.0",
+        uploaded_at: "2021-01-01",
+        uploaded_by: {
+          first_name: "John",
+          last_name: "Doe",
+          img: "https://via.placeholder.com/150",
+          id: "123",
+        },
+      },
+    ],
+  },
+  {
+    id: "4",
+    file_name: "Chemistry.mpeg",
+    file_size_bytes: "100000",
+    mime_type: "audio/mpeg",
+    created_at: "2021-01-01",
+    updated_at: "2021-01-01",
+    created_by: {
+      first_name: "John",
+      last_name: "Doe",
+      img: "https://via.placeholder.com/150",
+      id: "123",
+    },
+    file_versions: [
+      {
+        id: "4-1",
+        version_number: 1,
+        file_size_bytes: "100000",
+        file_type: "audio/mpeg",
+        file_version: "1.0",
+        uploaded_at: "2021-01-01",
+        uploaded_by: {
+          first_name: "John",
+          last_name: "Doe",
+          img: "https://via.placeholder.com/150",
+          id: "123",
+        },
+      },
+    ],
+  },
+];

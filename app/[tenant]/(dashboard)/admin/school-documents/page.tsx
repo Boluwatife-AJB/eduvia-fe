@@ -2,9 +2,7 @@
 
 import CreateFolderModal from "@/components/school-admin/modal/create-folder";
 import UploadRepositoryFileModal from "@/components/school-admin/modal/upload-repository-file";
-import RepositoryView, {
-  UploadTargetSelection,
-} from "@/components/school-admin/tabs/repository-view";
+import RepositoryView from "@/components/school-admin/tabs/repository-view";
 import StorageView from "@/components/school-admin/tabs/storage-view";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { uploadFileToStorage } from "@/lib/services/file-upload";
 import { createRepositoryFile } from "@/lib/services/repository-files";
 import { localDateTimeToIso8601 } from "@/lib/utils";
-import { UploadRepositoryFileFormValues } from "@/types";
+import { UploadRepositoryFileFormValues, UploadTargetSelection } from "@/types";
 import {
   MagnifyingGlassIcon,
   PlusIcon,

@@ -1,5 +1,7 @@
 "use client";
 
+import RepositoryViewNew from "@/components/school-admin/tabs/repository-view-new";
+import StorageView from "@/components/school-admin/tabs/storage-view";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -9,14 +11,13 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/motion-tabs";
+import { UploadTargetSelection } from "@/types";
 import {
   MagnifyingGlassIcon,
   PlusIcon,
   UploadSimpleIcon,
 } from "@phosphor-icons/react/dist/ssr";
 import { useState } from "react";
-import RepositoryViewNew from "@/components/school-admin/tabs/repository-view-new";
-import StorageUsage from "@/components/school-admin/tabs/storage-usage";
 
 const tabs = [
   {
@@ -30,7 +31,13 @@ const tabs = [
 ];
 export default function Repository() {
   const [activeTab, setActiveTab] = useState("repository");
+  const [activeScope, setActiveScope] = useState<string>("SCHOOL_DOCUMENTS");
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
+  const [uploadTarget, setUploadTarget] = useState<UploadTargetSelection>({
+    scope: "SCHOOL_DOCUMENTS",
+    scopeId: null,
+    folderId: null,
+  });
 
   return (
     <div className="flex flex-col h-full space-y-6">
@@ -86,12 +93,14 @@ export default function Repository() {
           <TabsContents>
             <TabsContent value="repository">
               <RepositoryViewNew
+                activeScope={activeScope}
+                onActiveScopeChange={setActiveScope}
                 selectedFolderId={selectedFolderId}
-                onSelectedFolderIdChange={setSelectedFolderId}
+                onSelectedFolderIdChange={setUploadTarget}
               />
             </TabsContent>
             <TabsContent value="usage">
-              <StorageUsage />
+              <StorageView />
             </TabsContent>
           </TabsContents>
         </Tabs>

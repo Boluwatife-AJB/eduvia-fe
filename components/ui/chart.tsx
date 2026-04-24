@@ -275,17 +275,21 @@ const ChartLegend = RechartsPrimitive.Legend;
 function ChartLegendContent({
   className,
   hideIcon = false,
+  iconClassName,
+  itemClassName,
   payload,
   verticalAlign = "bottom",
   nameKey,
-  iconClassName,
-  itemClassName,
 }: React.ComponentProps<"div"> & {
   hideIcon?: boolean;
   nameKey?: string;
-  /** Swatch for non-icon legend items (default: small square). */
+  /**
+   * Classes for the color swatch or icon wrapper. When omitted, uses the default 8×8 square swatch.
+   */
   iconClassName?: string;
-  /** Row wrapper (icon + label), e.g. `gap-2` when using a larger `iconClassName`). */
+  /**
+   * Classes for each legend row (icon + label).
+   */
   itemClassName?: string;
 } & RechartsPrimitive.DefaultLegendContentProps) {
   const { config } = useChart();
@@ -317,11 +321,20 @@ function ChartLegendContent({
               )}
             >
               {itemConfig?.icon && !hideIcon ? (
-                <itemConfig.icon />
+                <span
+                  className={cn(
+                    "inline-flex",
+                    !iconClassName && "[&>svg]:h-3 [&>svg]:w-3",
+                    iconClassName,
+                  )}
+                >
+                  <itemConfig.icon />
+                </span>
               ) : (
                 <div
                   className={cn(
-                    "h-2 w-2 shrink-0 rounded-[2px]",
+                    "shrink-0",
+                    !iconClassName && "h-2 w-2 rounded-[2px]",
                     iconClassName,
                   )}
                   style={{
@@ -329,11 +342,7 @@ function ChartLegendContent({
                   }}
                 />
               )}
-              <span className="text-foreground">
-                {itemConfig?.label ??
-                  (typeof item.value === "string" ? item.value : null) ??
-                  (typeof item.dataKey === "string" ? item.dataKey : null)}
-              </span>
+              {itemConfig?.label}
             </div>
           );
         })}
