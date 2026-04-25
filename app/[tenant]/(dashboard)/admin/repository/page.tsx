@@ -29,15 +29,22 @@ const tabs = [
     value: "usage",
   },
 ];
+
+const DEFAULT_UPLOAD_TARGET: UploadTargetSelection = {
+  scope: "SCHOOL_DOCUMENTS",
+  scopeId: null,
+  folderId: null,
+};
+
 export default function Repository() {
   const [activeTab, setActiveTab] = useState("repository");
   const [activeScope, setActiveScope] = useState<string>("SCHOOL_DOCUMENTS");
-  const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
-  const [uploadTarget, setUploadTarget] = useState<UploadTargetSelection>({
-    scope: "SCHOOL_DOCUMENTS",
-    scopeId: null,
-    folderId: null,
-  });
+  const [uploadTarget, setUploadTarget] = useState<UploadTargetSelection>(
+    DEFAULT_UPLOAD_TARGET,
+  );
+
+  const selectedFolderId = uploadTarget.folderId;
+  const isRepositoryTab = activeTab === "repository";
 
   return (
     <div className="flex flex-col h-full space-y-6">
@@ -59,20 +66,24 @@ export default function Repository() {
             />
             <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
           </div>
-          <Button
-            variant="outline"
-            className="sm:h-12 h-10 gap-2 shrink-0 rounded-xl"
-          >
-            <UploadSimpleIcon weight="bold" className="size-4" />
-            Upload File
-          </Button>
-          <Button
-            variant="primary"
-            className="sm:h-12 h-10 gap-2 shrink-0 rounded-xl shadow-xs"
-          >
-            <PlusIcon weight="bold" className="size-4" />
-            New Folder
-          </Button>
+          {isRepositoryTab && (
+            <>
+              <Button
+                variant="outline"
+                className="sm:h-12 h-10 gap-2 shrink-0 rounded-xl"
+              >
+                <UploadSimpleIcon weight="bold" className="size-4" />
+                Upload File
+              </Button>
+              <Button
+                variant="primary"
+                className="sm:h-12 h-10 gap-2 shrink-0 rounded-xl shadow-xs"
+              >
+                <PlusIcon weight="bold" className="size-4" />
+                New Folder
+              </Button>
+            </>
+          )}
         </div>
       </div>
 
@@ -96,7 +107,7 @@ export default function Repository() {
                 activeScope={activeScope}
                 onActiveScopeChange={setActiveScope}
                 selectedFolderId={selectedFolderId}
-                onSelectedFolderIdChange={setUploadTarget}
+                onUploadTargetChange={setUploadTarget}
               />
             </TabsContent>
             <TabsContent value="usage">

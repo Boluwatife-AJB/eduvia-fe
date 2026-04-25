@@ -1334,3 +1334,16 @@ export const filesTestData = [
     ],
   },
 ];
+
+// export const MIME_ICON_MAP: Record<string, React.ElementType> = {
+//   "application/pdf": FilePdfIcon,
+//   "application/msword": FileDocIcon,
+//   "application/vnd.openxmlformats-officedocument.wordprocessingml.document": FileDocIcon,
+//   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": FileXlsIcon,
+//   "image/jpeg": ImageIcon,
+//   "image/png": ImagesIcon,
+//   "audio/mpeg": MusicNoteIcon,
+//   "audio/mp3": MusicNoteIcon,
+//   "video/mp4": VideoIcon,
+//   "video/mkv": VideoIcon,
+// };

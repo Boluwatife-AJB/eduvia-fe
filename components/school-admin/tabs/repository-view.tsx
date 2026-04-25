@@ -42,6 +42,7 @@ import {
 } from "@phosphor-icons/react/dist/ssr";
 import { schoolDocumentsScopes } from "@/lib/data";
 import {
+  FileRecord,
   FolderContent,
   RepositoryFolder,
   SelectableFolder,
@@ -97,64 +98,6 @@ function formatFolderUpdatedAt(iso: string | undefined) {
     return "—";
   }
 }
-
-export type FileRecord = {
-  id: string;
-  name: string;
-  type: "pdf" | "video" | "audio" | "excel" | "word" | "image";
-  size: string;
-  version: number;
-  uploadDate: string;
-  uploader: string;
-};
-
-const FILES: FileRecord[] = [
-  {
-    id: "101",
-    name: "Staff Code of Conduct.pdf",
-    type: "pdf",
-    size: "2.4 MB",
-    version: 3,
-    uploadDate: "Oct 12, 2025",
-    uploader: "Admin Office",
-  },
-  {
-    id: "102",
-    name: "Welcome Assembly 2025.mp4",
-    type: "video",
-    size: "145 MB",
-    version: 1,
-    uploadDate: "Sep 01, 2025",
-    uploader: "Media Dept",
-  },
-  {
-    id: "103",
-    name: "Annual Budget 2025.xlsx",
-    type: "excel",
-    size: "850 KB",
-    version: 2,
-    uploadDate: "Jan 10, 2025",
-    uploader: "Finance Dept",
-  },
-  {
-    id: "104",
-    name: "School Anthem.mp3",
-    type: "audio",
-    size: "4.2 MB",
-    version: 1,
-    uploadDate: "Aug 15, 2024",
-    uploader: "Music Dept",
-  },
-  {
-    id: "105",
-    name: "Parent Handbook.docx",
-    type: "word",
-    size: "1.2 MB",
-    version: 5,
-    uploadDate: "Aug 20, 2025",
-    uploader: "Admissions",
-  },
-];
 
 const getFileIcon = (type: string) => {
   switch (type) {

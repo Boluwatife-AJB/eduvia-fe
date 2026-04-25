@@ -80,6 +80,16 @@ type UploadTargetSelection = {
   folderId: string | null;
 };
 
+type FileRecord = {
+  id: string;
+  name: string;
+  type: "pdf" | "video" | "audio" | "excel" | "word" | "image";
+  size: string;
+  version: number;
+  uploadDate: string;
+  uploader: string;
+};
+
 interface SelectOption {
   value: string;
   label: string;
