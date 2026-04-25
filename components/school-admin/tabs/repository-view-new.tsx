@@ -66,6 +66,8 @@ import { cva } from "class-variance-authority";
 import { format } from "date-fns";
 import { SetStateAction } from "react";
 
+// FIXME: When a folder with content is clicked it doesn't display the content.
+
 // Types
 interface RepositoryViewNewProps {
   selectedFolderId: string | null;
