@@ -1,20 +1,10 @@
+import { FolderContent, RepositoryFolder, SubfolderGridItem } from "@/types";
 import { clsx, type ClassValue } from "clsx";
 import { format, isValid, parse } from "date-fns";
 import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
-}
-
-function formatDate(date: Date | undefined) {
-  if (!date) {
-    return "";
-  }
-  return date.toLocaleDateString("en-US", {
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-  });
 }
 
 export function parseFormDate(value: string): Date | undefined {
@@ -51,4 +41,101 @@ export function formatBytes(bytes: number): string {
   const sizes = ["B", "KB", "MB", "GB", "TB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
+}
+
+export function formatFolderDate(iso: string | undefined): string {
+  if (!iso) return "—";
+  try {
+    return format(new Date(iso), "MMM d, yyyy");
+  } catch {
+    return "—";
+  }
+}
+
+// Tree Traversal Functions
+export function folderInTree(
+  list: RepositoryFolder[] | undefined,
+  id: string,
+): boolean {
+  if (!list?.length) return false;
+  for (const f of list) {
+    if (f.id === id) return true;
+    if (folderInTree(f.children, id)) return true;
+  }
+  return false;
+}
+
+export function findFolderById(
+  list: RepositoryFolder[] | undefined,
+  id: string,
+): RepositoryFolder | null {
+  if (!list?.length) return null;
+  for (const f of list) {
+    if (f.id === id) return f;
+    const inChild = findFolderById(f.children, id);
+    if (inChild) return inChild;
+  }
+  return null;
+}
+
+export function getFolderNamePath(
+  list: RepositoryFolder[] | undefined,
+  targetId: string,
+  path: { id: string; name: string }[] = [],
+): { id: string; name: string }[] | null {
+  if (!list?.length) return null;
+  for (const f of list) {
+    const next = [...path, { id: f.id, name: f.name }];
+    if (f.id === targetId) return next;
+    const inChild = getFolderNamePath(f.children, targetId, next);
+    if (inChild) return inChild;
+  }
+  return null;
+}
+
+// Count Helpers
+export function getFolderListFileCount(
+  folder: SubfolderGridItem,
+): number | null {
+  if ("_count" in folder && folder._count != null) {
+    return folder._count.files;
+  }
+  return null;
+}
+
+// Folder Node State Derivation
+/**
+ * Derives all state needed to render a single folder node.
+ * Centralises the boolean logic that was previously scattered across JSX.
+ */
+export function deriveFolderNodeState(
+  folder: RepositoryFolder,
+  selectedFolderId: string | null,
+  folderContent: FolderContent | undefined,
+  isFolderContentPending: boolean,
+) {
+  const isSelected = selectedFolderId === folder.id;
+
+  // Content is considered "loaded" only when this specific folder is selected,
+  // the query has settled, and the response belongs to this folder.
+  const isContentLoaded =
+    isSelected &&
+    !isFolderContentPending &&
+    folderContent?.folder.id === folder.id;
+
+  // Subfolders returned by /contents that aren't already in the tree
+  // (avoids duplicate rows when the API mirrors folder.children).
+  const orphanSubfolders = isContentLoaded
+    ? folderContent!.sub_folders.filter(
+        (s) => !folder.children?.some((c) => c.id === s.id),
+      )
+    : [];
+
+  const isEmpty =
+    isContentLoaded &&
+    orphanSubfolders.length === 0 &&
+    !folderContent!.files.length &&
+    !folder.children?.length;
+
+  return { isSelected, isContentLoaded, orphanSubfolders, isEmpty };
 }

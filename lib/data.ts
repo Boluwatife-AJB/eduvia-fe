@@ -22,22 +22,29 @@ import {
   ClockIcon,
   CoinsIcon,
   CreditCardIcon,
+  FileDocIcon,
+  FilePdfIcon,
   FileTextIcon,
+  FileXlsIcon,
   FolderOpenIcon,
   FoldersIcon,
   GavelIcon,
   GearIcon,
   GearSixIcon,
   HeartbeatIcon,
+  ImageIcon,
+  ImagesIcon,
   KeyIcon,
   ListMagnifyingGlassIcon,
   MegaphoneSimpleIcon,
+  MusicNoteIcon,
   SoccerBallIcon,
   SquaresFourIcon,
   StudentIcon,
   TrophyIcon,
   UserIcon,
   UsersThreeIcon,
+  VideoIcon,
   WalletIcon,
 } from "@phosphor-icons/react/dist/ssr";
 
@@ -1135,6 +1142,31 @@ export const repositoryScopes = [
     value: "OTHER",
   },
 ];
+
+export const folderCardPalette = [
+  { color: "text-blue-500", bg: "bg-blue-500/10" },
+  { color: "text-indigo-500", bg: "bg-indigo-500/10" },
+  { color: "text-emerald-500", bg: "bg-emerald-500/10" },
+  { color: "text-amber-500", bg: "bg-amber-500/10" },
+  { color: "text-violet-500", bg: "bg-violet-500/10" },
+];
+
+export const MIME_ICON_MAP: Record<string, React.ElementType> = {
+  "application/pdf": FilePdfIcon,
+  "application/msword": FileDocIcon,
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+    FileDocIcon,
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":
+    FileXlsIcon,
+  "image/jpeg": ImageIcon,
+  "image/png": ImagesIcon,
+  "audio/mpeg": MusicNoteIcon,
+  "audio/mp3": MusicNoteIcon,
+  "video/mp4": VideoIcon,
+  "video/mkv": VideoIcon,
+};
+
+// export { FileIcon as FallbackFileIcon };
 
 // export const MIME_ICON_MAP: Record<string, React.ElementType> = {
 //   "application/pdf": FilePdfIcon,

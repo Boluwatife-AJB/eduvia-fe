@@ -90,6 +90,16 @@ type FileRecord = {
   uploader: string;
 };
 
+type SubfolderGridItem =
+  | RepositoryFolder
+  | FolderContent["sub_folders"][number];
+
+type BreadcrumbSeg =
+  | { type: "root" }
+  | { type: "group"; label: string }
+  | { type: "scope"; label: string }
+  | { type: "folder"; id: string; name: string };
+
 interface SelectOption {
   value: string;
   label: string;
