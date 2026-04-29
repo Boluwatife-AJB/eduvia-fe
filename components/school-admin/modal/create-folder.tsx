@@ -24,10 +24,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
+import { useClasses } from "@/hooks/use-classes";
+import { useDepartments } from "@/hooks/use-department";
+import { useSubjects } from "@/hooks/use-subjects";
 import { apiClient } from "@/lib/api";
 import { repositoryScopes } from "@/lib/data";
 import { createFolderSchema } from "@/lib/schema";
-import { CreateFolderFormValues } from "@/types";
+import { CreateFolderFormValues, SelectOption } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Controller, useForm } from "react-hook-form";
@@ -36,19 +39,8 @@ import { toast } from "sonner";
 interface CreateFolderModalProps {
   open: boolean;
   onClose: () => void;
+  parentFolderId?: string | null;
 }
-
-const scopesRequiringScopeId = new Set<string>([
-  "CLASS_DOCUMENTS",
-  "SUBJECT_DOCUMENTS",
-  "DEPARTMENT_DOCUMENTS",
-  "STAFF_RECORDS",
-  "TUITION_PAYMENTS",
-  "STAFF_SALARY",
-  "HEALTH_RECORDS",
-  "COUNSELING_RECORDS",
-  "DISCIPLINARY_RECORDS",
-]);
 
 const createFolder = async (data: CreateFolderFormValues) => {
   const payload = {
@@ -65,6 +57,7 @@ const createFolder = async (data: CreateFolderFormValues) => {
 export default function CreateFolderModal({
   open,
   onClose,
+  parentFolderId = null,
 }: CreateFolderModalProps) {
   const queryClient = useQueryClient();
   const form = useForm<CreateFolderFormValues>({
@@ -83,12 +76,17 @@ export default function CreateFolderModal({
     control,
     watch,
     reset,
+    setValue,
     formState: { isValid },
   } = form;
 
   const selectedScope = watch("scope");
-  const requiresScopeId =
-    !!selectedScope && scopesRequiringScopeId.has(selectedScope);
+  const isClassDocumentsScope = selectedScope === "CLASS_DOCUMENTS";
+  const isSubjectDocumentsScope = selectedScope === "SUBJECT_DOCUMENTS";
+  const isDepartmentDocumentsScope = selectedScope === "DEPARTMENT_DOCUMENTS";
+  const { classes, isLoading: isClassesLoading } = useClasses();
+  const { subjects, isLoading: isSubjectsLoading } = useSubjects();
+  const { departments, isLoading: isDepartmentsLoading } = useDepartments();
 
   const { mutateAsync: createFolderMutation, isPending: isCreatingFolder } =
     useMutation({
@@ -106,7 +104,10 @@ export default function CreateFolderModal({
     });
 
   const onSubmit = (data: CreateFolderFormValues) => {
-    createFolderMutation(data);
+    createFolderMutation({
+      ...data,
+      parentId: parentFolderId ?? "",
+    });
   };
 
   const handleClose = () => {
@@ -122,7 +123,7 @@ export default function CreateFolderModal({
             Create New Folder
           </DialogTitle>
           <DialogDescription className="mt-1">
-            Organize repository content by scope and parent folder.
+            Organize repository content by scope.
           </DialogDescription>
         </div>
 
@@ -158,7 +159,10 @@ export default function CreateFolderModal({
                   </FieldLabel>
                   <Select
                     value={field.value}
-                    onValueChange={field.onChange}
+                    onValueChange={(value) => {
+                      field.onChange(value);
+                      setValue("scopeId", "", { shouldValidate: true });
+                    }}
                     items={repositoryScopes}
                   >
                     <SelectTrigger className="h-12! w-full px-3">
@@ -187,18 +191,104 @@ export default function CreateFolderModal({
               name="scopeId"
               render={({ field, fieldState }) => (
                 <Field>
-                  <FieldLabel>
-                    Scope Resource ID{" "}
-                    {requiresScopeId && (
-                      <span className="text-destructive">*</span>
-                    )}
-                  </FieldLabel>
-                  <Input
-                    className="h-12 shadow-sm"
-                    placeholder="e.g. clx1234abcd"
-                    {...field}
-                    value={field.value ?? ""}
-                  />
+                  <FieldLabel>Scope Resource ID</FieldLabel>
+                  {isClassDocumentsScope ? (
+                    <Select
+                      value={field.value ?? ""}
+                      onValueChange={field.onChange}
+                      items={classes}
+                    >
+                      <SelectTrigger className="h-12! w-full px-3">
+                        <SelectValue
+                          placeholder={
+                            isClassesLoading
+                              ? "Loading classes..."
+                              : "Select class"
+                          }
+                        />
+                      </SelectTrigger>
+                      <SelectContent alignItemWithTrigger={false}>
+                        <SelectGroup>
+                          <SelectLabel>Classes</SelectLabel>
+                          {(classes as SelectOption[]).map((classOption) => (
+                            <SelectItem
+                              key={classOption.value}
+                              value={classOption.value}
+                            >
+                              {classOption.label}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  ) : isSubjectDocumentsScope ? (
+                    <Select
+                      value={field.value ?? ""}
+                      onValueChange={field.onChange}
+                      items={subjects}
+                    >
+                      <SelectTrigger className="h-12! w-full px-3">
+                        <SelectValue
+                          placeholder={
+                            isSubjectsLoading
+                              ? "Loading subjects..."
+                              : "Select subject"
+                          }
+                        />
+                      </SelectTrigger>
+                      <SelectContent alignItemWithTrigger={false}>
+                        <SelectGroup>
+                          <SelectLabel>Subjects</SelectLabel>
+                          {(subjects as SelectOption[]).map((subjectOption) => (
+                            <SelectItem
+                              key={subjectOption.value}
+                              value={subjectOption.value}
+                            >
+                              {subjectOption.label}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  ) : isDepartmentDocumentsScope ? (
+                    <Select
+                      value={field.value ?? ""}
+                      onValueChange={field.onChange}
+                      items={departments}
+                    >
+                      <SelectTrigger className="h-12! w-full px-3">
+                        <SelectValue
+                          placeholder={
+                            isDepartmentsLoading
+                              ? "Loading departments..."
+                              : "Select department"
+                          }
+                        />
+                      </SelectTrigger>
+                      <SelectContent alignItemWithTrigger={false}>
+                        <SelectGroup>
+                          <SelectLabel>Departments</SelectLabel>
+                          {(departments as SelectOption[]).map(
+                            (departmentOption) => (
+                              <SelectItem
+                                key={departmentOption.value}
+                                value={departmentOption.value}
+                              >
+                                {departmentOption.label}
+                              </SelectItem>
+                            ),
+                          )}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <Input
+                      className="h-12 shadow-sm"
+                      placeholder="e.g. clx1234abcd"
+                      {...field}
+                      value={field.value ?? ""}
+                    />
+                  )}
                   {/* <p className="text-xs text-muted-foreground leading-relaxed">
                     The ID of the resource this folder is scoped to. Required for:
                     CLASS_DOCUMENTS (classId), SUBJECT_DOCUMENTS (subjectId),
@@ -209,25 +299,6 @@ export default function CreateFolderModal({
                     empty for school-wide scopes like PAST_QUESTIONS and
                     SCHOOL_DOCUMENTS.
                   </p> */}
-                  {fieldState.invalid && (
-                    <FieldError errors={[fieldState.error]} />
-                  )}
-                </Field>
-              )}
-            />
-
-            <Controller
-              control={control}
-              name="parentId"
-              render={({ field, fieldState }) => (
-                <Field>
-                  <FieldLabel>Parent Folder ID</FieldLabel>
-                  <Input
-                    className="h-12 shadow-sm"
-                    placeholder="Optional parent folder id"
-                    {...field}
-                    value={field.value ?? ""}
-                  />
                   {fieldState.invalid && (
                     <FieldError errors={[fieldState.error]} />
                   )}

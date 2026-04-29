@@ -198,44 +198,17 @@ export const createAcademicTermSchema = z.object({
   endDate: z.string().min(1, { message: "End date is required" }),
 });
 
-const repositoryScopesRequiringScopeId = [
-  "CLASS_DOCUMENTS",
-  "SUBJECT_DOCUMENTS",
-  "DEPARTMENT_DOCUMENTS",
-  "STAFF_RECORDS",
-  "TUITION_PAYMENTS",
-  "STAFF_SALARY",
-  "HEALTH_RECORDS",
-  "COUNSELING_RECORDS",
-  "DISCIPLINARY_RECORDS",
-] as const;
-
-export const createFolderSchema = z
-  .object({
-    name: z.string().min(1, { message: "Name is required" }),
-    scope: z.enum(
-      repositoryScopes.map((option) => option.value),
-      {
-        message: "Scope is required",
-      },
-    ),
-    scopeId: z.string().optional().nullable(),
-    parentId: z.string().optional().nullable(),
-  })
-  .superRefine((data, ctx) => {
-    const requiresScopeId = repositoryScopesRequiringScopeId.includes(
-      data.scope as (typeof repositoryScopesRequiringScopeId)[number],
-    );
-    const hasScopeId = Boolean(data.scopeId?.trim());
-
-    if (requiresScopeId && !hasScopeId) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["scopeId"],
-        message: "Scope ID is required for the selected scope",
-      });
-    }
-  });
+export const createFolderSchema = z.object({
+  name: z.string().min(1, { message: "Name is required" }),
+  scope: z.enum(
+    repositoryScopes.map((option) => option.value),
+    {
+      message: "Scope is required",
+    },
+  ),
+  scopeId: z.string().optional().nullable(),
+  parentId: z.string().optional().nullable(),
+});
 
 export const uploadRepositoryFileFormSchema = z.object({
   name: z.string().min(1, { message: "File name is required" }),

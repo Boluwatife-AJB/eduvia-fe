@@ -23,7 +23,7 @@ import {
   UploadSimpleIcon,
 } from "@phosphor-icons/react/dist/ssr";
 import { useMutation } from "@tanstack/react-query";
-import { useRef, useState } from "react";
+import { ChangeEvent, useRef, useState } from "react";
 import { toast } from "sonner";
 
 const tabs = [
@@ -139,6 +139,15 @@ export default function Repository() {
     fileInputRef.current?.click();
   };
 
+  const handleFileSelection = (event: ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = event.target.files?.[0];
+    if (!selectedFile) return;
+
+    setPendingUploadFile(selectedFile);
+    setIsUploadModalOpen(true);
+    event.target.value = "";
+  };
+
   const handleUploadModalClose = () => {
     setIsUploadModalOpen(false);
     setPendingUploadFile(null);
@@ -178,13 +187,20 @@ export default function Repository() {
           </div>
           {isRepositoryTab && (
             <>
+              <input
+                ref={fileInputRef}
+                type="file"
+                className="sr-only"
+                onChange={handleFileSelection}
+              />
               <Button
                 variant="outline"
                 className="sm:h-12 h-10 gap-2 shrink-0 rounded-xl"
                 onClick={handleUploadClick}
+                disabled={isUploadingFile}
               >
                 <UploadSimpleIcon weight="bold" className="size-4" />
-                Upload File
+                {isUploadingFile ? "Uploading..." : "Upload File"}
               </Button>
               <Button
                 variant="primary"
@@ -232,6 +248,7 @@ export default function Repository() {
       <CreateFolderModal
         open={isCreateFolderModalOpen}
         onClose={() => setIsCreateFolderModalOpen(false)}
+        parentFolderId={selectedFolderId}
       />
 
       <UploadRepositoryFileModal

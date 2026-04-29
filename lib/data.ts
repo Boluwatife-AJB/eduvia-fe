@@ -384,9 +384,14 @@ export const schoolAdminNavSections: NavSection[] = [
   {
     label: "Repository",
     items: [
+      // {
+      //   title: "School Documents",
+      //   href: "/admin/school-documents",
+      //   Icon: FolderOpenIcon,
+      // },
       {
-        title: "School Documents",
-        href: "/admin/school-documents",
+        title: "School Repository",
+        href: "/admin/repository",
         Icon: FolderOpenIcon,
       },
       {
