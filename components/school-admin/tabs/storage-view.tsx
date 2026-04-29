@@ -29,24 +29,9 @@ import {
 } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { ChartContainer } from "@/components/ui/chart";
-
-const STORAGE_TOTAL = 500; // GB
-const STORAGE_USED = 412; // GB
-const USAGE_PERCENTAGE = (STORAGE_USED / STORAGE_TOTAL) * 100;
-
-const DONUT_DATA = [
-  { name: "Used", value: STORAGE_USED, fill: "#3b82f6" },
-  { name: "Free", value: STORAGE_TOTAL - STORAGE_USED, fill: "#e2e8f0" },
-];
-
-const SCOPE_DATA = [
-  { name: "Academic", value: 185 },
-  { name: "Administrative", value: 95 },
-  { name: "Events", value: 65 },
-  { name: "Operations", value: 42 },
-  { name: "Student Welfare", value: 15 },
-  { name: "Sport Records", value: 10 },
-];
+import { apiClient } from "@/lib/api";
+import { useQuery } from "@tanstack/react-query";
+import { StorageBreakdown, StorageUsage } from "@/types";
 
 const RECENT_UPLOADS = [
   {
@@ -134,8 +119,37 @@ const donutChartConfig = {
   },
 };
 
+const fetchStorageUsage = async (): Promise<StorageUsage> => {
+  const response = await apiClient.get("/repository/storage/usage");
+  return response.data.data;
+};
+
+const fetchStorageBreakdown = async (): Promise<StorageBreakdown[]> => {
+  const response = await apiClient.get("/repository/storage/breakdown");
+  return response.data.data;
+};
+
 export default function StorageView() {
-  const isNearLimit = USAGE_PERCENTAGE > 80;
+  const { data: storageUsage } = useQuery({
+    queryKey: ["storage-usage"],
+    queryFn: fetchStorageUsage,
+  });
+
+  const { data: storageBreakdown } = useQuery({
+    queryKey: ["storage-breakdown"],
+    queryFn: fetchStorageBreakdown,
+  });
+
+  // console.log(storageBreakdown);
+
+  const scopeData = storageBreakdown?.map((item) => ({
+    name:
+      item.scope.split("_").join(" ").charAt(0).toUpperCase() +
+      item.scope.split("_").join(" ").slice(1),
+    value: item.used_mb,
+  }));
+
+  // console.log(scopeData);
 
   return (
     <div className="flex-1 p-4 space-y-8 overflow-y-auto h-[calc(100vh-16rem)] custom-scrollbar">
@@ -158,7 +172,15 @@ export default function StorageView() {
             >
               <PieChart>
                 <Pie
-                  data={DONUT_DATA}
+                  data={[
+                    { value: storageUsage?.used_gb ?? 0, fill: "#3b82f6" },
+                    {
+                      value:
+                        (storageUsage?.quota_gb ?? 0) -
+                        (storageUsage?.used_gb ?? 0),
+                      fill: "#e2e8f0",
+                    },
+                  ]}
                   cx="50%"
                   cy="50%"
                   innerRadius={70}
@@ -172,7 +194,7 @@ export default function StorageView() {
             </ChartContainer>
             <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-0.5">
               <span className="text-4xl font-bold leading-none tabular-nums text-foreground">
-                {USAGE_PERCENTAGE.toFixed(0)}%
+                {storageUsage?.used_percent.toFixed(0)}%
               </span>
               <span className="text-sm leading-none text-muted-foreground">
                 Used
@@ -187,7 +209,7 @@ export default function StorageView() {
                   <span className="w-3 h-3 rounded-full bg-primary-blue" /> Used
                 </div>
                 <span className="font-semibold text-foreground">
-                  {STORAGE_USED} GB
+                  {storageUsage?.used_gb} GB
                 </span>
               </div>
               <div className="flex flex-col items-center">
@@ -195,7 +217,8 @@ export default function StorageView() {
                   <span className="w-3 h-3 rounded-full bg-slate-200" /> Free
                 </div>
                 <span className="font-semibold text-foreground">
-                  {STORAGE_TOTAL - STORAGE_USED} GB
+                  {(storageUsage?.quota_gb ?? 0) - (storageUsage?.used_gb ?? 0)}{" "}
+                  GB
                 </span>
               </div>
             </div>
@@ -203,30 +226,30 @@ export default function StorageView() {
             <div
               className={cn(
                 "w-full p-4 rounded-xl flex items-center justify-between",
-                isNearLimit
+                storageUsage?.is_warning
                   ? "bg-amber-500/10 border border-amber-500/20"
                   : "bg-muted/50 border border-border/50",
               )}
             >
               <div className="flex flex-col items-start text-left">
                 <Badge
-                  variant={isNearLimit ? "outline" : "secondary"}
+                  variant={storageUsage?.is_warning ? "outline" : "secondary"}
                   className={cn(
                     "mb-1",
-                    isNearLimit
+                    storageUsage?.is_warning
                       ? "border-amber-500 text-amber-600 bg-amber-500/10"
                       : "",
                   )}
                 >
-                  Pro Plan
+                  {storageUsage?.plan} Plan
                 </Badge>
                 <span className="text-xs text-muted-foreground">
-                  {isNearLimit
+                  {storageUsage?.is_warning
                     ? "Approaching storage limit."
                     : "Plenty of space available."}
                 </span>
               </div>
-              {isNearLimit && (
+              {storageUsage?.is_warning && (
                 <Button
                   size="sm"
                   className="bg-amber-500 hover:bg-amber-600 text-white gap-1.5"
@@ -259,7 +282,7 @@ export default function StorageView() {
               className="min-h-[200px] w-full"
             >
               <BarChart
-                data={SCOPE_DATA}
+                data={scopeData}
                 layout="vertical"
                 margin={{ top: 5, right: 30, left: 40, bottom: 5 }}
               >
@@ -279,13 +302,13 @@ export default function StorageView() {
                     border: "1px solid hsl(var(--border))",
                   }}
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  formatter={(value: any) => [`${value} GB`, "Usage"]}
+                  formatter={(value: any) => [`${value} MB`, "Usage"]}
                 />
                 <Bar
                   dataKey="value"
                   fill="#3b82f6"
-                  radius={[0, 4, 4, 0]}
-                  barSize={24}
+                  radius={[0, 8, 8, 0]}
+                  barSize={28}
                 />
               </BarChart>
             </ChartContainer>

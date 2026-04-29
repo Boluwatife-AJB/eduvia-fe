@@ -590,3 +590,20 @@ interface FolderContent {
   sub_folders: Folder[];
   files: RepositoryFile[];
 }
+
+interface StorageUsage {
+  plan: "FREE" | "BASIC" | "PRO" | "ENTERPRISE";
+  used_bytes: string;
+  quota_bytes: string;
+  used_gb: number;
+  quota_gb: number;
+  used_percent: number;
+  is_warning: boolean;
+  is_critical: boolean;
+}
+
+interface StorageBreakdown {
+  scope: string;
+  used_bytes: string;
+  used_mb: number;
+}
