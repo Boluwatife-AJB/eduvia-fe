@@ -542,6 +542,13 @@ interface Folder {
   updated_at: string;
 }
 
+interface UploadedBySlice {
+  profile_img: string;
+  first_name: string;
+  last_name: string;
+  uuid: string;
+}
+
 interface FileVersion {
   id: string;
   tenant_id: string;
@@ -551,7 +558,7 @@ interface FileVersion {
   file_url: string;
   mime_type: string;
   file_size_bytes: string;
-  uploaded_by: string;
+  uploaded_by: UploadedBySlice;
   change_note: string;
   created_at: string;
   updated_at: string;

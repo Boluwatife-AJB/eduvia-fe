@@ -11,6 +11,7 @@ import {
   BreadcrumbItem,
   BreadcrumbLink,
   BreadcrumbList,
+  BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
@@ -32,11 +33,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { apiClient } from "@/lib/api";
-import {
-  filesTestData,
-  foldersTestData,
-  schoolDocumentsScopes,
-} from "@/lib/data";
+import { schoolDocumentsScopes } from "@/lib/data";
 import { cn, formatBytes } from "@/lib/utils";
 import {
   FolderContent,
@@ -64,7 +61,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { cva } from "class-variance-authority";
 import { format } from "date-fns";
-import { SetStateAction } from "react";
+import { Fragment, SetStateAction, useMemo } from "react";
 
 // FIXME: When a folder with content is clicked it doesn't display the content. The folder content is not fetched.
 
@@ -99,6 +96,15 @@ interface FolderContentListProps {
   isLoading: boolean;
   onSelectFolder: (folder: SelectableFolder) => void;
 }
+
+type SubfolderGridItem =
+  | RepositoryFolder
+  | FolderContent["sub_folders"][number];
+type BreadcrumbSeg =
+  | { type: "root" }
+  | { type: "group"; label: string }
+  | { type: "scope"; label: string }
+  | { type: "folder"; id: string; name: string };
 
 // Constants
 const folderCardPalette = [
@@ -193,6 +199,41 @@ function folderInTree(
     if (folderInTree(f.children, id)) return true;
   }
   return false;
+}
+
+function findFolderById(
+  list: RepositoryFolder[] | undefined,
+  id: string,
+): RepositoryFolder | null {
+  if (!list?.length) return null;
+  for (const f of list) {
+    if (f.id === id) return f;
+    const inChild = findFolderById(f.children, id);
+    if (inChild) return inChild;
+  }
+  return null;
+}
+
+function getFolderNamePath(
+  list: RepositoryFolder[] | undefined,
+  targetId: string,
+  path: { id: string; name: string }[] = [],
+): { id: string; name: string }[] | null {
+  if (!list?.length) return null;
+  for (const f of list) {
+    const next = [...path, { id: f.id, name: f.name }];
+    if (f.id === targetId) return next;
+    const inChild = getFolderNamePath(f.children, targetId, next);
+    if (inChild) return inChild;
+  }
+  return null;
+}
+
+function getFolderListFileCount(folder: SubfolderGridItem): number | null {
+  if ("_count" in folder && folder._count != null) {
+    return folder._count.files;
+  }
+  return null;
 }
 
 /**
@@ -400,23 +441,24 @@ function FolderNode({
 
           {/* Empty state */}
           {isEmpty && <SidebarMessage>Folder is empty</SidebarMessage>}
+        </div>
+      )}
 
-          {/* Recursive children */}
-          {!!folder.children?.length && (
-            <div className="space-y-0.5">
-              {folder.children.map((child) => (
-                <FolderNode
-                  key={child.id}
-                  folder={child}
-                  depth={depth + 1}
-                  selectedFolderId={selectedFolderId}
-                  folderContent={folderContent}
-                  isFolderContentPending={isFolderContentPending}
-                  onSelectFolder={onSelectFolder}
-                />
-              ))}
-            </div>
-          )}
+      {/* Recursive children must remain mounted even when parent isn't selected,
+          otherwise selecting a nested folder collapses its subtree. */}
+      {!!folder.children?.length && (
+        <div className="space-y-0.5 pl-3">
+          {folder.children.map((child) => (
+            <FolderNode
+              key={child.id}
+              folder={child}
+              depth={depth + 1}
+              selectedFolderId={selectedFolderId}
+              folderContent={folderContent}
+              isFolderContentPending={isFolderContentPending}
+              onSelectFolder={onSelectFolder}
+            />
+          ))}
         </div>
       )}
     </div>
@@ -507,6 +549,13 @@ export default function RepositoryViewNew({
     enabled: Boolean(activeScope),
   });
 
+  // Prevent stale rendering while switching folders/scopes:
+  // only treat content as usable if it belongs to the current selection.
+  const activeFolderContent =
+    selectedFolderId && folderContent?.folder?.id === selectedFolderId
+      ? folderContent
+      : undefined;
+
   const selectedFolderIsInTree = Boolean(
     selectedFolderId && folders && folderInTree(folders, selectedFolderId),
   );
@@ -514,6 +563,62 @@ export default function RepositoryViewNew({
   // Whether the orphan block (folder selected but not found in tree) should show
   const showOrphanBlock =
     Boolean(selectedFolderId) && !selectedFolderIsInTree && !isFoldersPending;
+
+  const folderNamePath = useMemo(() => {
+    if (!selectedFolderId) return null;
+    const fromTree = getFolderNamePath(folders, selectedFolderId);
+    if (fromTree) return fromTree;
+    if (activeFolderContent?.folder?.id === selectedFolderId) {
+      return [
+        {
+          id: activeFolderContent.folder.id,
+          name: activeFolderContent.folder.name,
+        },
+      ];
+    }
+    return null;
+  }, [selectedFolderId, folders, activeFolderContent]);
+
+  const scopeOrParentFolders = useMemo((): SubfolderGridItem[] | null => {
+    if (!activeScope) return null;
+    if (!selectedFolderId) {
+      if (isFoldersPending) return null;
+      return folders ?? [];
+    }
+    if (isFolderContentPending) return null;
+    if (!activeFolderContent) return [];
+    return activeFolderContent.sub_folders;
+  }, [
+    activeScope,
+    selectedFolderId,
+    isFoldersPending,
+    folders,
+    isFolderContentPending,
+    activeFolderContent,
+  ]);
+
+  let groupTitle: string | null = null;
+  let itemLabel = activeScope;
+  for (const scope of schoolDocumentsScopes) {
+    const item = scope.items.find((i) => i.value === activeScope);
+    if (item) {
+      groupTitle = scope.title;
+      itemLabel = item.label;
+      break;
+    }
+  }
+
+  const breadcrumbSegments: BreadcrumbSeg[] = (() => {
+    const segments: BreadcrumbSeg[] = [{ type: "root" }];
+    if (groupTitle) segments.push({ type: "group", label: groupTitle });
+    segments.push({ type: "scope", label: itemLabel });
+    if (folderNamePath) {
+      for (const folder of folderNamePath) {
+        segments.push({ type: "folder", id: folder.id, name: folder.name });
+      }
+    }
+    return segments;
+  })();
 
   return (
     <div className="flex ">
@@ -562,7 +667,14 @@ export default function RepositoryViewNew({
                             <Button
                               type="button"
                               variant="link"
-                              onClick={() => onActiveScopeChange(item.value)}
+                              onClick={() => {
+                                onActiveScopeChange(item.value);
+                                onUploadTargetChange({
+                                  scope: item.value,
+                                  scopeId: null,
+                                  folderId: null,
+                                });
+                              }}
                               className={sidebarItemVariants({
                                 active: isActiveItem,
                               })}
@@ -582,7 +694,7 @@ export default function RepositoryViewNew({
                                   folders={folders}
                                   isLoading={isFoldersPending}
                                   selectedFolderId={selectedFolderId}
-                                  folderContent={folderContent}
+                                  folderContent={activeFolderContent}
                                   isFolderContentPending={
                                     isFolderContentPending
                                   }
@@ -599,7 +711,7 @@ export default function RepositoryViewNew({
                                 {showOrphanBlock && (
                                   <div className="mt-1.5 pl-2 ml-2 space-y-0.5 border-l border-border/50 py-1">
                                     <FolderContentList
-                                      folderContent={folderContent}
+                                      folderContent={activeFolderContent}
                                       isLoading={isFolderContentPending}
                                       onSelectFolder={(f) =>
                                         onUploadTargetChange({
@@ -624,108 +736,220 @@ export default function RepositoryViewNew({
           })}
         </Accordion>
       </div>
-      ;{/* Repository View (Main Content) */}
-      <div className="flex-1 pl-6 pr-4 h-[calc(100vh-18rem)] pt-2 space-y-8 min-h-0 overflow-y-auto custom-scrollbar pb-6">
+
+      {/* Repository View (Main Content) */}
+      <div className="flex-1 pl-6 pr-4 h-[calc(100vh-16rem)] pt-2 space-y-8 min-h-0 overflow-y-auto custom-scrollbar pb-3">
         <Breadcrumb>
           <BreadcrumbList>
-            <BreadcrumbItem>
-              <BreadcrumbLink className="text-sm cursor-pointer">
-                School Repository
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbLink className="text-sm cursor-pointer">
-                JSS 1 Gold
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbLink className="text-sm cursor-pointer">
-                Mathematics
-              </BreadcrumbLink>
-            </BreadcrumbItem>
+            {breadcrumbSegments.map((segment, index) => {
+              const isCurrent = index === breadcrumbSegments.length - 1;
+              const key =
+                segment.type === "root"
+                  ? "root"
+                  : segment.type === "group"
+                    ? "group"
+                    : segment.type === "scope"
+                      ? "scope"
+                      : `folder-${segment.id}`;
+              const label =
+                segment.type === "root"
+                  ? "School Repository"
+                  : segment.type === "group" || segment.type === "scope"
+                    ? segment.label
+                    : segment.name;
+
+              const goToScopeRoot = () =>
+                onUploadTargetChange({
+                  scope: activeScope,
+                  scopeId: null,
+                  folderId: null,
+                });
+
+              return (
+                <Fragment key={key}>
+                  {index > 0 ? (
+                    <BreadcrumbSeparator className="mx-0.5" />
+                  ) : null}
+                  <BreadcrumbItem>
+                    {isCurrent ? (
+                      <BreadcrumbPage className="font-assistant font-medium text-foreground">
+                        {label}
+                      </BreadcrumbPage>
+                    ) : null}
+
+                    {!isCurrent && segment.type === "root" ? (
+                      <BreadcrumbLink
+                        className="text-sm"
+                        render={
+                          <button
+                            type="button"
+                            className="text-muted-foreground"
+                            onClick={goToScopeRoot}
+                          />
+                        }
+                      >
+                        {label}
+                      </BreadcrumbLink>
+                    ) : null}
+
+                    {!isCurrent && segment.type === "group" ? (
+                      <span className="text-muted-foreground max-w-40 truncate sm:max-w-none text-sm">
+                        {label}
+                      </span>
+                    ) : null}
+
+                    {!isCurrent && segment.type === "scope" ? (
+                      <BreadcrumbLink
+                        className="text-sm"
+                        render={
+                          <button
+                            type="button"
+                            className="text-muted-foreground"
+                            onClick={goToScopeRoot}
+                          />
+                        }
+                      >
+                        {label}
+                      </BreadcrumbLink>
+                    ) : null}
+
+                    {!isCurrent && segment.type === "folder" ? (
+                      <BreadcrumbLink
+                        className="text-sm"
+                        render={
+                          <button
+                            type="button"
+                            className="text-muted-foreground max-w-40 truncate"
+                            onClick={() => {
+                              const folder = findFolderById(
+                                folders,
+                                segment.id,
+                              );
+                              if (folder) {
+                                onUploadTargetChange({
+                                  scope: folder.scope,
+                                  scopeId: folder.scope_id,
+                                  folderId: folder.id,
+                                });
+                                return;
+                              }
+                              if (
+                                activeFolderContent?.folder?.id === segment.id
+                              ) {
+                                onUploadTargetChange({
+                                  scope: activeFolderContent.folder.scope,
+                                  scopeId: activeFolderContent.folder.scope_id,
+                                  folderId: activeFolderContent.folder.id,
+                                });
+                              }
+                            }}
+                          />
+                        }
+                      >
+                        {label}
+                      </BreadcrumbLink>
+                    ) : null}
+                  </BreadcrumbItem>
+                </Fragment>
+              );
+            })}
           </BreadcrumbList>
         </Breadcrumb>
 
         {/* Folders */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {foldersTestData.map((folder, index) => {
-            const palette = folderCardPalette[index % folderCardPalette.length];
-            return (
-              <Card
-                key={folder.id}
-                className="p-4 hover:shadow-md transition-shadow cursor-pointer flex flex-col gap-4 border border-border/50"
-              >
-                <div className="flex justify-between items-start">
-                  <div
-                    className={cn("p-3 rounded-xl", palette.bg, palette.color)}
-                  >
-                    <FolderIcon weight="fill" className="size-6" />
+        {scopeOrParentFolders && scopeOrParentFolders.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {scopeOrParentFolders.map((folder, index) => {
+              const palette =
+                folderCardPalette[index % folderCardPalette.length];
+              const fileCount = getFolderListFileCount(folder);
+              return (
+                <Card
+                  key={folder.id}
+                  className="p-4 hover:shadow-md transition-shadow cursor-pointer flex flex-col gap-4 border border-border/50"
+                  onClick={() =>
+                    onUploadTargetChange({
+                      scope: folder.scope,
+                      scopeId: folder.scope_id,
+                      folderId: folder.id,
+                    })
+                  }
+                >
+                  <div className="flex justify-between items-start">
+                    <div
+                      className={cn(
+                        "p-3 rounded-xl",
+                        palette.bg,
+                        palette.color,
+                      )}
+                    >
+                      <FolderIcon weight="fill" className="size-6" />
+                    </div>
+
+                    <DropdownMenu>
+                      <DropdownMenuTrigger
+                        onClick={(e) => e.stopPropagation()}
+                        render={
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                          >
+                            <DotsThreeIcon weight="bold" className="size-5" />
+                          </Button>
+                        }
+                      />
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem>Open Folder</DropdownMenuItem>
+                        <DropdownMenuItem>Share</DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem className="text-destructive focus:text-destructive">
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
 
-                  <DropdownMenu>
-                    <DropdownMenuTrigger
-                      onClick={(e) => e.stopPropagation()}
-                      render={
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                        >
-                          <DotsThreeIcon weight="bold" className="size-5" />
-                        </Button>
-                      }
-                    />
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem>Open Folder</DropdownMenuItem>
-                      <DropdownMenuItem>Share</DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem className="text-destructive focus:text-destructive">
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
+                  <div>
+                    <h3 className="font-semibold text-lg text-foreground line-clamp-2">
+                      {folder.name}
+                    </h3>
+                    <p className="text-sm text-muted-foreground mt-1 flex items-center flex-wrap gap-x-2 gap-y-1">
+                      {fileCount != null ? (
+                        <span>
+                          {fileCount} {fileCount === 1 ? "file" : "files"}
+                        </span>
+                      ) : null}
+                      {fileCount != null ? (
+                        <span className="w-1 h-1 rounded-full bg-border" />
+                      ) : null}
+                      <span>Updated {formatFolderDate(folder.updated_at)}</span>
+                    </p>
+                  </div>
 
-                <div>
-                  <h3 className="font-semibold text-lg text-foreground line-clamp-2">
-                    {folder.name}
-                  </h3>
-                  <p className="text-sm text-muted-foreground mt-1 flex items-center flex-wrap gap-x-2 gap-y-1">
-                    {folder.file_count != null ? (
-                      <span>
-                        {folder.file_count}{" "}
-                        {folder.file_count === 1 ? "file" : "files"}
-                      </span>
-                    ) : null}
-                    {folder.file_count != null ? (
-                      <span className="w-1 h-1 rounded-full bg-border" />
-                    ) : null}
-                    <span>Updated {formatFolderDate(folder.updated_at)}</span>
-                  </p>
-                </div>
-
-                <div className="flex items-center gap-2 mt-auto pt-4 border-t border-border/50">
-                  <Avatar className="size-6">
-                    <AvatarFallback className="text-[10px]">
-                      {folder.created_by.first_name.charAt(0).toUpperCase()}
-                      {folder.created_by.last_name.charAt(0).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="text-xs text-muted-foreground line-clamp-2">
-                    Created {formatFolderDate(folder.created_at)}
-                  </span>
-                </div>
-              </Card>
-            );
-          })}
-        </div>
+                  <div className="flex items-center gap-2 mt-auto pt-4 border-t border-border/50">
+                    <Avatar className="size-6">
+                      <AvatarFallback className="text-[10px]">
+                        {folder.name.charAt(0).toUpperCase() || "F"}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="text-xs text-muted-foreground line-clamp-2">
+                      Created {formatFolderDate(folder.created_at)}
+                    </span>
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+        ) : null}
 
         {/* Files Table */}
         <div className="space-y-4">
           <h3 className="text-lg font-semibold font-assistant">
-            Files in JSS 1 Gold
+            Files in{" "}
+            {selectedFolderId
+              ? (activeFolderContent?.folder.name ?? "Selected Folder")
+              : itemLabel}
           </h3>
 
           <Card className="overflow-hidden border border-border/50">
@@ -742,105 +966,143 @@ export default function RepositoryViewNew({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filesTestData.map((file) => (
-                  <TableRow
-                    key={file.id}
-                    className="cursor-pointer hover:bg-muted/20"
-                  >
-                    <TableCell>
-                      <FileTypeIcon
-                        mimeType={file.mime_type}
-                        size="6"
-                        // weight="fill"
-                      />
-                    </TableCell>
-                    <TableCell className="font-medium">
-                      {file.file_name}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {formatBytes(Number(file.file_size_bytes))}
-                    </TableCell>
-                    <TableCell>
-                      {file.file_versions.length > 1 ? (
-                        <Badge
-                          variant="outline"
-                          className="text-[10px] h-5 bg-blue-500/10 text-blue-600 border-blue-500/20"
-                        >
-                          V{file.file_versions.length}
-                        </Badge>
-                      ) : (
-                        <span className="text-muted-foreground text-sm pl-2">
-                          -
-                        </span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {format(new Date(file.created_at), "MMM d, yyyy")}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Avatar className="size-6">
-                          <AvatarFallback className="text-[10px]">
-                            {file.created_by.first_name.charAt(0).toUpperCase()}
-                            {file.created_by.last_name.charAt(0).toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
-                        <span className="text-sm text-foreground">
-                          {file.created_by.first_name}{" "}
-                          {file.created_by.last_name}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div
-                        className="flex justify-end pr-2"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <DropdownMenu>
-                          <DropdownMenuTrigger
-                            render={
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8"
-                              >
-                                <DotsThreeIcon
-                                  weight="bold"
-                                  className="size-5"
-                                />
-                              </Button>
-                            }
-                          />
-                          <DropdownMenuContent align="end" className="w-40">
-                            <DropdownMenuItem>
-                              <DownloadSimpleIcon className="size-4 mr-2" />
-                              Download
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
-                              <ShareNetworkIcon className="size-4 mr-2" />
-                              Share
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
-                              <ClockCounterClockwiseIcon className="size-4 mr-2" />
-                              Version History
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem className="text-destructive focus:text-destructive">
-                              <TrashSimpleIcon className="size-4 mr-2" />
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
+                {selectedFolderId && isFolderContentPending ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={7}
+                      className="h-20 text-center text-sm text-muted-foreground"
+                    >
+                      Loading folder files...
                     </TableCell>
                   </TableRow>
-                ))}
+                ) : activeFolderContent &&
+                  activeFolderContent.files.length > 0 ? (
+                  activeFolderContent.files.map((file) => (
+                    <TableRow
+                      key={file.id}
+                      className="cursor-pointer hover:bg-muted/20"
+                    >
+                      <TableCell>
+                        <FileTypeIcon
+                          mimeType={file.versions[0]?.mime_type ?? ""}
+                          size="size-6"
+                          weight="fill"
+                        />
+                      </TableCell>
+                      <TableCell className="font-medium">{file.name}</TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {formatBytes(
+                          Number(file.versions[0]?.file_size_bytes ?? 0),
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {file.versions.length > 1 ? (
+                          <Badge
+                            variant="outline"
+                            className="text-[10px] h-5 bg-blue-500/10 text-blue-600 border-blue-500/20"
+                          >
+                            V{file.versions.length}
+                          </Badge>
+                        ) : (
+                          <span className="text-muted-foreground text-sm pl-2">
+                            -
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {format(new Date(file.created_at), "MMM d, yyyy")}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Avatar className="size-6">
+                            <AvatarFallback className="text-[10px]">
+                              {file.versions[0]?.uploaded_by.first_name
+                                ?.charAt(0)
+                                .toUpperCase() ??
+                                file.versions[0]?.uploaded_by.last_name
+                                  ?.charAt(0)
+                                  .toUpperCase() ??
+                                "U"}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className="text-sm text-foreground">
+                            {file.versions[0]?.uploaded_by.first_name}{" "}
+                            {file.versions[0]?.uploaded_by.last_name}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div
+                          className="flex justify-end pr-2"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <DropdownMenu>
+                            <DropdownMenuTrigger
+                              render={
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8"
+                                >
+                                  <DotsThreeIcon
+                                    weight="bold"
+                                    className="size-5"
+                                  />
+                                </Button>
+                              }
+                            />
+                            <DropdownMenuContent align="end" className="w-40">
+                              <DropdownMenuItem>
+                                <DownloadSimpleIcon className="size-4 mr-2" />
+                                Download
+                              </DropdownMenuItem>
+                              <DropdownMenuItem>
+                                <ShareNetworkIcon className="size-4 mr-2" />
+                                Share
+                              </DropdownMenuItem>
+                              <DropdownMenuItem>
+                                <ClockCounterClockwiseIcon className="size-4 mr-2" />
+                                Version History
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem className="text-destructive focus:text-destructive">
+                                <TrashSimpleIcon className="size-4 mr-2" />
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell
+                      colSpan={7}
+                      className="h-20 text-center text-sm text-muted-foreground"
+                    >
+                      No files in this folder.
+                    </TableCell>
+                  </TableRow>
+                )}
+                {/* {selectedFolderId &&
+                !isFolderContentPending &&
+                folderContent &&
+                folderContent.files.length === 0 ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={7}
+                      className="h-20 text-center text-sm text-muted-foreground"
+                    >
+                      No files in this folder.
+                    </TableCell>
+                  </TableRow>
+                ) : null} */}
               </TableBody>
             </Table>
           </Card>
         </div>
       </div>
-      ;
     </div>
   );
 }
