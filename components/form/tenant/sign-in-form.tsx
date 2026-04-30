@@ -4,7 +4,7 @@ import { apiClient } from "@/lib/api";
 import { setAuthToken } from "@/lib/auth";
 import { signInSchema } from "@/lib/schema";
 import { useTenantStore } from "@/lib/stores/tenant.store";
-import { SignInFormValues } from "@/types";
+import { SignInFormValues, SignInResponse } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   ArrowRightIcon,
@@ -59,12 +59,22 @@ export default function SignInForm({ userType }: SignInFormProps) {
 
   const { mutateAsync: signIn, isPending } = useMutation({
     mutationFn: signInUser,
-    onSuccess: (data) => {
+    onSuccess: (data: SignInResponse) => {
+      // console.log(data);
       setAuthToken({
         access_token: data.access_token,
         refresh_token: data.refresh_token,
       });
-      router.push(`/${tenant?.slug}/`);
+      if (data.user.role === "TEACHER") {
+        router.push(`/${tenant?.slug}/teacher/overview`);
+      } else if (data.user.role === "STUDENT") {
+        router.push(`/${tenant?.slug}/student/overview`);
+      } else if (data.user.role === "PARENT") {
+        router.push(`/${tenant?.slug}/parent/dashboard`);
+      } else if (data.user.role === "ADMIN" || data.user.role === "PRINCIPAL") {
+        router.push(`/${tenant?.slug}/`);
+      }
+      // router.push(`/${tenant?.slug}/`);
     },
     onError: (error: AxiosError) => {
       toast.error(

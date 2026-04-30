@@ -187,275 +187,287 @@ export default function TenantDashboardPage() {
           Welcome Back {user?.first_name} {user?.last_name}
         </h1>
 
-        {/* ROW 1: Stats */}
-        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-          {cardsToRender.map((card) => (
-            <StatsCard key={card.title} {...card} />
-          ))}
-        </div>
-        {/* ROW 2: 3 Column Layout */}
-        <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-12 lg:min-h-[400px]">
-          {/* Col 1 (40% ≈ 5 cols): Enrollment Chart */}
-          <div className="lg:col-span-5 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl p-6 shadow-sm flex flex-col">
-            <h2 className="text-base font-bold text-slate-800 dark:text-slate-100 mb-4 tracking-tight">
-              Enrollment Distribution
-            </h2>
-            <div className="flex-1 w-full min-h-[250px] relative">
-              <ChartContainer
-                config={pieChartConfig}
-                className="max-h-[300px] w-full mx-auto aspect-square"
-              >
-                <PieChart>
-                  <Pie
-                    data={enrollmentData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={75}
-                    outerRadius={105}
-                    paddingAngle={5}
-                    dataKey="value"
-                    stroke="none"
-                  />
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                  <ChartLegend
-                    content={
-                      <ChartLegendContent
-                        nameKey="name"
-                        iconClassName="size-4 shrink-0 rounded-full ring-1 ring-slate-900/10 dark:ring-slate-100/15"
-                        itemClassName="gap-2"
-                        className="-translate-y-2 flex-wrap gap-3 *:basis-1/4 *:justify-center"
-                      />
-                    }
-                  />
-                </PieChart>
-              </ChartContainer>
-              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none pb-8">
-                <span className="text-3xl font-black text-slate-800 dark:text-slate-100">
-                  1,000
-                </span>
-                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">
-                  Total
-                </span>
-              </div>
+        {(user?.role === "ADMIN" || user?.role === "PRINCIPAL") && (
+          <>
+            {/* ROW 1: Stats */}
+            <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+              {cardsToRender.map((card) => (
+                <StatsCard key={card.title} {...card} />
+              ))}
             </div>
-          </div>
-
-          {/* Col 2 (35% ≈ 4 cols): Fee Collection */}
-          <div className="lg:col-span-4 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl p-6 shadow-sm flex flex-col">
-            <div className="mb-4">
-              <h2 className="text-base font-bold text-slate-800 dark:text-slate-100 tracking-tight">
-                Fee Collection Overview
-              </h2>
-              <p className="text-xs text-slate-500 font-medium">
-                Collected vs Outstanding
-              </p>
-            </div>
-            <div className="flex-1 w-full min-h-[250px]">
-              <ChartContainer
-                config={barChartConfig}
-                className="max-h-[300px] w-full mx-auto aspect-square"
-              >
-                <BarChart
-                  data={feeCollectionData}
-                  layout="vertical"
-                  margin={{ top: 5, right: 30, left: 10, bottom: 5 }}
-                  barSize={20}
-                >
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    horizontal={true}
-                    vertical={false}
-                    stroke="#e2e8f0"
-                  />
-                  <XAxis type="number" hide />
-                  <YAxis
-                    dataKey="name"
-                    type="category"
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fill: "#64748b", fontSize: 12, fontWeight: 500 }}
-                  />
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                  <ChartLegend
-                    content={
-                      <ChartLegendContent
-                        nameKey="name"
-                        iconClassName="size-3 shrink-0  ring-1 ring-slate-900/10 dark:ring-slate-100/15"
-                        itemClassName="gap-2"
-                        className="-translate-y-2 flex-wrap gap-3 *:basis-1/4 *:justify-center"
-                      />
-                    }
-                  />
-                  <Bar
-                    dataKey="collected"
-                    name="Collected"
-                    fill="#10b981"
-                    radius={[0, 4, 4, 0]}
-                  />
-                  <Bar
-                    dataKey="outstanding"
-                    name="Outstanding"
-                    fill="#ef4444"
-                    radius={[0, 4, 4, 0]}
-                  />
-                </BarChart>
-              </ChartContainer>
-            </div>
-          </div>
-
-          {/* Col 3 (25% ≈ 3 cols): Quick Actions */}
-          <div className="lg:col-span-3 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl p-6 shadow-sm flex flex-col">
-            <h2 className="text-base font-bold text-slate-800 dark:text-slate-100 mb-4 tracking-tight">
-              Quick Actions
-            </h2>
-            <div className="flex flex-col gap-3 flex-1 justify-start">
-              <Button
-                variant="outline"
-                className="w-full justify-start gap-3 rounded-lg border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 h-11 shadow-sm font-semibold text-slate-600 dark:text-slate-300 transition-all"
-                onClick={() => setAddStudentModal(true)}
-              >
-                <UserPlusIcon
-                  className="size-5 text-primary-blue"
-                  weight="duotone"
-                />
-                Add Student
-              </Button>
-              <Button
-                variant="outline"
-                className="w-full justify-start gap-3 rounded-lg border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 h-11 shadow-sm font-semibold text-slate-600 dark:text-slate-300 transition-all"
-                onClick={() => setAddTeacherModal(true)}
-              >
-                <ChalkboardTeacherIcon
-                  className="size-5 text-emerald-500"
-                  weight="duotone"
-                />
-                Add Teacher
-              </Button>
-              <Button
-                variant="outline"
-                className="w-full justify-start gap-3 rounded-lg border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 h-11 shadow-sm font-semibold text-slate-600 dark:text-slate-300 transition-all"
-              >
-                <CheckCircleIcon
-                  className="size-5 text-amber-500"
-                  weight="duotone"
-                />
-                Approve Results
-              </Button>
-              <Button
-                variant="outline"
-                className="w-full justify-start gap-3 rounded-lg border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 h-11 shadow-sm font-semibold text-slate-600 dark:text-slate-300 transition-all"
-              >
-                <MoneyIcon
-                  className="size-5 text-violet-500"
-                  weight="duotone"
-                />
-                Set Fees
-              </Button>
-              <Button
-                variant="outline"
-                className="w-full justify-start gap-3 rounded-lg border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 h-11 shadow-sm font-semibold text-slate-600 dark:text-slate-300 transition-all"
-              >
-                <MegaphoneIcon
-                  className="size-5 text-pink-500"
-                  weight="duotone"
-                />
-                Post Announcement
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        {/* Row 3: 2 Column Layout: Activity Log and Pending Approvals */}
-        <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
-          {/* Activity Log */}
-          <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl p-6 shadow-sm flex flex-col">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-base font-bold text-slate-800 dark:text-slate-100 tracking-tight">
-                Recent Activity
-              </h2>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-primary-blue hover:text-primary-blue/80 font-semibold text-xs h-8"
-                onClick={() => router.push("/admin/audit-logs")}
-              >
-                View All
-              </Button>
-            </div>
-            <div className="flex flex-col gap-4 flex-1">
-              {activityLog.map((log) => (
-                <div key={log.id} className="flex items-start gap-4">
-                  <div
-                    className={`mt-0.5 p-2 rounded-full ${log.bg} ${log.color}`}
+            {/* ROW 2: 3 Column Layout */}
+            <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-12 lg:min-h-[400px]">
+              {/* Col 1 (40% ≈ 5 cols): Enrollment Chart */}
+              <div className="lg:col-span-5 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl p-6 shadow-sm flex flex-col">
+                <h2 className="text-base font-bold text-slate-800 dark:text-slate-100 mb-4 tracking-tight">
+                  Enrollment Distribution
+                </h2>
+                <div className="flex-1 w-full min-h-[250px] relative">
+                  <ChartContainer
+                    config={pieChartConfig}
+                    className="max-h-[300px] w-full mx-auto aspect-square"
                   >
-                    <log.icon className="size-4" weight="bold" />
-                  </div>
-                  <div className="flex-1 space-y-1">
-                    <p className="text-sm font-medium text-slate-800 dark:text-slate-200">
-                      {log.action}
-                    </p>
-                    <div className="flex items-center text-xs text-slate-500 dark:text-slate-400 gap-2">
-                      <span className="font-semibold">{log.user}</span>
-                      <span>•</span>
-                      <span>{log.time}</span>
-                    </div>
+                    <PieChart>
+                      <Pie
+                        data={enrollmentData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={75}
+                        outerRadius={105}
+                        paddingAngle={5}
+                        dataKey="value"
+                        stroke="none"
+                      />
+                      <ChartTooltip content={<ChartTooltipContent />} />
+                      <ChartLegend
+                        content={
+                          <ChartLegendContent
+                            nameKey="name"
+                            iconClassName="size-4 shrink-0 rounded-full ring-1 ring-slate-900/10 dark:ring-slate-100/15"
+                            itemClassName="gap-2"
+                            className="-translate-y-2 flex-wrap gap-3 *:basis-1/4 *:justify-center"
+                          />
+                        }
+                      />
+                    </PieChart>
+                  </ChartContainer>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none pb-8">
+                    <span className="text-3xl font-black text-slate-800 dark:text-slate-100">
+                      1,000
+                    </span>
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">
+                      Total
+                    </span>
                   </div>
                 </div>
-              ))}
-            </div>
-          </div>
+              </div>
 
-          {/* Pending Approvals */}
-          <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl p-6 shadow-sm flex flex-col">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-base font-bold text-slate-800 dark:text-slate-100 tracking-tight">
-                Pending Approvals
-              </h2>
-              <div className="bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 text-xs font-bold px-2.5 py-0.5 rounded-full">
-                {pendingApprovals.length} New
+              {/* Col 2 (35% ≈ 4 cols): Fee Collection */}
+              <div className="lg:col-span-4 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl p-6 shadow-sm flex flex-col">
+                <div className="mb-4">
+                  <h2 className="text-base font-bold text-slate-800 dark:text-slate-100 tracking-tight">
+                    Fee Collection Overview
+                  </h2>
+                  <p className="text-xs text-slate-500 font-medium">
+                    Collected vs Outstanding
+                  </p>
+                </div>
+                <div className="flex-1 w-full min-h-[250px]">
+                  <ChartContainer
+                    config={barChartConfig}
+                    className="max-h-[300px] w-full mx-auto aspect-square"
+                  >
+                    <BarChart
+                      data={feeCollectionData}
+                      layout="vertical"
+                      margin={{ top: 5, right: 30, left: 10, bottom: 5 }}
+                      barSize={20}
+                    >
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        horizontal={true}
+                        vertical={false}
+                        stroke="#e2e8f0"
+                      />
+                      <XAxis type="number" hide />
+                      <YAxis
+                        dataKey="name"
+                        type="category"
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{
+                          fill: "#64748b",
+                          fontSize: 12,
+                          fontWeight: 500,
+                        }}
+                      />
+                      <ChartTooltip content={<ChartTooltipContent />} />
+                      <ChartLegend
+                        content={
+                          <ChartLegendContent
+                            nameKey="name"
+                            iconClassName="size-3 shrink-0  ring-1 ring-slate-900/10 dark:ring-slate-100/15"
+                            itemClassName="gap-2"
+                            className="-translate-y-2 flex-wrap gap-3 *:basis-1/4 *:justify-center"
+                          />
+                        }
+                      />
+                      <Bar
+                        dataKey="collected"
+                        name="Collected"
+                        fill="#10b981"
+                        radius={[0, 4, 4, 0]}
+                      />
+                      <Bar
+                        dataKey="outstanding"
+                        name="Outstanding"
+                        fill="#ef4444"
+                        radius={[0, 4, 4, 0]}
+                      />
+                    </BarChart>
+                  </ChartContainer>
+                </div>
+              </div>
+
+              {/* Col 3 (25% ≈ 3 cols): Quick Actions */}
+              <div className="lg:col-span-3 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl p-6 shadow-sm flex flex-col">
+                <h2 className="text-base font-bold text-slate-800 dark:text-slate-100 mb-4 tracking-tight">
+                  Quick Actions
+                </h2>
+                <div className="flex flex-col gap-3 flex-1 justify-start">
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start gap-3 rounded-lg border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 h-11 shadow-sm font-semibold text-slate-600 dark:text-slate-300 transition-all"
+                    onClick={() => setAddStudentModal(true)}
+                  >
+                    <UserPlusIcon
+                      className="size-5 text-primary-blue"
+                      weight="duotone"
+                    />
+                    Add Student
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start gap-3 rounded-lg border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 h-11 shadow-sm font-semibold text-slate-600 dark:text-slate-300 transition-all"
+                    onClick={() => setAddTeacherModal(true)}
+                  >
+                    <ChalkboardTeacherIcon
+                      className="size-5 text-emerald-500"
+                      weight="duotone"
+                    />
+                    Add Teacher
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start gap-3 rounded-lg border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 h-11 shadow-sm font-semibold text-slate-600 dark:text-slate-300 transition-all"
+                  >
+                    <CheckCircleIcon
+                      className="size-5 text-amber-500"
+                      weight="duotone"
+                    />
+                    Approve Results
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start gap-3 rounded-lg border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 h-11 shadow-sm font-semibold text-slate-600 dark:text-slate-300 transition-all"
+                  >
+                    <MoneyIcon
+                      className="size-5 text-violet-500"
+                      weight="duotone"
+                    />
+                    Set Fees
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start gap-3 rounded-lg border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 h-11 shadow-sm font-semibold text-slate-600 dark:text-slate-300 transition-all"
+                  >
+                    <MegaphoneIcon
+                      className="size-5 text-pink-500"
+                      weight="duotone"
+                    />
+                    Post Announcement
+                  </Button>
+                </div>
               </div>
             </div>
-            <div className="flex flex-col gap-3 flex-1">
-              {pendingApprovals.map((item) => (
-                <div
-                  key={item.id}
-                  className="flex items-center justify-between p-3 rounded-lg border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors group"
-                >
-                  <div className="flex flex-col gap-1.5">
-                    <p className="text-sm font-bold text-slate-800 dark:text-slate-200">
-                      {item.title}
-                    </p>
-                    <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-                      <span className="bg-slate-200 dark:bg-slate-700 px-1.5 py-0.5 rounded text-[10px] font-bold text-slate-600 dark:text-slate-300 tracking-wide uppercase">
-                        {item.type}
-                      </span>
-                      <span>•</span>
-                      <span className="font-medium">{item.submittedBy}</span>
-                      <span className="hidden sm:inline-block">•</span>
-                      <span className="hidden sm:inline-block">
-                        {item.date}
-                      </span>
+
+            {/* Row 3: 2 Column Layout: Activity Log and Pending Approvals */}
+            <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
+              {/* Activity Log */}
+              <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl p-6 shadow-sm flex flex-col">
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-base font-bold text-slate-800 dark:text-slate-100 tracking-tight">
+                    Recent Activity
+                  </h2>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-primary-blue hover:text-primary-blue/80 font-semibold text-xs h-8"
+                    onClick={() => router.push("/admin/audit-logs")}
+                  >
+                    View All
+                  </Button>
+                </div>
+                <div className="flex flex-col gap-4 flex-1">
+                  {activityLog.map((log) => (
+                    <div key={log.id} className="flex items-start gap-4">
+                      <div
+                        className={`mt-0.5 p-2 rounded-full ${log.bg} ${log.color}`}
+                      >
+                        <log.icon className="size-4" weight="bold" />
+                      </div>
+                      <div className="flex-1 space-y-1">
+                        <p className="text-sm font-medium text-slate-800 dark:text-slate-200">
+                          {log.action}
+                        </p>
+                        <div className="flex items-center text-xs text-slate-500 dark:text-slate-400 gap-2">
+                          <span className="font-semibold">{log.user}</span>
+                          <span>•</span>
+                          <span>{log.time}</span>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      size="sm"
-                      className="h-7 px-3 bg-primary-blue hover:bg-primary-blue/90 text-white text-xs font-semibold rounded-md transition-all opacity-0 group-hover:opacity-100"
-                    >
-                      Review
-                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Pending Approvals */}
+              <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl p-6 shadow-sm flex flex-col">
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-base font-bold text-slate-800 dark:text-slate-100 tracking-tight">
+                    Pending Approvals
+                  </h2>
+                  <div className="bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 text-xs font-bold px-2.5 py-0.5 rounded-full">
+                    {pendingApprovals.length} New
                   </div>
                 </div>
-              ))}
-              <Button
-                variant="outline"
-                className="w-full mt-auto border-dashed border-slate-300 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
-              >
-                View All Requests
-              </Button>
+                <div className="flex flex-col gap-3 flex-1">
+                  {pendingApprovals.map((item) => (
+                    <div
+                      key={item.id}
+                      className="flex items-center justify-between p-3 rounded-lg border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors group"
+                    >
+                      <div className="flex flex-col gap-1.5">
+                        <p className="text-sm font-bold text-slate-800 dark:text-slate-200">
+                          {item.title}
+                        </p>
+                        <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                          <span className="bg-slate-200 dark:bg-slate-700 px-1.5 py-0.5 rounded text-[10px] font-bold text-slate-600 dark:text-slate-300 tracking-wide uppercase">
+                            {item.type}
+                          </span>
+                          <span>•</span>
+                          <span className="font-medium">
+                            {item.submittedBy}
+                          </span>
+                          <span className="hidden sm:inline-block">•</span>
+                          <span className="hidden sm:inline-block">
+                            {item.date}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          size="sm"
+                          className="h-7 px-3 bg-primary-blue hover:bg-primary-blue/90 text-white text-xs font-semibold rounded-md transition-all opacity-0 group-hover:opacity-100"
+                        >
+                          Review
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                  <Button
+                    variant="outline"
+                    className="w-full mt-auto border-dashed border-slate-300 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
+                  >
+                    View All Requests
+                  </Button>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
+          </>
+        )}
+
+        {user?.role === "TEACHER" && <></>}
       </div>
 
       <Dialog open={addStudentModal} onOpenChange={setAddStudentModal}>

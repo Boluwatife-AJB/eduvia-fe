@@ -139,6 +139,18 @@ interface AdminStatsCard {
   backgroundColor: string;
 }
 
+interface SignInResponse {
+  user: {
+    id: string;
+    role: Role;
+    first_name: string;
+    last_name: string;
+    identifier: string;
+  };
+  access_token: string;
+  refresh_token: string;
+}
+
 interface StatsResponse {
   total_students: number;
   total_teachers: number;
