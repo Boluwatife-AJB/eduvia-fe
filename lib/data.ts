@@ -219,8 +219,8 @@ export const teacherNavSections: NavSection[] = [
         Icon: ClockIcon,
       },
       {
-        title: "Upload Lectures",
-        href: "/teacher/upload-lectures",
+        title: "Lectures",
+        href: "/teacher/lectures",
         Icon: FileTextIcon,
       },
       // {
@@ -1180,3 +1180,34 @@ export const MIME_ICON_MAP: Record<string, React.ElementType> = {
 //   "video/mp4": VideoIcon,
 //   "video/mkv": VideoIcon,
 // };
+
+export const lectureContentTypes = [
+  {
+    value: "VIDEO",
+    label: "Video",
+  },
+  {
+    value: "AUDIO",
+    label: "Audio",
+  },
+  {
+    value: "PDF",
+    label: "PDF",
+  },
+  {
+    value: "SLIDES",
+    label: "Slides",
+  },
+  {
+    value: "IMAGE",
+    label: "Image",
+  },
+  {
+    value: "TEXT",
+    label: "Text",
+  },
+  {
+    value: "LINK",
+    label: "Link",
+  },
+];

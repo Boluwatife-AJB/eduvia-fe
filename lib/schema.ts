@@ -4,6 +4,7 @@ import {
   classOfDegreeOptions,
   days,
   genderOptions,
+  lectureContentTypes,
   levels,
   nonTeachingStaffRoles,
   relationshipOptions,
@@ -285,4 +286,26 @@ export const uploadRepositoryFileFormSchema = z.object({
       }
     }),
   change_note: z.string().optional(),
+});
+
+export const uploadLectureSchema = z.object({
+  title: z.string().min(1, { message: "Title is required" }),
+  description: z.string().optional(),
+  classId: z.string().min(1, { message: "Class is required" }),
+  subjectId: z.string().min(1, { message: "Subject is required" }),
+  contentType: z.enum(
+    lectureContentTypes.map((option) => option.value),
+    {
+      message: "Content type is required",
+    },
+  ),
+  fileUrl: z.string().optional(),
+  externalUrl: z.string().optional(),
+  textContent: z.string().optional(),
+  durationMinutes: z.coerce
+    .number()
+    .min(1, { message: "Duration must be at least 1 minute" }),
+  sortOrder: z.coerce
+    .number()
+    .min(1, { message: "Sort order must be at least 1" }),
 });

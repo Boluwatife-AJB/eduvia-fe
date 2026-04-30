@@ -13,6 +13,7 @@ import {
   signInSchema,
   subjectSchema,
   createFolderSchema,
+  uploadLectureSchema,
 } from "@/lib/schema";
 import { Icon } from "@phosphor-icons/react";
 import { z } from "zod";
@@ -38,6 +39,7 @@ type CreateFolderFormValues = z.infer<typeof createFolderSchema>;
 type UploadRepositoryFileFormValues = z.infer<
   typeof uploadRepositoryFileFormSchema
 >;
+type UploadLectureFormValues = z.infer<typeof uploadLectureSchema>;
 
 type Gender = "MALE" | "FEMALE";
 
