@@ -223,11 +223,11 @@ export const teacherNavSections: NavSection[] = [
         href: "/teacher/upload-lectures",
         Icon: FileTextIcon,
       },
-      {
-        title: "Assignments",
-        href: "/teacher/assignments",
-        Icon: FileTextIcon,
-      },
+      // {
+      //   title: "Assignments",
+      //   href: "/teacher/assignments",
+      //   Icon: FileTextIcon,
+      // },
       {
         title: "Assessments",
         href: "/teacher/assessments",

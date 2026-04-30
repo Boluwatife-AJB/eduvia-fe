@@ -67,7 +67,36 @@ type AdminRoles =
 
 type SubjectType = "COMPULSORY" | "ELECTIVE" | "OPTIONAL";
 
-type DayOfWeek = "MONDAY" | "TUESDAY" | "WEDNESDAY" | "THURSDAY" | "FRIDAY";
+type DayOfWeek =
+  | "MONDAY"
+  | "TUESDAY"
+  | "WEDNESDAY"
+  | "THURSDAY"
+  | "FRIDAY"
+  | "SATURDAY"
+  | "SUNDAY";
+
+/** Single slot returned by GET /timetable/teacher/me (nested shape). */
+interface TeacherTimetableSlot {
+  id: string;
+  tenant_id: string;
+  class_id: string;
+  subject_id: string;
+  teacher_id: string;
+  academic_term_id: string;
+  day_of_week: DayOfWeek;
+  start_time: string;
+  end_time: string;
+  venue: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  class: Pick<ClassSlice, "id" | "name" | "level">;
+  subject: Pick<SubjectSlice, "id" | "name" | "code" | "title">;
+}
+
+/** Timetable keyed by weekday (possibly empty arrays). API: /timetable/teacher/me */
+type TeacherTimetableResponse = Record<DayOfWeek, TeacherTimetableSlot[]>;
 
 type SelectableFolder = Pick<
   RepositoryFolder,
