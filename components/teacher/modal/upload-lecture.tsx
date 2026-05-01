@@ -30,6 +30,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
 import { useClasses } from "@/hooks/use-classes";
 import { useSubjects } from "@/hooks/use-subjects";
+import { apiClient } from "@/lib/api";
 import { lectureContentTypes } from "@/lib/data";
 import { uploadLectureSchema } from "@/lib/schema";
 import type { SelectOption, UploadLectureFormValues } from "@/types";
@@ -45,6 +46,23 @@ interface UploadLectureModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
+
+const submitLecture = async (data: UploadLectureFormValues) => {
+  const payload = {
+    title: data.title,
+    description: data.description,
+    class_id: data.classId,
+    subject_id: data.subjectId,
+    content_type: data.contentType,
+    // file_url: data.fileUrl,
+    external_url: data.externalUrl,
+    text_content: data.textContent,
+    duration_mins: data.durationMinutes,
+    order: data.sortOrder,
+  };
+  const response = await apiClient.post("/lectures", payload);
+  return response.data.data;
+};
 
 export default function UploadLectureModal({
   isOpen,
@@ -72,23 +90,6 @@ export default function UploadLectureModal({
 
   const { handleSubmit, control, reset, formState } = form;
   const contentType = useWatch({ control, name: "contentType" });
-
-  useEffect(() => {
-    if (!isOpen) {
-      reset({
-        title: "",
-        description: "",
-        classId: "",
-        subjectId: "",
-        contentType: lectureContentTypes[0]!.value,
-        fileUrl: "",
-        externalUrl: "",
-        textContent: "",
-        durationMinutes: 45,
-        sortOrder: 1,
-      });
-    }
-  }, [isOpen, reset]);
 
   const onSubmit = (data: UploadLectureFormValues) => {
     // TODO: wire POST when lecture API exists
@@ -221,6 +222,7 @@ export default function UploadLectureModal({
                         value={field.value}
                         onValueChange={field.onChange}
                         disabled={classesLoading}
+                        items={classes}
                       >
                         <SelectTrigger className="h-12! w-full px-3">
                           <SelectValue placeholder="Select class" />

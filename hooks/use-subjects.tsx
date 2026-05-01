@@ -23,6 +23,8 @@ export function useSubjects() {
     retry: 2,
   });
 
+  // console.log("subjectsData", subjectsData);
+
   const subjects: SelectOption[] =
     subjectsData?.map((subject: Subject) => ({
       value: subject.id,
