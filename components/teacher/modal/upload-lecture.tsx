@@ -28,82 +28,180 @@ import {
 } from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
-import { useClasses } from "@/hooks/use-classes";
-import { useSubjects } from "@/hooks/use-subjects";
+import { useTeacherAssignments } from "@/hooks/use-teacher-assignments";
 import { apiClient } from "@/lib/api";
 import { lectureContentTypes } from "@/lib/data";
 import { uploadLectureSchema } from "@/lib/schema";
+import { uploadFileToStorage } from "@/lib/services/file-upload";
 import type { SelectOption, UploadLectureFormValues } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { UploadSimpleIcon } from "@phosphor-icons/react";
-import { useEffect } from "react";
+import { UploadSimpleIcon, XIcon } from "@phosphor-icons/react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
-
-// Bug and improvement: Ensure teacher is assigned to the subject in the class. And then there should be an input that allows the teacher to select a file from their computer. Then upon submitting the form, the file should be uploaded to the server and the file URL should be stored in the database. The file url should be added to the payload when submitting the form. Finally, the external link field should not be missing in the form.
 
 interface UploadLectureModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-const submitLecture = async (data: UploadLectureFormValues) => {
-  const payload = {
-    title: data.title,
-    description: data.description,
-    class_id: data.classId,
-    subject_id: data.subjectId,
-    content_type: data.contentType,
-    // file_url: data.fileUrl,
-    external_url: data.externalUrl,
-    text_content: data.textContent,
-    duration_mins: data.durationMinutes,
-    order: data.sortOrder,
-  };
-  const response = await apiClient.post("/lectures", payload);
-  return response.data.data;
+const FILE_CONTENT_TYPES = [
+  "VIDEO",
+  "AUDIO",
+  "PDF",
+  "SLIDES",
+  "IMAGE",
+] as const;
+
+function isFileContentType(
+  t: string,
+): t is (typeof FILE_CONTENT_TYPES)[number] {
+  return (FILE_CONTENT_TYPES as readonly string[]).includes(t);
+}
+
+function acceptForContentType(contentType: string): string {
+  switch (contentType) {
+    case "VIDEO":
+      return "video/*";
+    case "AUDIO":
+      return "audio/*";
+    case "PDF":
+      return "application/pdf,.pdf";
+    case "SLIDES":
+      return ".ppt,.pptx,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation";
+    case "IMAGE":
+      return "image/*";
+    default:
+      return "";
+  }
+}
+
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+const defaultFormValues: UploadLectureFormValues = {
+  title: "",
+  description: "",
+  classId: "",
+  subjectId: "",
+  contentType: lectureContentTypes[0]!.value,
+  fileUrl: "",
+  externalUrl: "",
+  textContent: "",
+  durationMinutes: 45,
+  sortOrder: 1,
 };
 
 export default function UploadLectureModal({
   isOpen,
   onClose,
 }: UploadLectureModalProps) {
-  const { classes, isLoading: classesLoading } = useClasses();
-  const { subjects, isLoading: subjectsLoading } = useSubjects();
+  const queryClient = useQueryClient();
+  const {
+    classes,
+    getSubjectsForClass,
+    isLoading: assignmentsLoading,
+  } = useTeacherAssignments();
+
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [fileError, setFileError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const form = useForm({
     resolver: zodResolver(uploadLectureSchema),
     mode: "onChange",
-    defaultValues: {
-      title: "",
-      description: "",
-      classId: "",
-      subjectId: "",
-      contentType: lectureContentTypes[0]!.value,
-      fileUrl: "",
-      externalUrl: "",
-      textContent: "",
-      durationMinutes: 45,
-      sortOrder: 1,
+    defaultValues: defaultFormValues,
+  });
+
+  const { handleSubmit, control, reset, setValue } = form;
+  const contentType = useWatch({ control, name: "contentType" });
+  const classId = useWatch({ control, name: "classId" });
+
+  const subjectOptions = useMemo(
+    () => getSubjectsForClass(classId ?? ""),
+    [getSubjectsForClass, classId],
+  );
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const id = requestAnimationFrame(() => {
+      reset(defaultFormValues);
+      setPendingFile(null);
+      setFileError(null);
+    });
+    return () => cancelAnimationFrame(id);
+  }, [isOpen, reset]);
+
+  const { mutateAsync: uploadLecture, isPending } = useMutation({
+    mutationFn: async ({
+      form: data,
+      file,
+    }: {
+      form: UploadLectureFormValues;
+      file: File | null;
+    }) => {
+      let file_url: string | undefined;
+      if (isFileContentType(data.contentType)) {
+        if (!file) {
+          throw new Error("Please select a file to upload.");
+        }
+        const uploaded = await uploadFileToStorage(file);
+        file_url = uploaded.file_url;
+      }
+
+      const payload = {
+        title: data.title,
+        description: data.description,
+        class_id: data.classId,
+        subject_id: data.subjectId,
+        content_type: data.contentType,
+        file_url,
+        external_url: data.externalUrl,
+        text_content: data.textContent,
+        duration_mins: data.durationMinutes,
+        order: data.sortOrder,
+      };
+
+      const response = await apiClient.post("/lectures", payload);
+      return response.data.data;
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["lectures"] });
+      toast.success("Lecture uploaded");
+      reset(defaultFormValues);
+      setPendingFile(null);
+      setFileError(null);
+      onClose();
+    },
+    onError: (err) => {
+      const message =
+        err instanceof Error ? err.message : "Failed to upload lecture";
+      toast.error(message);
     },
   });
 
-  const { handleSubmit, control, reset, formState } = form;
-  const contentType = useWatch({ control, name: "contentType" });
-
   const onSubmit = (data: UploadLectureFormValues) => {
-    // TODO: wire POST when lecture API exists
-    toast.success("Lecture details saved locally — connect upload API.");
-    console.info("upload lecture:", data);
-    reset();
-    onClose();
+    if (isFileContentType(data.contentType) && !pendingFile) {
+      setFileError("Please select a file to upload.");
+      return;
+    }
+    setFileError(null);
+    void uploadLecture({ form: data, file: pendingFile });
   };
 
   const isLinkContent = contentType === "LINK";
   const isTextContent = contentType === "TEXT";
+  const needsFile = !isTextContent && !isLinkContent;
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => !open && !isPending && onClose()}
+    >
       <DialogContent className="flex max-h-[min(90vh,760px)] max-w-[calc(100%-2rem)] flex-col gap-0 overflow-hidden bg-background p-0 sm:max-w-2xl pb-4">
         <DialogHeader className="shrink-0 border-b border-border px-6 py-5 text-left">
           <DialogTitle className="font-assistant text-xl font-bold text-foreground">
@@ -154,7 +252,13 @@ export default function UploadLectureModal({
                       </FieldLabel>
                       <Select
                         value={field.value}
-                        onValueChange={field.onChange}
+                        onValueChange={(v) => {
+                          field.onChange(v);
+                          if (v === "TEXT" || v === "LINK") {
+                            setPendingFile(null);
+                            setFileError(null);
+                          }
+                        }}
                         items={lectureContentTypes.map((opt) => ({
                           value: opt.value,
                           label: opt.label,
@@ -220,8 +324,11 @@ export default function UploadLectureModal({
                       </FieldLabel>
                       <Select
                         value={field.value}
-                        onValueChange={field.onChange}
-                        disabled={classesLoading}
+                        onValueChange={(v) => {
+                          field.onChange(v);
+                          setValue("subjectId", "");
+                        }}
+                        disabled={assignmentsLoading}
                         items={classes}
                       >
                         <SelectTrigger className="h-12! w-full px-3">
@@ -238,6 +345,11 @@ export default function UploadLectureModal({
                           </SelectGroup>
                         </SelectContent>
                       </Select>
+                      {!assignmentsLoading && classes.length === 0 ? (
+                        <FieldDescription>
+                          No classes assigned to you yet.
+                        </FieldDescription>
+                      ) : null}
                       {fieldState.invalid && (
                         <FieldError errors={[fieldState.error]} />
                       )}
@@ -256,15 +368,26 @@ export default function UploadLectureModal({
                       <Select
                         value={field.value}
                         onValueChange={field.onChange}
-                        disabled={subjectsLoading}
+                        disabled={
+                          assignmentsLoading ||
+                          !classId ||
+                          subjectOptions.length === 0
+                        }
+                        items={subjectOptions}
                       >
                         <SelectTrigger className="h-12! w-full px-3">
-                          <SelectValue placeholder="Select subject" />
+                          <SelectValue
+                            placeholder={
+                              classId
+                                ? "Select subject"
+                                : "Select a class first"
+                            }
+                          />
                         </SelectTrigger>
                         <SelectContent alignItemWithTrigger={false}>
                           <SelectGroup>
                             <SelectLabel>Subjects</SelectLabel>
-                            {subjects.map((s: SelectOption) => (
+                            {subjectOptions.map((s: SelectOption) => (
                               <SelectItem key={s.value} value={s.value}>
                                 {s.label}
                               </SelectItem>
@@ -363,7 +486,7 @@ export default function UploadLectureModal({
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid}>
                       <FieldLabel htmlFor="upload-lecture-text">
-                        Lesson text
+                        Lesson text <span className="text-destructive">*</span>
                       </FieldLabel>
                       <FieldDescription>
                         Paste or write the lecture content for students.
@@ -391,7 +514,8 @@ export default function UploadLectureModal({
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid}>
                       <FieldLabel htmlFor="upload-lecture-external-url">
-                        External link
+                        External link{" "}
+                        <span className="text-destructive">*</span>
                       </FieldLabel>
                       <FieldDescription>
                         URL students will open (e.g. Meet, YouTube, or reading
@@ -413,32 +537,70 @@ export default function UploadLectureModal({
                 />
               )}
 
-              {!isTextContent && !isLinkContent && (
-                <Controller
-                  control={control}
-                  name="fileUrl"
-                  render={({ field, fieldState }) => (
-                    <Field data-invalid={fieldState.invalid}>
-                      <FieldLabel htmlFor="upload-lecture-file-url">
-                        File URL
-                      </FieldLabel>
-                      <FieldDescription>
-                        After uploading to storage, paste the file URL here.
-                      </FieldDescription>
-                      <Input
-                        id="upload-lecture-file-url"
-                        type="url"
-                        className="h-12 placeholder:text-sm focus-visible:border-primary-blue focus-visible:ring-2 focus-visible:ring-primary-blue/20"
-                        placeholder="https://…"
-                        autoComplete="off"
-                        {...field}
-                      />
-                      {fieldState.invalid && (
-                        <FieldError errors={[fieldState.error]} />
-                      )}
-                    </Field>
-                  )}
-                />
+              {needsFile && (
+                <Field data-invalid={Boolean(fileError)}>
+                  <FieldLabel htmlFor="upload-lecture-file-input">
+                    Lecture file <span className="text-destructive">*</span>
+                  </FieldLabel>
+                  <FieldDescription>
+                    Choose a file from your device. It will be uploaded when you
+                    save.
+                  </FieldDescription>
+                  <input
+                    id="upload-lecture-file-input"
+                    ref={fileInputRef}
+                    type="file"
+                    className="sr-only"
+                    accept={acceptForContentType(contentType)}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0] ?? null;
+                      setPendingFile(file);
+                      setFileError(null);
+                      e.target.value = "";
+                    }}
+                  />
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="h-11"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={isPending}
+                    >
+                      Choose file
+                    </Button>
+                    {pendingFile ? (
+                      <span className="text-sm text-muted-foreground">
+                        {pendingFile.name} ({formatFileSize(pendingFile.size)})
+                      </span>
+                    ) : (
+                      <span className="text-sm text-muted-foreground">
+                        No file selected
+                      </span>
+                    )}
+                    {pendingFile ? (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="size-9 shrink-0"
+                        aria-label="Remove selected file"
+                        onClick={() => {
+                          setPendingFile(null);
+                          setFileError(null);
+                        }}
+                        disabled={isPending}
+                      >
+                        <XIcon className="size-4" weight="bold" />
+                      </Button>
+                    ) : null}
+                  </div>
+                  {fileError ? (
+                    <p className="text-sm text-destructive" role="alert">
+                      {fileError}
+                    </p>
+                  ) : null}
+                </Field>
               )}
             </FieldGroup>
           </div>
@@ -449,16 +611,17 @@ export default function UploadLectureModal({
               variant="outline"
               onClick={() => onClose()}
               className="h-11"
+              disabled={isPending}
             >
               Cancel
             </Button>
             <Button
               variant="primary"
               type="submit"
-              disabled={formState.isSubmitting}
+              disabled={isPending}
               className="gap-2 h-11"
             >
-              {formState.isSubmitting ? (
+              {isPending ? (
                 <>
                   <Spinner className="size-4" />
                   Saving…

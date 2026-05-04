@@ -288,24 +288,57 @@ export const uploadRepositoryFileFormSchema = z.object({
   change_note: z.string().optional(),
 });
 
-export const uploadLectureSchema = z.object({
-  title: z.string().min(1, { message: "Title is required" }),
-  description: z.string().optional(),
-  classId: z.string().min(1, { message: "Class is required" }),
-  subjectId: z.string().min(1, { message: "Subject is required" }),
-  contentType: z.enum(
-    lectureContentTypes.map((option) => option.value),
-    {
-      message: "Content type is required",
-    },
-  ),
-  fileUrl: z.string().optional(),
-  externalUrl: z.string().optional(),
-  textContent: z.string().optional(),
-  durationMinutes: z.coerce
-    .number()
-    .min(1, { message: "Duration must be at least 1 minute" }),
-  sortOrder: z.coerce
-    .number()
-    .min(1, { message: "Sort order must be at least 1" }),
-});
+export const uploadLectureSchema = z
+  .object({
+    title: z.string().min(1, { message: "Title is required" }),
+    description: z.string().optional(),
+    classId: z.string().min(1, { message: "Class is required" }),
+    subjectId: z.string().min(1, { message: "Subject is required" }),
+    contentType: z.enum(
+      lectureContentTypes.map((option) => option.value),
+      {
+        message: "Content type is required",
+      },
+    ),
+    fileUrl: z.string().optional(),
+    externalUrl: z.string().optional(),
+    textContent: z.string().optional(),
+    durationMinutes: z.coerce
+      .number()
+      .min(1, { message: "Duration must be at least 1 minute" }),
+    sortOrder: z.coerce
+      .number()
+      .min(1, { message: "Sort order must be at least 1" }),
+  })
+  .superRefine((data, ctx) => {
+    if (data.contentType === "LINK") {
+      const url = data.externalUrl?.trim() ?? "";
+      if (!url) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["externalUrl"],
+          message: "External link is required",
+        });
+        return;
+      }
+      const parsed = z.string().url().safeParse(url);
+      if (!parsed.success) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["externalUrl"],
+          message: "Enter a valid URL",
+        });
+      }
+    }
+
+    if (data.contentType === "TEXT") {
+      const text = data.textContent?.trim() ?? "";
+      if (!text) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["textContent"],
+          message: "Lesson text is required",
+        });
+      }
+    }
+  });
