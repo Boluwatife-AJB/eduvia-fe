@@ -96,6 +96,24 @@ const defaultFormValues: UploadLectureFormValues = {
   sortOrder: 1,
 };
 
+type CreateLecturePayload = {
+  title: string;
+  description?: string;
+  class_id: string;
+  subject_id: string;
+  content_type: string;
+  file_url?: string;
+  external_url?: string;
+  text_content?: string;
+  duration_mins: number;
+  order: number;
+};
+
+async function createLecture(payload: CreateLecturePayload) {
+  const response = await apiClient.post("/lectures", payload);
+  return response.data.data;
+}
+
 export default function UploadLectureModal({
   isOpen,
   onClose,
@@ -153,7 +171,7 @@ export default function UploadLectureModal({
         file_url = uploaded.file_url;
       }
 
-      const payload = {
+      const payload: CreateLecturePayload = {
         title: data.title,
         description: data.description,
         class_id: data.classId,
@@ -166,8 +184,7 @@ export default function UploadLectureModal({
         order: data.sortOrder,
       };
 
-      const response = await apiClient.post("/lectures", payload);
-      return response.data.data;
+      return createLecture(payload);
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["lectures"] });

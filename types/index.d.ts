@@ -660,3 +660,32 @@ interface StorageBreakdown {
   used_bytes: string;
   used_mb: number;
 }
+
+interface TeacherLecture {
+  id: string;
+  title: string;
+  description: string;
+  content_type: string;
+  status: string;
+  file_url: string | null;
+  external_url: string | null;
+  text_content: string | null;
+  duration_mins: number | null;
+  file_size: number | null;
+  order: number;
+  published_at: string | null;
+  created_at: string;
+  subject: {
+    id: string;
+    name: string;
+    code: string;
+  };
+  class: {
+    id: string;
+    name: string;
+  };
+  term: {
+    id: string;
+    name: string;
+  };
+}
