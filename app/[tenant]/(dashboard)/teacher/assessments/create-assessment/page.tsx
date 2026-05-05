@@ -4,12 +4,16 @@ import { assessmentTypes, questionTypes } from "@/lib/data";
 import { createAssessmentSchema } from "@/lib/schema";
 import { CreateAssessmentFormValues } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Controller, useFieldArray, useForm } from "react-hook-form";
-
+import { Controller, useFieldArray, useForm, useWatch } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group";
 import {
   Popover,
   PopoverContent,
@@ -25,22 +29,68 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { parseFormDate } from "@/lib/utils";
+import { useUser } from "@/contexts/user-context";
+import { useTeacherAssignments } from "@/hooks/use-teacher-assignments";
+import { useTerm } from "@/hooks/use-term";
+import { apiClient } from "@/lib/api";
+import { localDateTimeToIso8601, parseFormDate } from "@/lib/utils";
 import {
   CalendarIcon,
+  CheckCircleIcon,
   ClockIcon,
   PlusIcon,
   TrashIcon,
+  XCircleIcon,
 } from "@phosphor-icons/react/dist/ssr";
-import { format } from "date-fns";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { AxiosError } from "axios";
+import { differenceInMinutes, format, parse } from "date-fns";
 import Editor from "react-simple-wysiwyg";
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupInput,
-} from "@/components/ui/input-group";
+import { toast } from "sonner";
+
+const submitAssessment = async (data: CreateAssessmentFormValues) => {
+  const payload = {
+    title: data.title,
+    instructions: data.instructions,
+    type: data.type,
+    class_id: data.classId,
+    subject_id: data.subjectId,
+    teacher_id: data.teacherId,
+    term_id: data.termId,
+    start_time: localDateTimeToIso8601(data.startDate, data.startTime),
+    end_time: localDateTimeToIso8601(data.endDate, data.endTime),
+    duration_mins: data.durationMins,
+    pass_mark: data.passMark,
+    is_exam_component: data.isExamComponent,
+    ca_component: data.isExamComponent ? data.caComponent : null,
+    max_attempts: data.maxAttempts,
+    shuffle_questions: data.shuffleQuestions,
+    shuffle_options: data.shuffleOptions,
+    prevent_tab_switch: data.preventTabSwitch,
+    questions: data.questions.map((question) => ({
+      type: question.type,
+      question_text: question.questionText,
+      question_image: question.questionImage,
+      marks: question.marks,
+      options: (question.options ?? []).map((option) => ({
+        id: option.id,
+        text: option.text,
+        is_correct: option.isCorrect,
+      })),
+      correct_answer: question.correctAnswer ?? "",
+      accepted_answers: question.acceptedAnswers ?? [],
+      marking_guide: question.markingGuide || "",
+      max_word_count: question.maxWordCount ?? 0,
+    })),
+  };
+  const response = await apiClient.post("/assessments", payload);
+  return response.data.data;
+};
 
 export default function CreateAssessment() {
+  const queryClient = useQueryClient();
+  const { user } = useUser();
+
   const form = useForm<CreateAssessmentFormValues>({
     resolver: zodResolver(createAssessmentSchema),
     defaultValues: {
@@ -49,16 +99,16 @@ export default function CreateAssessment() {
       type: "TEST",
       classId: "",
       subjectId: "",
-      teacherId: "", // this would typically come from context
+      teacherId: user?.id || "",
       termId: "",
       startDate: format(new Date(), "dd/MM/yyyy"),
       endDate: format(new Date(), "dd/MM/yyyy"),
-      startTime: "",
+      startTime: format(new Date(), "HH:mm"),
       endTime: "",
       durationMins: 60,
       passMark: 50,
       isExamComponent: false,
-      caComponent: "",
+      caComponent: null,
       maxAttempts: 1,
       shuffleQuestions: false,
       shuffleOptions: false,
@@ -75,17 +125,26 @@ export default function CreateAssessment() {
             { id: "D", text: "", isCorrect: false },
           ],
           correctAnswer: "A",
-          acceptedAnswers: [""],
-          maxWordCount: 100,
+          acceptedAnswers: [],
+          maxWordCount: 0,
         },
       ],
     },
   });
 
-  const { control, handleSubmit, watch, setValue } = form;
+  const { control, handleSubmit, getValues, setValue, setError } = form;
+  const { classes, getSubjectsForClass } = useTeacherAssignments();
+  const { terms, isLoading: termsLoading } = useTerm();
+  const selectedClassId = useWatch({ control, name: "classId" });
+  const watchedStartTime = useWatch({ control, name: "startTime" });
+  const watchedEndTime = useWatch({ control, name: "endTime" });
+  const watchedQuestions = useWatch({ control, name: "questions" });
+  const subjectOptions = selectedClassId
+    ? getSubjectsForClass(selectedClassId)
+    : [];
 
   const {
-    fields: questions,
+    fields: questionFields,
     append: appendQuestion,
     remove: removeQuestion,
   } = useFieldArray({
@@ -93,9 +152,48 @@ export default function CreateAssessment() {
     name: "questions",
   });
 
+  const { mutateAsync: createAssessment } = useMutation({
+    mutationFn: submitAssessment,
+    onSuccess: () => {
+      toast.success("Assessment created successfully", {
+        icon: (
+          <CheckCircleIcon className="size-5 text-emerald-500" weight="fill" />
+        ),
+      });
+      queryClient.invalidateQueries({ queryKey: ["assessments"] });
+      // router.push(`/${tenant?.slug}/teacher/assessments`);
+      // reset();
+    },
+    onError: (error: AxiosError) => {
+      toast.error(
+        (error.response?.data as { message: string })?.message ||
+          "Failed to create assessment",
+        {
+          icon: <XCircleIcon className="size-5 text-red-500" weight="fill" />,
+        },
+      );
+    },
+  });
+
   const onSubmit = (data: CreateAssessmentFormValues) => {
+    if (data.classId) {
+      const assignedSubjectsForClass = getSubjectsForClass(data.classId);
+      const isAssignedSubject = assignedSubjectsForClass.some(
+        (subject) => subject.value === data.subjectId,
+      );
+      if (!isAssignedSubject) {
+        setError("subjectId", {
+          type: "manual",
+          message:
+            "You can only create assessments for subjects assigned to you in this class.",
+        });
+        return;
+      }
+    }
+
     console.log("Form data:", data);
     // TODO: Send data to API
+    createAssessment(data);
   };
 
   return (
@@ -119,7 +217,12 @@ export default function CreateAssessment() {
       </div>
 
       <form
-        onSubmit={handleSubmit(onSubmit)}
+        onSubmit={handleSubmit(onSubmit, (error) => {
+          console.log(error);
+          // toast.error(error.message, {
+          //   icon: <XCircleIcon className="size-5 text-red-500" weight="fill" />,
+          // });
+        })}
         className="space-y-12 max-w-5xl mx-auto"
       >
         {/* General Settings */}
@@ -182,6 +285,121 @@ export default function CreateAssessment() {
             />
           </div>
 
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Controller
+              control={control}
+              name="classId"
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel>
+                    Class <span className="text-destructive">*</span>
+                  </FieldLabel>
+                  <Select
+                    value={field.value}
+                    onValueChange={(value) => {
+                      field.onChange(value);
+                      setValue("subjectId", "");
+                    }}
+                    items={classes}
+                  >
+                    <SelectTrigger className="h-11! w-full px-3 shadow-sm">
+                      <SelectValue placeholder="Select class" />
+                    </SelectTrigger>
+                    <SelectContent alignItemWithTrigger={false}>
+                      <SelectGroup>
+                        <SelectLabel>Classes</SelectLabel>
+                        {classes.map((item) => (
+                          <SelectItem key={item.value} value={item.value}>
+                            {item.label}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
+                </Field>
+              )}
+            />
+
+            <Controller
+              control={control}
+              name="subjectId"
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel>
+                    Subject <span className="text-destructive">*</span>
+                  </FieldLabel>
+                  <Select
+                    value={field.value}
+                    onValueChange={field.onChange}
+                    disabled={!selectedClassId || subjectOptions.length === 0}
+                    items={subjectOptions}
+                  >
+                    <SelectTrigger className="h-11! w-full px-3 shadow-sm">
+                      <SelectValue
+                        placeholder={
+                          selectedClassId
+                            ? "Select subject"
+                            : "Select class first"
+                        }
+                      />
+                    </SelectTrigger>
+                    <SelectContent alignItemWithTrigger={false}>
+                      <SelectGroup>
+                        <SelectLabel>Assigned Subjects</SelectLabel>
+                        {subjectOptions.map((item) => (
+                          <SelectItem key={item.value} value={item.value}>
+                            {item.label}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
+                </Field>
+              )}
+            />
+
+            <Controller
+              control={control}
+              name="termId"
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel>
+                    Term <span className="text-destructive">*</span>
+                  </FieldLabel>
+                  <Select
+                    value={field.value}
+                    onValueChange={field.onChange}
+                    disabled={termsLoading || terms.length === 0}
+                    items={terms}
+                  >
+                    <SelectTrigger className="h-11! w-full px-3 shadow-sm">
+                      <SelectValue placeholder="Select term" />
+                    </SelectTrigger>
+                    <SelectContent alignItemWithTrigger={false}>
+                      <SelectGroup>
+                        <SelectLabel>Terms</SelectLabel>
+                        {terms.map((item) => (
+                          <SelectItem key={item.value} value={item.value}>
+                            {item.label}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
+                </Field>
+              )}
+            />
+          </div>
+
           <Controller
             control={control}
             name="instructions"
@@ -204,7 +422,6 @@ export default function CreateAssessment() {
             )}
           />
         </section>
-
         {/* Configuration */}
         <section className="space-y-6">
           <h2 className="text-xl font-semibold border-b pb-2 text-foreground">
@@ -380,7 +597,27 @@ export default function CreateAssessment() {
                     min={1}
                     className="h-11 shadow-sm"
                     {...field}
-                    onChange={(e) => field.onChange(parseInt(e.target.value))}
+                    // Difference between end time and start time should be at least the duration
+                    onChange={(e) => {
+                      const duration = parseInt(e.target.value);
+                      const endTime = parse(
+                        watchedEndTime,
+                        "HH:mm",
+                        new Date(),
+                      );
+                      const startTime = parse(
+                        watchedStartTime,
+                        "HH:mm",
+                        new Date(),
+                      );
+                      const difference = differenceInMinutes(
+                        endTime,
+                        startTime,
+                      );
+                      if (difference < duration) {
+                        field.onChange(duration);
+                      }
+                    }}
                   />
                   {fieldState.invalid && (
                     <FieldError errors={[fieldState.error]} />
@@ -508,8 +745,7 @@ export default function CreateAssessment() {
             />
           </div>
         </section>
-
-        {/* Questions */}
+        ;{/* Questions */}
         <section className="space-y-6">
           <div className="flex items-center justify-between border-b pb-2">
             <h2 className="text-xl font-semibold text-foreground">
@@ -518,8 +754,9 @@ export default function CreateAssessment() {
           </div>
 
           <div className="space-y-8">
-            {questions.map((question, index) => {
-              const currentType = watch(`questions.${index}.type`);
+            {questionFields.map((question, index) => {
+              const currentType = watchedQuestions?.[index]?.type;
+              const questionOptions = watchedQuestions?.[index]?.options ?? [];
 
               return (
                 <div
@@ -535,7 +772,7 @@ export default function CreateAssessment() {
                       variant="destructive"
                       size="icon"
                       onClick={() => {
-                        if (questions.length > 1) {
+                        if (questionFields.length > 1) {
                           removeQuestion(index);
                         }
                       }}
@@ -670,7 +907,7 @@ export default function CreateAssessment() {
                           className="h-8 gap-1.5"
                           onClick={() => {
                             const currentOptions =
-                              watch(`questions.${index}.options`) || [];
+                              getValues(`questions.${index}.options`) || [];
                             const nextId = String.fromCharCode(
                               65 + currentOptions.length,
                             ); // A, B, C...
@@ -685,48 +922,43 @@ export default function CreateAssessment() {
                       </div>
 
                       <div className="grid gap-3">
-                        {watch(`questions.${index}.options`)?.map(
-                          (option, optIdx) => (
-                            <div
-                              key={optIdx}
-                              className="flex items-center gap-3"
+                        {questionOptions?.map((option, optIdx) => (
+                          <div key={optIdx} className="flex items-center gap-3">
+                            <span className="font-semibold text-sm w-6 text-center">
+                              {option.id}
+                            </span>
+                            <Controller
+                              control={control}
+                              name={`questions.${index}.options.${optIdx}.text`}
+                              render={({ field }) => (
+                                <Input
+                                  className="h-11 flex-1 shadow-sm"
+                                  placeholder={`Option ${option.id}`}
+                                  {...field}
+                                />
+                              )}
+                            />
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                              onClick={() => {
+                                const currentOptions = [
+                                  ...(getValues(`questions.${index}.options`) ||
+                                    []),
+                                ];
+                                currentOptions.splice(optIdx, 1);
+                                setValue(
+                                  `questions.${index}.options`,
+                                  currentOptions,
+                                );
+                              }}
                             >
-                              <span className="font-semibold text-sm w-6 text-center">
-                                {option.id}
-                              </span>
-                              <Controller
-                                control={control}
-                                name={`questions.${index}.options.${optIdx}.text`}
-                                render={({ field }) => (
-                                  <Input
-                                    className="h-11 flex-1 shadow-sm"
-                                    placeholder={`Option ${option.id}`}
-                                    {...field}
-                                  />
-                                )}
-                              />
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                                onClick={() => {
-                                  const currentOptions = [
-                                    ...(watch(`questions.${index}.options`) ||
-                                      []),
-                                  ];
-                                  currentOptions.splice(optIdx, 1);
-                                  setValue(
-                                    `questions.${index}.options`,
-                                    currentOptions,
-                                  );
-                                }}
-                              >
-                                <TrashIcon className="size-4" />
-                              </Button>
-                            </div>
-                          ),
-                        )}
+                              <TrashIcon className="size-4" />
+                            </Button>
+                          </div>
+                        ))}
                       </div>
 
                       <div className="pt-4 mt-4 border-t">
@@ -745,13 +977,11 @@ export default function CreateAssessment() {
                                 </SelectTrigger>
                                 <SelectContent alignItemWithTrigger={false}>
                                   <SelectGroup>
-                                    {watch(`questions.${index}.options`)?.map(
-                                      (opt) => (
-                                        <SelectItem key={opt.id} value={opt.id}>
-                                          Option {opt.id}
-                                        </SelectItem>
-                                      ),
-                                    )}
+                                    {questionOptions?.map((opt) => (
+                                      <SelectItem key={opt.id} value={opt.id}>
+                                        Option {opt.id}
+                                      </SelectItem>
+                                    ))}
                                   </SelectGroup>
                                 </SelectContent>
                               </Select>
@@ -911,7 +1141,7 @@ export default function CreateAssessment() {
             </Button>
           </div>
         </section>
-
+        ;
         <div className="pt-6 border-t flex justify-end">
           <Button
             type="submit"

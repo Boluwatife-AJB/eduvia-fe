@@ -1252,3 +1252,26 @@ export const assessmentTypes: SelectOption[] = [
     label: "Presentation",
   },
 ];
+
+export const caComponentTypes: SelectOption[] = [
+  {
+    value: "CA1",
+    label: "CA1",
+  },
+  {
+    value: "CA2",
+    label: "CA2",
+  },
+  {
+    value: "CA3",
+    label: "CA3",
+  },
+  {
+    value: "CA4",
+    label: "CA4",
+  },
+  {
+    value: "CA5",
+    label: "CA5",
+  },
+];

@@ -2,13 +2,13 @@ import { isAfter, isSameDay, isValid, parse } from "date-fns";
 import { z } from "zod";
 import {
   assessmentTypes,
+  caComponentTypes,
   classOfDegreeOptions,
   days,
   genderOptions,
   lectureContentTypes,
   levels,
   nonTeachingStaffRoles,
-  questionTypes,
   relationshipOptions,
   repositoryScopes,
   subjectTypes,
@@ -433,7 +433,10 @@ export const createAssessmentSchema = z.object({
     .min(1, { message: "Duration must be at least 1 minute" }),
   passMark: z.number().min(1, { message: "Pass mark must be at least 1" }),
   isExamComponent: z.boolean(),
-  caComponent: z.string().optional(),
+  caComponent: z
+    .enum(caComponentTypes.map((option) => option.value))
+    .optional()
+    .nullable(),
   maxAttempts: z
     .number()
     .min(1, { message: "Max attempts must be at least 1" }),
@@ -441,28 +444,129 @@ export const createAssessmentSchema = z.object({
   shuffleOptions: z.boolean(),
   preventTabSwitch: z.boolean(),
   questions: z.array(
-    z.object({
-      type: z.enum(questionTypes.map((option) => option.value)),
-      questionText: z.string().min(1, { message: "Question text is required" }),
-      questionImage: z.string().optional(),
-      marks: z.number().min(1, { message: "Marks must be at least 1" }),
-      options: z.array(
-        z.object({
-          id: z.string().min(1, { message: "Option ID is required" }),
-          text: z.string().min(1, { message: "Option text is required" }),
-          isCorrect: z.boolean(),
-        }),
-      ),
-      correctAnswer: z
-        .string()
-        .min(1, { message: "Correct answer is required" }),
-      acceptedAnswers: z
-        .array(z.string())
-        .min(1, { message: "Accepted answers are required" }),
-      markingGuide: z.string().optional(),
-      maxWordCount: z
-        .number()
-        .min(1, { message: "Max word count must be at least 1" }),
-    }),
+    z.discriminatedUnion("type", [
+      // MULTIPLE_CHOICE
+      z.object({
+        type: z.literal("MULTIPLE_CHOICE"),
+        questionText: z
+          .string()
+          .min(1, { message: "Question text is required" }),
+        questionImage: z.string().optional(),
+        marks: z.number().min(1, { message: "Marks must be at least 1" }),
+        options: z.array(
+          z.object({
+            id: z.string().min(1, { message: "Option ID is required" }),
+            text: z.string().min(1, { message: "Option text is required" }),
+            isCorrect: z.boolean(),
+          }),
+        ),
+        correctAnswer: z
+          .string()
+          .min(1, { message: "Correct answer is required" }),
+        acceptedAnswers: z.array(z.string()).optional(),
+        markingGuide: z.string().optional(),
+        maxWordCount: z.number().optional(),
+      }),
+
+      // TRUE_FALSE
+      z.object({
+        type: z.literal("TRUE_FALSE"),
+        questionText: z
+          .string()
+          .min(1, { message: "Question text is required" }),
+        questionImage: z.string().optional(),
+        marks: z.number().min(1, { message: "Marks must be at least 1" }),
+        options: z.array(
+          z.object({
+            id: z.string().min(1, { message: "Option ID is required" }),
+            text: z.string().min(1, { message: "Option text is required" }),
+            isCorrect: z.boolean(),
+          }),
+        ),
+        correctAnswer: z
+          .string()
+          .min(1, { message: "Correct answer is required" }),
+        acceptedAnswers: z.array(z.string()).optional(),
+        markingGuide: z.string().optional(),
+        maxWordCount: z.number().optional(),
+      }),
+
+      // SHORT_ANSWER
+      z.object({
+        type: z.literal("SHORT_ANSWER"),
+        questionText: z
+          .string()
+          .min(1, { message: "Question text is required" }),
+        questionImage: z.string().optional(),
+        marks: z.number().min(1, { message: "Marks must be at least 1" }),
+        // Not used in the UI for this question type, but it may still exist in form state
+        options: z
+          .array(
+            z.object({
+              id: z.string().min(1, { message: "Option ID is required" }),
+              // Accept empty text for non-choice question types
+              text: z.string(),
+              isCorrect: z.boolean(),
+            }),
+          )
+          .optional(),
+        correctAnswer: z.string().optional(),
+        acceptedAnswers: z
+          .array(z.string())
+          .min(1, { message: "Accepted answers are required" }),
+        markingGuide: z.string().optional(),
+        maxWordCount: z.number().optional(),
+      }),
+
+      // FILL_IN_THE_BLANK
+      z.object({
+        type: z.literal("FILL_IN_THE_BLANK"),
+        questionText: z
+          .string()
+          .min(1, { message: "Question text is required" }),
+        questionImage: z.string().optional(),
+        marks: z.number().min(1, { message: "Marks must be at least 1" }),
+        options: z
+          .array(
+            z.object({
+              id: z.string().min(1, { message: "Option ID is required" }),
+              text: z.string(),
+              isCorrect: z.boolean(),
+            }),
+          )
+          .optional(),
+        correctAnswer: z.string().optional(),
+        acceptedAnswers: z
+          .array(z.string())
+          .min(1, { message: "Accepted answers are required" }),
+        markingGuide: z.string().optional(),
+        maxWordCount: z.number().optional(),
+      }),
+
+      // ESSAY
+      z.object({
+        type: z.literal("ESSAY"),
+        questionText: z
+          .string()
+          .min(1, { message: "Question text is required" }),
+        questionImage: z.string().optional(),
+        marks: z.number().min(1, { message: "Marks must be at least 1" }),
+        options: z
+          .array(
+            z.object({
+              id: z.string().min(1, { message: "Option ID is required" }),
+              text: z.string(),
+              isCorrect: z.boolean(),
+            }),
+          )
+          .optional(),
+        correctAnswer: z.string().optional(),
+        acceptedAnswers: z.array(z.string()).optional(),
+        markingGuide: z.string().optional(),
+        maxWordCount: z
+          .number()
+          .min(1, { message: "Max word count must be at least 1" }),
+      }),
+    ]),
   ),
 });

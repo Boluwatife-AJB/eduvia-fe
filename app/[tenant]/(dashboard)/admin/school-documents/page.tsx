@@ -275,3 +275,89 @@ export default function SchoolDocuments() {
 }
 
 // 1605047
+
+/*
+{
+    "title": "Algebra Refreshal",
+    "instructions": "1. Ensure you read the questions before selecting an answer<div>2. No cheating and use of calculator.</div>",
+    "type": "TEST",
+    "class_id": "seed-class-jss1-onyx",
+    "subject_id": "seed-subject-maths",
+    "teacher_id": "63b95da7-dcb2-4988-9c97-5ff3dd4013f5",
+    "term_id": "dfb69966-9f04-490c-8f42-9b1c9c4045f1",
+    "start_time": null,
+    "end_time": null,
+    "duration_mins": 60,
+    "pass_mark": 50,
+    "is_exam_component": false,
+    "ca_component": "",
+    "max_attempts": 1,
+    "shuffle_questions": true,
+    "shuffle_options": true,
+    "prevent_tab_switch": true,
+    "questions": [
+        {
+            "type": "MULTIPLE_CHOICE",
+            "question_text": "<strong data-start=\"152\" data-end=\"171\">Solve for x:</strong><br data-start=\"171\" data-end=\"174\">\n2x + 5 = 13<br data-start=\"185\" data-end=\"188\"><br data-start=\"192\" data-end=\"195\"><br>",
+            "marks": 1,
+            "options": [
+                {
+                    "id": "A",
+                    "text": "2",
+                    "is_correct": true
+                },
+                {
+                    "id": "B",
+                    "text": "3",
+                    "is_correct": false
+                },
+                {
+                    "id": "C",
+                    "text": "4",
+                    "is_correct": false
+                },
+                {
+                    "id": "D",
+                    "text": "6",
+                    "is_correct": false
+                }
+            ],
+            "correct_answer": "C",
+            "accepted_answers": "",
+            "marking_guide": "",
+            "max_word_count": 100
+        },
+        {
+            "type": "MULTIPLE_CHOICE",
+            "question_text": "<strong data-start=\"310\" data-end=\"329\">Solve for y:</strong><br data-start=\"329\" data-end=\"332\">y² − 9 = 0",
+            "marks": 1,
+            "options": [
+                {
+                    "id": "A",
+                    "text": "y = 3 ",
+                    "is_correct": true
+                },
+                {
+                    "id": "B",
+                    "text": "y = −3 ",
+                    "is_correct": false
+                },
+                {
+                    "id": "C",
+                    "text": "y = ±3 ",
+                    "is_correct": false
+                },
+                {
+                    "id": "D",
+                    "text": "y = 9",
+                    "is_correct": false
+                }
+            ],
+            "correct_answer": "C",
+            "accepted_answers": "",
+            "marking_guide": "",
+            "max_word_count": 100
+        }
+    ]
+}
+*/

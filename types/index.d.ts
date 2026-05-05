@@ -702,3 +702,60 @@ interface TeacherLectureDetails extends TeacherLecture {
     progress_percentage: number;
   }>;
 }
+
+interface Assessment {
+  id: string;
+  tenant_id: string;
+  title: string;
+  instructions: string;
+  type: string;
+  status: string;
+  class_id: string;
+  subject_id: string;
+  term_id: string;
+  start_time: string;
+  end_time: string;
+  duration_mins: number;
+  total_marks: number;
+  pass_mark: number;
+  is_exam_component: boolean;
+  ca_component: string | null;
+  max_attempts: number;
+  shuffle_questions: boolean;
+  shuffle_options: boolean;
+  prevent_tab_switch: boolean;
+  prevent_screenshot: boolean;
+  require_camera: boolean;
+  submitted_for_approval: string | null;
+  approved_by: string | null;
+  approved_at: string | null;
+  rejected_by: string | null;
+  rejected_at: string | null;
+  instructions: string;
+  type: string;
+  status: string;
+  class_id: string;
+  subject_id: string;
+  term_id: string;
+  start_time: string;
+  end_time: string;
+  duration_mins: number;
+  total_marks: number;
+  pass_mark: number;
+  submitted_for_approval: string | null;
+  approved_by: string | null;
+  approved_at: string | null;
+  rejected_by: string | null;
+  rejected_at: string | null;
+  rejected_reason: string | null;
+  result_generated_at: string | null;
+  created_at: string;
+  updated_at: string;
+  subject: SubjectSlice;
+  class: ClassSlice;
+  teacher: UserSlice[];
+  _count: {
+    assessment_questions: number;
+    assessment_submissions: number;
+  };
+}
