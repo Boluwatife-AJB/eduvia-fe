@@ -689,3 +689,12 @@ interface TeacherLecture {
     name: string;
   };
 }
+
+interface TeacherLectureDetails extends TeacherLecture {
+  views: Array<{
+    id: string;
+    student_id: string;
+    viewed_at: string;
+    progress_percentage: number;
+  }>;
+}

@@ -342,3 +342,12 @@ export const uploadLectureSchema = z
       }
     }
   });
+
+export const editLectureSchema = z.object({
+  title: z.string().min(1, { message: "Title is required" }),
+  description: z.string().optional(),
+  durationMinutes: z
+    .number()
+    .min(1, { message: "Duration must be at least 1 minute" }),
+  sortOrder: z.number().min(1, { message: "Sort order must be at least 1" }),
+});
