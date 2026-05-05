@@ -54,6 +54,22 @@ const fetchLectures = async (params: ApiParams): Promise<TeacherLecture[]> => {
   return response.data.data;
 };
 
+const toggleLecturePublication = async (id: string, isPublished: boolean) => {
+  const action = isPublished ? "unpublish" : "publish";
+  const response = await apiClient.patch(`/lectures/${id}/${action}`);
+  return response.data.data;
+};
+
+const archiveLecture = async (id: string) => {
+  const response = await apiClient.patch(`/lectures/${id}/archive`);
+  return response.data.data;
+};
+
+const deleteLecture = async (id: string) => {
+  const response = await apiClient.delete(`/lectures/${id}`);
+  return response.data.data;
+};
+
 const CONTENT_TYPES = [
   "VIDEO",
   "AUDIO",
@@ -102,13 +118,14 @@ export default function Lectures() {
   const [isUploadLectureModalOpen, setIsUploadLectureModalOpen] =
     useState(false);
 
-  const [filterClassId, setFilterClassId] = useState<string>("all");
-  const [filterSubjectId, setFilterSubjectId] = useState<string>("all");
-  const [filterContentType, setFilterContentType] = useState<string>("all");
+  const [filterClassId, setFilterClassId] = useState<string | null>(null);
+  const [filterSubjectId, setFilterSubjectId] = useState<string | null>(null);
+  const [filterContentType, setFilterContentType] = useState<string | null>(
+    null,
+  );
 
   const { classes, getSubjectsForClass } = useTeacherAssignments();
-  const subjects =
-    filterClassId !== "all" ? getSubjectsForClass(filterClassId) : [];
+  const subjects = filterClassId ? getSubjectsForClass(filterClassId) : [];
 
   const { data: lectures, isLoading } = useQuery({
     queryKey: [
@@ -129,48 +146,36 @@ export default function Lectures() {
     },
   });
 
-  const publishMutation = useMutation({
-    mutationFn: (id: string) => apiClient.patch(`/lectures/${id}/publish`),
-    onSuccess: () => {
-      toast.success("Lecture published successfully");
+  const { mutateAsync: toggleLecturePublicationMutation } = useMutation({
+    mutationFn: ({ id, isPublished }: { id: string; isPublished: boolean }) =>
+      toggleLecturePublication(id, isPublished),
+    onSuccess: (value) => {
+      toast.success(
+        value.isPublished
+          ? "Lecture published successfully"
+          : "Lecture unpublished successfully",
+      );
       queryClient.invalidateQueries({ queryKey: ["teacher-lectures"] });
     },
-    onError: () => {
-      toast.error("Failed to publish lecture");
-    },
+    onError: () => toast.error("Failed to toggle lecture publication"),
   });
 
-  const unpublishMutation = useMutation({
-    mutationFn: (id: string) => apiClient.patch(`/lectures/${id}/unpublish`),
-    onSuccess: () => {
-      toast.success("Lecture unpublished successfully");
-      queryClient.invalidateQueries({ queryKey: ["teacher-lectures"] });
-    },
-    onError: () => {
-      toast.error("Failed to unpublish lecture");
-    },
-  });
-
-  const archiveMutation = useMutation({
-    mutationFn: (id: string) => apiClient.patch(`/lectures/${id}/archive`),
+  const { mutateAsync: archiveLectureMutation } = useMutation({
+    mutationFn: (id: string) => archiveLecture(id),
     onSuccess: () => {
       toast.success("Lecture archived successfully");
       queryClient.invalidateQueries({ queryKey: ["teacher-lectures"] });
     },
-    onError: () => {
-      toast.error("Failed to archive lecture");
-    },
+    onError: () => toast.error("Failed to archive lecture"),
   });
 
-  const deleteMutation = useMutation({
-    mutationFn: (id: string) => apiClient.delete(`/lectures/${id}`),
+  const { mutateAsync: deleteLectureMutation } = useMutation({
+    mutationFn: (id: string) => deleteLecture(id),
     onSuccess: () => {
       toast.success("Lecture deleted successfully");
       queryClient.invalidateQueries({ queryKey: ["teacher-lectures"] });
     },
-    onError: () => {
-      toast.error("Failed to delete lecture");
-    },
+    onError: () => toast.error("Failed to delete lecture"),
   });
 
   const handleUploadLecture = () => {
@@ -325,26 +330,44 @@ export default function Lectures() {
                     <DropdownMenuContent align="end">
                       {lecture.status === "PUBLISHED" ? (
                         <DropdownMenuItem
-                          onClick={() => unpublishMutation.mutate(lecture.id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleLecturePublicationMutation({
+                              id: lecture.id,
+                              isPublished: false,
+                            });
+                          }}
                         >
                           Unpublish
                         </DropdownMenuItem>
                       ) : (
                         <DropdownMenuItem
-                          onClick={() => publishMutation.mutate(lecture.id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleLecturePublicationMutation({
+                              id: lecture.id,
+                              isPublished: true,
+                            });
+                          }}
                         >
                           Publish
                         </DropdownMenuItem>
                       )}
                       <DropdownMenuItem
-                        onClick={() => archiveMutation.mutate(lecture.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          archiveLectureMutation(lecture.id);
+                        }}
                       >
                         Archive
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
                         className="text-destructive focus:text-destructive"
-                        onClick={() => deleteMutation.mutate(lecture.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteLectureMutation(lecture.id);
+                        }}
                       >
                         Delete
                       </DropdownMenuItem>
@@ -358,15 +381,12 @@ export default function Lectures() {
                   </h3>
                   <p className="text-sm text-muted-foreground mt-1 flex items-center flex-wrap gap-x-2 gap-y-1">
                     <Badge
-                      // variant={
-                      //   lecture.status === "PUBLISHED"
-                      //     ? "default"
-                      //     : "outline"
-                      // }
                       className={cn(
                         lecture.status === "PUBLISHED"
                           ? "bg-green-600/10 text-green-600 focus-visible:ring-green-600/20 dark:bg-green-400/10 dark:text-green-400 dark:focus-visible:ring-green-400/40"
-                          : "bg-yellow-600/10 text-yellow-600 focus-visible:ring-yellow-600/20 dark:bg-yellow-400/10 dark:text-yellow-400 dark:focus-visible:ring-yellow-400/40",
+                          : lecture.status === "ARCHIVED"
+                            ? "bg-gray-600/10 text-gray-600 focus-visible:ring-gray-600/20 dark:bg-gray-400/10 dark:text-gray-400 dark:focus-visible:ring-gray-400/40"
+                            : "bg-yellow-600/10 text-yellow-600 focus-visible:ring-yellow-600/20 dark:bg-yellow-400/10 dark:text-yellow-400 dark:focus-visible:ring-yellow-400/40",
                         "border-none focus-visible:outline-none text-xs py-0.5 px-1.5 capitalize",
                       )}
                     >
