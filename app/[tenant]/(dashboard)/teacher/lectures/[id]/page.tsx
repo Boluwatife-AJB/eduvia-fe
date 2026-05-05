@@ -18,6 +18,7 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Spinner } from "@/components/ui/spinner";
 import { apiClient } from "@/lib/api";
+import { useTenantStore } from "@/lib/stores/tenant.store";
 import { formatBytes, formatFolderDate } from "@/lib/utils";
 import { TeacherLectureDetails } from "@/types";
 import {
@@ -144,11 +145,10 @@ function StatCard({
 }
 
 export default function LectureDetails() {
-  const params = useParams();
   const router = useRouter();
   const queryClient = useQueryClient();
-  const tenant = params.tenant as string;
-  const id = params.id as string;
+  const { tenant } = useTenantStore();
+  const { id } = useParams<{ id: string }>();
 
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -216,7 +216,7 @@ export default function LectureDetails() {
       toast.success("Lecture deleted");
       void queryClient.invalidateQueries({ queryKey: ["teacher-lectures"] });
       setDeleteOpen(false);
-      router.push(`/${tenant}/teacher/lectures`);
+      router.push(`/${tenant?.slug}/teacher/lectures`);
     },
     onError: () => toast.error("Failed to delete lecture"),
   });
@@ -237,7 +237,7 @@ export default function LectureDetails() {
         <Button
           variant="ghost"
           className="gap-2 mb-6"
-          onClick={() => router.push(`/${tenant}/teacher/lectures`)}
+          onClick={() => router.push(`/${tenant?.slug}/teacher/lectures`)}
         >
           <ArrowLeftIcon className="size-4" weight="bold" />
           Back to lectures
@@ -251,7 +251,7 @@ export default function LectureDetails() {
           </p>
           <Button
             variant="primary"
-            onClick={() => router.push(`/${tenant}/teacher/lectures`)}
+            onClick={() => router.push(`/${tenant?.slug}/teacher/lectures`)}
           >
             Return to list
           </Button>
@@ -272,7 +272,7 @@ export default function LectureDetails() {
           <Button
             variant="ghost"
             className="gap-2 -ml-2 h-9 px-2"
-            onClick={() => router.push(`/${tenant}/teacher/lectures`)}
+            onClick={() => router.push(`/${tenant?.slug}/teacher/lectures`)}
           >
             <ArrowLeftIcon className="size-4" weight="bold" />
             Lectures

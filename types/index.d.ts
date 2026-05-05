@@ -14,6 +14,8 @@ import {
   subjectSchema,
   createFolderSchema,
   uploadLectureSchema,
+  editLectureSchema,
+  createAssessmentSchema,
 } from "@/lib/schema";
 import { Icon } from "@phosphor-icons/react";
 import { z } from "zod";
@@ -40,6 +42,8 @@ type UploadRepositoryFileFormValues = z.infer<
   typeof uploadRepositoryFileFormSchema
 >;
 type UploadLectureFormValues = z.infer<typeof uploadLectureSchema>;
+type EditLectureFormValues = z.infer<typeof editLectureSchema>;
+type CreateAssessmentFormValues = z.infer<typeof createAssessmentSchema>;
 
 type Gender = "MALE" | "FEMALE";
 

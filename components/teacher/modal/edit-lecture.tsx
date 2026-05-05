@@ -20,16 +20,13 @@ import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
 import { apiClient } from "@/lib/api";
 import { editLectureSchema } from "@/lib/schema";
-import type { TeacherLecture } from "@/types";
+import type { EditLectureFormValues, TeacherLecture } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FloppyDiskIcon } from "@phosphor-icons/react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { z } from "zod";
-
-type EditLectureFormValues = z.infer<typeof editLectureSchema>;
 
 interface EditLectureModalProps {
   open: boolean;
@@ -44,12 +41,13 @@ async function updateLecture(
     description?: string;
     duration_mins: number;
     order: number;
+    text_content?: string;
+    external_url?: string;
   },
 ) {
-  const response = await apiClient.patch(`/lectures/${id}`, payload);
+  const response = await apiClient.put(`/lectures/${id}`, payload);
   return response.data.data;
 }
-
 export default function EditLectureModal({
   open,
   onClose,
@@ -64,6 +62,8 @@ export default function EditLectureModal({
       title: lecture.title,
       description: lecture.description ?? "",
       durationMinutes: lecture.duration_mins ?? 45,
+      textContent: lecture.text_content ?? "",
+      externalUrl: lecture.external_url ?? "",
       sortOrder: lecture.order,
     },
   });
@@ -76,6 +76,8 @@ export default function EditLectureModal({
       title: lecture.title,
       description: lecture.description ?? "",
       durationMinutes: lecture.duration_mins ?? 45,
+      textContent: lecture.text_content ?? "",
+      externalUrl: lecture.external_url ?? "",
       sortOrder: lecture.order,
     });
   }, [open, lecture, reset]);
@@ -86,14 +88,16 @@ export default function EditLectureModal({
         title: data.title.trim(),
         description: data.description?.trim() || undefined,
         duration_mins: data.durationMinutes,
+        text_content: data.textContent ?? undefined,
+        external_url: data.externalUrl ?? undefined,
         order: data.sortOrder,
       }),
     onSuccess: () => {
-      void queryClient.invalidateQueries({
+      queryClient.invalidateQueries({
         queryKey: ["lecture-details", lecture.id],
       });
-      void queryClient.invalidateQueries({ queryKey: ["teacher-lectures"] });
-      toast.success("Lecture updated");
+      queryClient.invalidateQueries({ queryKey: ["teacher-lectures"] });
+      toast.success("Lecture updated successfully");
       onClose();
     },
     onError: () => {
@@ -106,7 +110,7 @@ export default function EditLectureModal({
       open={open}
       onOpenChange={(next) => !next && !isPending && onClose()}
     >
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-xl">
         <DialogHeader>
           <DialogTitle className="font-assistant text-xl font-bold">
             Edit lecture
@@ -119,7 +123,7 @@ export default function EditLectureModal({
 
         <form
           onSubmit={handleSubmit((data) => void saveLecture(data))}
-          className="space-y-4"
+          className="space-y-4 h-[70vh] custom-scrollbar overflow-y-auto px-1 overflow-x-hidden"
         >
           <FieldGroup className="gap-4">
             <Controller
@@ -132,7 +136,7 @@ export default function EditLectureModal({
                   </FieldLabel>
                   <Input
                     id="edit-lecture-title"
-                    className="h-11"
+                    className="h-11 placeholder:text-xs md:placeholder:text-sm focus-visible:ring-2 focus-visible:ring-primary-blue/20 focus-visible:border-primary-blue placeholder:font-semibold"
                     autoComplete="off"
                     {...field}
                   />
@@ -154,7 +158,52 @@ export default function EditLectureModal({
                   <Textarea
                     id="edit-lecture-description"
                     rows={3}
-                    className="min-h-20 resize-y"
+                    className="min-h-20 resize-none placeholder:text-xs md:placeholder:text-sm focus-visible:ring-2 focus-visible:ring-primary-blue/20 focus-visible:border-primary-blue placeholder:font-semibold"
+                    {...field}
+                  />
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
+                </Field>
+              )}
+            />
+
+            {/* TODO: Change this to a markdown editor */}
+            <Controller
+              control={control}
+              name="textContent"
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor="edit-lecture-text">
+                    Lesson text
+                  </FieldLabel>
+                  <Textarea
+                    id="edit-lecture-text"
+                    rows={8}
+                    className="min-h-48 resize-y placeholder:text-xs md:placeholder:text-sm focus-visible:ring-2 focus-visible:ring-primary-blue/20 focus-visible:border-primary-blue placeholder:font-semibold"
+                    {...field}
+                  />
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
+                </Field>
+              )}
+            />
+
+            <Controller
+              control={control}
+              name="externalUrl"
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor="edit-lecture-external-url">
+                    External URL
+                  </FieldLabel>
+
+                  <Input
+                    id="edit-lecture-external-url"
+                    type="url"
+                    placeholder="https://"
+                    className="h-11 placeholder:text-xs md:placeholder:text-sm focus-visible:ring-2 focus-visible:ring-primary-blue/20 focus-visible:border-primary-blue placeholder:font-semibold"
                     {...field}
                   />
                   {fieldState.invalid && (
@@ -178,7 +227,7 @@ export default function EditLectureModal({
                       id="edit-lecture-duration"
                       type="number"
                       min={1}
-                      className="h-11"
+                      className="h-11 placeholder:text-xs md:placeholder:text-sm focus-visible:ring-2 focus-visible:ring-primary-blue/20 focus-visible:border-primary-blue placeholder:font-semibold"
                       value={
                         typeof field.value === "number" &&
                         Number.isFinite(field.value)
@@ -212,7 +261,7 @@ export default function EditLectureModal({
                       id="edit-lecture-order"
                       type="number"
                       min={1}
-                      className="h-11"
+                      className="h-11 placeholder:text-xs md:placeholder:text-sm focus-visible:ring-2 focus-visible:ring-primary-blue/20 focus-visible:border-primary-blue placeholder:font-semibold"
                       value={
                         typeof field.value === "number" &&
                         Number.isFinite(field.value)
@@ -236,12 +285,13 @@ export default function EditLectureModal({
             </div>
           </FieldGroup>
 
-          <DialogFooter className="gap-2 sm:gap-0">
+          <DialogFooter className="gap-2 sm:gap-4">
             <Button
               type="button"
               variant="outline"
               onClick={() => onClose()}
               disabled={isPending}
+              className="h-11 px-6"
             >
               Cancel
             </Button>
@@ -249,7 +299,7 @@ export default function EditLectureModal({
               type="submit"
               variant="primary"
               disabled={isPending}
-              className="gap-2"
+              className="gap-2 h-11"
             >
               {isPending ? (
                 <>

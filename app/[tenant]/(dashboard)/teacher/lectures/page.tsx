@@ -19,10 +19,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Spinner } from "@/components/ui/spinner";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useTeacherAssignments } from "@/hooks/use-teacher-assignments";
 import { apiClient } from "@/lib/api";
 import { folderCardPalette } from "@/lib/data";
+import { useTenantStore } from "@/lib/stores/tenant.store";
 import { cn, formatFolderDate } from "@/lib/utils";
 import { TeacherLecture } from "@/types";
 import {
@@ -37,7 +38,7 @@ import {
   PlusIcon,
 } from "@phosphor-icons/react/dist/ssr";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useParams, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -109,11 +110,37 @@ const getContentTypeIcon = (type: string) => {
   }
 };
 
+function LectureCardSkeleton() {
+  return (
+    <Card className="p-4 flex flex-col gap-4 border border-border/50">
+      <div className="flex justify-between items-start">
+        <Skeleton className="h-12 w-12 rounded-xl" />
+        <Skeleton className="h-8 w-8 rounded-md" />
+      </div>
+
+      <div className="space-y-2">
+        <Skeleton className="h-6 w-3/4" />
+        <Skeleton className="h-4 w-full" />
+      </div>
+
+      <div className="flex items-center gap-2">
+        <Skeleton className="h-5 w-20 rounded-full" />
+        <Skeleton className="h-1 w-1 rounded-full" />
+        <Skeleton className="h-4 w-28" />
+      </div>
+
+      <div className="flex items-center gap-2 mt-auto pt-4 border-t border-border/50">
+        <Skeleton className="size-6 rounded-full" />
+        <Skeleton className="h-4 w-32" />
+      </div>
+    </Card>
+  );
+}
+
 export default function Lectures() {
-  const params = useParams();
   const router = useRouter();
   const queryClient = useQueryClient();
-  const tenant = params.tenant as string;
+  const { tenant } = useTenantStore();
 
   const [isUploadLectureModalOpen, setIsUploadLectureModalOpen] =
     useState(false);
@@ -183,7 +210,7 @@ export default function Lectures() {
   };
 
   const handleCardClick = (id: string) => {
-    router.push(`/${tenant}/teacher/lectures/${id}`);
+    router.push(`/${tenant?.slug}/teacher/lectures/${id}`);
   };
 
   return (
@@ -290,8 +317,10 @@ export default function Lectures() {
       </div>
 
       {isLoading ? (
-        <div className="flex items-center justify-center h-64">
-          <Spinner className="text-primary w-8 h-8" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {Array.from({ length: 6 }).map((_, index) => (
+            <LectureCardSkeleton key={index} />
+          ))}
         </div>
       ) : lectures && lectures.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

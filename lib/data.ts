@@ -1168,20 +1168,7 @@ export const MIME_ICON_MAP: Record<string, React.ElementType> = {
 
 // export { FileIcon as FallbackFileIcon };
 
-// export const MIME_ICON_MAP: Record<string, React.ElementType> = {
-//   "application/pdf": FilePdfIcon,
-//   "application/msword": FileDocIcon,
-//   "application/vnd.openxmlformats-officedocument.wordprocessingml.document": FileDocIcon,
-//   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": FileXlsIcon,
-//   "image/jpeg": ImageIcon,
-//   "image/png": ImagesIcon,
-//   "audio/mpeg": MusicNoteIcon,
-//   "audio/mp3": MusicNoteIcon,
-//   "video/mp4": VideoIcon,
-//   "video/mkv": VideoIcon,
-// };
-
-export const lectureContentTypes = [
+export const lectureContentTypes: SelectOption[] = [
   {
     value: "VIDEO",
     label: "Video",
@@ -1209,5 +1196,59 @@ export const lectureContentTypes = [
   {
     value: "LINK",
     label: "Link",
+  },
+];
+
+export const questionTypes: SelectOption[] = [
+  {
+    value: "MULTIPLE_CHOICE",
+    label: "Multiple Choice",
+  },
+  {
+    value: "TRUE_FALSE",
+    label: "True/False",
+  },
+  {
+    value: "FILL_IN_THE_BLANK",
+    label: "Fill in the Blank",
+  },
+  {
+    value: "ESSAY",
+    label: "Essay",
+  },
+  {
+    value: "SHORT_ANSWER",
+    label: "Short Answer",
+  },
+];
+
+export const assessmentTypes: SelectOption[] = [
+  {
+    value: "TEST",
+    label: "Test",
+  },
+  {
+    value: "EXAM",
+    label: "Exam",
+  },
+  {
+    value: "ASSIGNMENT",
+    label: "Assignment",
+  },
+  {
+    value: "POP_QUIZ",
+    label: "Pop Quiz",
+  },
+  {
+    value: "CLASSWORK",
+    label: "Classwork",
+  },
+  {
+    value: "PROJECT",
+    label: "Project",
+  },
+  {
+    value: "PRESENTATION",
+    label: "Presentation",
   },
 ];

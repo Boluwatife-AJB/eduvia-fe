@@ -1,12 +1,14 @@
 import { isAfter, isSameDay, isValid, parse } from "date-fns";
 import { z } from "zod";
 import {
+  assessmentTypes,
   classOfDegreeOptions,
   days,
   genderOptions,
   lectureContentTypes,
   levels,
   nonTeachingStaffRoles,
+  questionTypes,
   relationshipOptions,
   repositoryScopes,
   subjectTypes,
@@ -346,8 +348,121 @@ export const uploadLectureSchema = z
 export const editLectureSchema = z.object({
   title: z.string().min(1, { message: "Title is required" }),
   description: z.string().optional(),
+  textContent: z.string().optional(),
+  externalUrl: z.string().optional(),
   durationMinutes: z
     .number()
     .min(1, { message: "Duration must be at least 1 minute" }),
   sortOrder: z.number().min(1, { message: "Sort order must be at least 1" }),
+});
+
+/*
+{
+  "title": "First Term Mathematics Examination",
+  "instructions": "Answer all questions. Time allowed: 2 hours.",
+  "type": "TEST",
+  "class_id": "string",
+  "subject_id": "string",
+  "teacher_id": "string",
+  "termId": "string",
+  "start_time": "2025-06-10T09:00:00.000Z",
+  "end_time": "2025-06-10T11:00:00.000Z",
+  "duration_mins": 120,
+  "pass_mark": 60,
+  "is_exam_component": false,
+  "ca_component": "CA1",
+  "max_attempts": 1,
+  "shuffle_questions": false,
+  "shuffle_options": false,
+  "prevent_tab_switch": false,
+  "questions": [
+    {
+      "type": "MULTIPLE_CHOICE",
+      "question_text": "What is the capital of Nigeria?",
+      "question_image": "string",
+      "marks": 10,
+      "options": [
+        {
+          "id": "a",
+          "text": "Abuja",
+          "is_correct": true
+        },
+        {
+          "id": "b",
+          "text": "Lagos",
+          "is_correct": false
+        },
+        {
+          "id": "c",
+          "text": "Kano",
+          "is_correct": false
+        },
+        {
+          "id": "d",
+          "text": "Port Harcourt",
+          "is_correct": false
+        }
+      ],
+      "correct_answer": "Abuja",
+      "accepted_answers": [
+        "Abuja",
+        "abuja",
+        "aBuja"
+      ],
+      "marking_guide": "string",
+      "max_word_count": 500
+    }
+  ]
+}
+*/
+
+export const createAssessmentSchema = z.object({
+  title: z.string().min(1, { message: "Title is required" }),
+  instructions: z.string().min(1, { message: "Instructions are required" }),
+  type: z.enum(assessmentTypes.map((option) => option.value)),
+  classId: z.string().min(1, { message: "Class is required" }),
+  subjectId: z.string().min(1, { message: "Subject is required" }),
+  teacherId: z.string().min(1, { message: "Teacher is required" }),
+  termId: z.string().min(1, { message: "Term is required" }),
+  startDate: z.string().min(1, { message: "Start date is required" }),
+  endDate: z.string().min(1, { message: "End date is required" }),
+  startTime: z.string().min(1, { message: "Start time is required" }),
+  endTime: z.string().min(1, { message: "End time is required" }),
+  durationMins: z
+    .number()
+    .min(1, { message: "Duration must be at least 1 minute" }),
+  passMark: z.number().min(1, { message: "Pass mark must be at least 1" }),
+  isExamComponent: z.boolean(),
+  caComponent: z.string().optional(),
+  maxAttempts: z
+    .number()
+    .min(1, { message: "Max attempts must be at least 1" }),
+  shuffleQuestions: z.boolean(),
+  shuffleOptions: z.boolean(),
+  preventTabSwitch: z.boolean(),
+  questions: z.array(
+    z.object({
+      type: z.enum(questionTypes.map((option) => option.value)),
+      questionText: z.string().min(1, { message: "Question text is required" }),
+      questionImage: z.string().optional(),
+      marks: z.number().min(1, { message: "Marks must be at least 1" }),
+      options: z.array(
+        z.object({
+          id: z.string().min(1, { message: "Option ID is required" }),
+          text: z.string().min(1, { message: "Option text is required" }),
+          isCorrect: z.boolean(),
+        }),
+      ),
+      correctAnswer: z
+        .string()
+        .min(1, { message: "Correct answer is required" }),
+      acceptedAnswers: z
+        .array(z.string())
+        .min(1, { message: "Accepted answers are required" }),
+      markingGuide: z.string().optional(),
+      maxWordCount: z
+        .number()
+        .min(1, { message: "Max word count must be at least 1" }),
+    }),
+  ),
 });
