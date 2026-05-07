@@ -70,10 +70,10 @@ const toggleAssessmentPublication = async (
   return response.data.data;
 };
 
-const archiveAssessment = async (id: string) => {
-  const response = await apiClient.patch(`/assessments/${id}/archive`);
-  return response.data.data;
-};
+// const archiveAssessment = async (id: string) => {
+//   const response = await apiClient.patch(`/assessments/${id}/archive`);
+//   return response.data.data;
+// };
 
 const deleteAssessment = async (id: string) => {
   const response = await apiClient.delete(`/assessments/${id}`);
@@ -159,14 +159,14 @@ export default function Assessments() {
     onError: () => toast.error("Failed to toggle assessment publication"),
   });
 
-  const { mutateAsync: archiveMutation } = useMutation({
-    mutationFn: (id: string) => archiveAssessment(id),
-    onSuccess: () => {
-      toast.success("Assessment archived successfully");
-      queryClient.invalidateQueries({ queryKey: ["assessments"] });
-    },
-    onError: () => toast.error("Failed to archive assessment"),
-  });
+  // const { mutateAsync: archiveMutation } = useMutation({
+  //   mutationFn: (id: string) => archiveAssessment(id),
+  //   onSuccess: () => {
+  //     toast.success("Assessment archived successfully");
+  //     queryClient.invalidateQueries({ queryKey: ["assessments"] });
+  //   },
+  //   onError: () => toast.error("Failed to archive assessment"),
+  // });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteAssessment(id),
@@ -362,14 +362,14 @@ export default function Assessments() {
                           Publish
                         </DropdownMenuItem>
                       )}
-                      <DropdownMenuItem
+                      {/* <DropdownMenuItem
                         onClick={(e) => {
                           e.stopPropagation();
                           archiveMutation(assessment.id);
                         }}
                       >
                         Archive
-                      </DropdownMenuItem>
+                      </DropdownMenuItem> */}
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
                         className="text-destructive focus:text-destructive"
@@ -410,7 +410,7 @@ export default function Assessments() {
                     </Badge>
                     <span className="w-1 h-1 rounded-full bg-border shrink-0" />
                     <span className="line-clamp-1 max-w-[40%] text-xs font-medium bg-muted px-1.5 py-0.5 rounded-sm">
-                      {assessment.type}
+                      {assessment.type.replace(/_/g, " ")}
                     </span>
                     <span className="w-1 h-1 rounded-full bg-border shrink-0" />
                     <span className="line-clamp-1 max-w-[40%]">
