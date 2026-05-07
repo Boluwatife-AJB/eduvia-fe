@@ -759,3 +759,63 @@ interface Assessment {
     assessment_submissions: number;
   };
 }
+
+interface OptionSlice {
+  id: string;
+  text: string;
+  is_correct: boolean;
+}
+
+interface AssessmentQuestion {
+  id: string;
+  assessment_id: string;
+  tenant_id: string;
+  type: string;
+  question_text: string;
+  question_image: string | null;
+  marks: number;
+  order: number;
+  options: OptionSlice[];
+  correct_answer: string;
+  accepted_answers: string[];
+  marking_guide: string;
+  max_word_count: number;
+  is_auto_gradable: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+interface AssessmentDetails {
+  id: string;
+  tenant_id: string;
+  title: string;
+  instructions: string;
+  type: string;
+  status: string;
+  class_id: string;
+  subject_id: string;
+  teacher_id: UserSlice[];
+  term_id: string;
+  start_time: string;
+  end_time: string;
+  duration_mins: number;
+  total_marks: number;
+  pass_mark: number;
+  is_exam_component: boolean;
+  ca_component: string | null;
+  max_attempts: number;
+  shuffle_questions: boolean;
+  rejected_by: string | null;
+  rejected_reason: string | null;
+  result_generated_at: string | null;
+  created_at: string;
+  updated_at: string;
+  assessmentQuestions: AssessmentQuestion[];
+  subject: SubjectSlice;
+  class: ClassSlice;
+  term: AcademicTerm;
+  _count: {
+    assessment_submissions: number;
+  };
+  teacher: UserSlice[];
+}

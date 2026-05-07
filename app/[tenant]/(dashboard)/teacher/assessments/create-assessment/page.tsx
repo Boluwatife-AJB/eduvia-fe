@@ -2,13 +2,20 @@
 
 import { assessmentTypes, questionTypes } from "@/lib/data";
 import { createAssessmentSchema } from "@/lib/schema";
-import { CreateAssessmentFormValues } from "@/types";
+import { CreateAssessmentFormValues, SelectOption } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Controller, useFieldArray, useForm, useWatch } from "react-hook-form";
+import {
+  Controller,
+  useFieldArray,
+  useForm,
+  useWatch,
+  type Path,
+} from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   InputGroup,
   InputGroupAddon,
@@ -47,6 +54,23 @@ import { AxiosError } from "axios";
 import { differenceInMinutes, format, parse } from "date-fns";
 import Editor from "react-simple-wysiwyg";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
+import { useTenantStore } from "@/lib/stores/tenant.store";
+
+/** Keeps spaces and blank lines while editing (one array entry per line). */
+function acceptedAnswersTextToLines(raw: string): string[] {
+  return raw.split(/\r?\n/);
+}
+
+function acceptedAnswersLinesToText(values: string[] | undefined): string {
+  if (!Array.isArray(values) || values.length === 0) return "";
+  return values.join("\n");
+}
+
+/** Trim and drop empty lines for API / validation only. */
+function normalizeAcceptedAnswersForApi(lines: string[] | undefined): string[] {
+  return (lines ?? []).map((s) => s.trim()).filter((s) => s.length > 0);
+}
 
 const submitAssessment = async (data: CreateAssessmentFormValues) => {
   const payload = {
@@ -78,7 +102,11 @@ const submitAssessment = async (data: CreateAssessmentFormValues) => {
         is_correct: option.isCorrect,
       })),
       correct_answer: question.correctAnswer ?? "",
-      accepted_answers: question.acceptedAnswers ?? [],
+      accepted_answers:
+        question.type === "SHORT_ANSWER" ||
+        question.type === "FILL_IN_THE_BLANK"
+          ? normalizeAcceptedAnswersForApi(question.acceptedAnswers)
+          : (question.acceptedAnswers ?? []),
       marking_guide: question.markingGuide || "",
       max_word_count: question.maxWordCount ?? 0,
     })),
@@ -90,6 +118,8 @@ const submitAssessment = async (data: CreateAssessmentFormValues) => {
 export default function CreateAssessment() {
   const queryClient = useQueryClient();
   const { user } = useUser();
+  const router = useRouter();
+  const { tenant } = useTenantStore();
 
   const form = useForm<CreateAssessmentFormValues>({
     resolver: zodResolver(createAssessmentSchema),
@@ -132,7 +162,7 @@ export default function CreateAssessment() {
     },
   });
 
-  const { control, handleSubmit, getValues, setValue, setError } = form;
+  const { control, handleSubmit, getValues, setValue, setError, reset } = form;
   const { classes, getSubjectsForClass } = useTeacherAssignments();
   const { terms, isLoading: termsLoading } = useTerm();
   const selectedClassId = useWatch({ control, name: "classId" });
@@ -161,8 +191,8 @@ export default function CreateAssessment() {
         ),
       });
       queryClient.invalidateQueries({ queryKey: ["assessments"] });
-      // router.push(`/${tenant?.slug}/teacher/assessments`);
-      // reset();
+      router.push(`/${tenant?.slug}/teacher/assessments`);
+      reset();
     },
     onError: (error: AxiosError) => {
       toast.error(
@@ -384,7 +414,7 @@ export default function CreateAssessment() {
                     <SelectContent alignItemWithTrigger={false}>
                       <SelectGroup>
                         <SelectLabel>Terms</SelectLabel>
-                        {terms.map((item) => (
+                        {terms.map((item: SelectOption) => (
                           <SelectItem key={item.value} value={item.value}>
                             {item.label}
                           </SelectItem>
@@ -745,7 +775,6 @@ export default function CreateAssessment() {
             />
           </div>
         </section>
-        ;{/* Questions */}
         <section className="space-y-6">
           <div className="flex items-center justify-between border-b pb-2">
             <h2 className="text-xl font-semibold text-foreground">
@@ -797,9 +826,20 @@ export default function CreateAssessment() {
                             items={questionTypes}
                             onValueChange={(val) => {
                               field.onChange(val);
-                              // Reset options based on type
+                              const q = (
+                                name: keyof Pick<
+                                  CreateAssessmentFormValues["questions"][number],
+                                  | "options"
+                                  | "correctAnswer"
+                                  | "acceptedAnswers"
+                                  | "maxWordCount"
+                                  | "markingGuide"
+                                >,
+                              ) =>
+                                `questions.${index}.${String(name)}` as Path<CreateAssessmentFormValues>;
+
                               if (val === "TRUE_FALSE") {
-                                setValue(`questions.${index}.options`, [
+                                setValue(q("options"), [
                                   { id: "true", text: "True", isCorrect: true },
                                   {
                                     id: "false",
@@ -807,19 +847,34 @@ export default function CreateAssessment() {
                                     isCorrect: false,
                                   },
                                 ]);
-                                setValue(
-                                  `questions.${index}.correctAnswer`,
-                                  "true",
-                                );
+                                setValue(q("correctAnswer"), "true");
+                                setValue(q("acceptedAnswers"), []);
+                                setValue(q("maxWordCount"), 0);
+                                setValue(q("markingGuide"), "");
                               } else if (val === "MULTIPLE_CHOICE") {
-                                setValue(`questions.${index}.options`, [
+                                setValue(q("options"), [
                                   { id: "A", text: "", isCorrect: true },
                                   { id: "B", text: "", isCorrect: false },
                                 ]);
-                                setValue(
-                                  `questions.${index}.correctAnswer`,
-                                  "A",
-                                );
+                                setValue(q("correctAnswer"), "A");
+                                setValue(q("acceptedAnswers"), []);
+                                setValue(q("maxWordCount"), 0);
+                                setValue(q("markingGuide"), "");
+                              } else if (
+                                val === "SHORT_ANSWER" ||
+                                val === "FILL_IN_THE_BLANK"
+                              ) {
+                                setValue(q("options"), []);
+                                setValue(q("correctAnswer"), "");
+                                setValue(q("acceptedAnswers"), []);
+                                setValue(q("maxWordCount"), 100);
+                                setValue(q("markingGuide"), "");
+                              } else if (val === "ESSAY") {
+                                setValue(q("options"), []);
+                                setValue(q("correctAnswer"), "");
+                                setValue(q("acceptedAnswers"), []);
+                                setValue(q("maxWordCount"), 500);
+                                setValue(q("markingGuide"), "");
                               }
                             }}
                           >
@@ -1037,22 +1092,24 @@ export default function CreateAssessment() {
                         render={({ field, fieldState }) => (
                           <Field>
                             <FieldLabel>
-                              Accepted Answers (comma separated)
+                              Accepted answers (one per line)
                             </FieldLabel>
-                            <Input
-                              className="h-11 shadow-sm"
-                              placeholder="e.g. Abuja, abuja, ABUJA"
-                              value={
-                                Array.isArray(field.value)
-                                  ? field.value.join(", ")
-                                  : ""
+                            <p className="text-xs text-muted-foreground -mt-1 mb-1">
+                              Each line is one acceptable answer (use Enter for
+                              another variant). Spaces are allowed. Extra spaces
+                              and empty lines are cleaned up when you save.
+                            </p>
+                            <Textarea
+                              className="min-h-[100px] shadow-sm"
+                              placeholder={
+                                currentType === "FILL_IN_THE_BLANK"
+                                  ? "e.g. photosynthesis"
+                                  : "e.g. x = 5"
                               }
+                              value={acceptedAnswersLinesToText(field.value)}
                               onChange={(e) =>
                                 field.onChange(
-                                  e.target.value
-                                    .split(",")
-                                    .map((s) => s.trim())
-                                    .filter(Boolean),
+                                  acceptedAnswersTextToLines(e.target.value),
                                 )
                               }
                             />
@@ -1132,8 +1189,8 @@ export default function CreateAssessment() {
                     { id: "D", text: "", isCorrect: false },
                   ],
                   correctAnswer: "A",
-                  acceptedAnswers: [""],
-                  maxWordCount: 100,
+                  acceptedAnswers: [],
+                  maxWordCount: 0,
                 })
               }
             >
@@ -1141,7 +1198,6 @@ export default function CreateAssessment() {
             </Button>
           </div>
         </section>
-        ;
         <div className="pt-6 border-t flex justify-end">
           <Button
             type="submit"

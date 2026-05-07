@@ -513,7 +513,10 @@ export const createAssessmentSchema = z.object({
         correctAnswer: z.string().optional(),
         acceptedAnswers: z
           .array(z.string())
-          .min(1, { message: "Accepted answers are required" }),
+          .min(1, { message: "Accepted answers are required" })
+          .refine((arr) => arr.some((s) => s.trim().length > 0), {
+            message: "Enter at least one accepted answer",
+          }),
         markingGuide: z.string().optional(),
         maxWordCount: z.number().optional(),
       }),
@@ -538,7 +541,10 @@ export const createAssessmentSchema = z.object({
         correctAnswer: z.string().optional(),
         acceptedAnswers: z
           .array(z.string())
-          .min(1, { message: "Accepted answers are required" }),
+          .min(1, { message: "Accepted answers are required" })
+          .refine((arr) => arr.some((s) => s.trim().length > 0), {
+            message: "Enter at least one accepted answer",
+          }),
         markingGuide: z.string().optional(),
         maxWordCount: z.number().optional(),
       }),

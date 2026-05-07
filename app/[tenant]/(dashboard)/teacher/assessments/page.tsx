@@ -1,7 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogMedia,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -20,11 +29,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Spinner } from "@/components/ui/spinner";
 import { useTeacherAssignments } from "@/hooks/use-teacher-assignments";
 import { apiClient } from "@/lib/api";
 import { folderCardPalette } from "@/lib/data";
 import { useTenantStore } from "@/lib/stores/tenant.store";
-import { cn, formatFolderDate } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { Assessment } from "@/types";
 import {
   ClipboardTextIcon,
@@ -32,7 +42,7 @@ import {
   DotsThreeIcon,
   FileTextIcon,
   PlusIcon,
-  QuestionIcon,
+  TrashSimpleIcon,
 } from "@phosphor-icons/react/dist/ssr";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
@@ -113,6 +123,10 @@ export default function Assessments() {
   const [filterClassId, setFilterClassId] = useState<string | null>(null);
   const [filterSubjectId, setFilterSubjectId] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState<string | null>(null);
+  const [assessmentToDelete, setAssessmentToDelete] = useState<{
+    id: string;
+    title: string;
+  } | null>(null);
 
   const { classes, getSubjectsForClass } = useTeacherAssignments();
   const subjects = filterClassId ? getSubjectsForClass(filterClassId) : [];
@@ -154,11 +168,12 @@ export default function Assessments() {
     onError: () => toast.error("Failed to archive assessment"),
   });
 
-  const { mutateAsync: deleteMutation } = useMutation({
+  const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteAssessment(id),
     onSuccess: () => {
       toast.success("Assessment deleted successfully");
       queryClient.invalidateQueries({ queryKey: ["assessments"] });
+      setAssessmentToDelete(null);
     },
     onError: () => toast.error("Failed to delete assessment"),
   });
@@ -360,7 +375,10 @@ export default function Assessments() {
                         className="text-destructive focus:text-destructive"
                         onClick={(e) => {
                           e.stopPropagation();
-                          deleteMutation(assessment.id);
+                          setAssessmentToDelete({
+                            id: assessment.id,
+                            title: assessment.title,
+                          });
                         }}
                       >
                         Delete
@@ -469,6 +487,52 @@ export default function Assessments() {
           </Link>
         </div>
       )}
+
+      <AlertDialog
+        open={assessmentToDelete !== null}
+        onOpenChange={(open) => {
+          if (!open) setAssessmentToDelete(null);
+        }}
+      >
+        <AlertDialogContent size="sm">
+          <AlertDialogHeader>
+            <AlertDialogMedia className="bg-destructive/10 text-destructive dark:bg-destructive/20 dark:text-destructive">
+              <TrashSimpleIcon weight="bold" className="size-4" />
+            </AlertDialogMedia>
+            <AlertDialogTitle>Delete this assessment?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You are about to permanently delete{" "}
+              <span className="font-medium text-foreground">
+                {assessmentToDelete?.title}
+              </span>
+              . This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteMutation.isPending}>
+              Cancel
+            </AlertDialogCancel>
+            <Button
+              variant="destructive"
+              disabled={deleteMutation.isPending}
+              onClick={() => {
+                if (assessmentToDelete) {
+                  deleteMutation.mutate(assessmentToDelete.id);
+                }
+              }}
+            >
+              {deleteMutation.isPending ? (
+                <>
+                  <Spinner className="size-4" />
+                  Deleting…
+                </>
+              ) : (
+                "Delete assessment"
+              )}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
