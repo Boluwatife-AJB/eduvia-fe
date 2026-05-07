@@ -65,7 +65,7 @@ const toggleAssessmentPublication = async (
   id: string,
   isPublished: boolean,
 ) => {
-  const action = isPublished ? "unpublish" : "publish";
+  const action = !isPublished ? "unpublish" : "publish";
   const response = await apiClient.patch(`/assessments/${id}/${action}`);
   return response.data.data;
 };
